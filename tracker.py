@@ -147,6 +147,9 @@ SECTIONS = [
         "Form Of Contract",
         "Contract Type",
         "Payment Mode",
+        "Withdrawal Allowed",
+        "No. of Covers",
+        "Online Bankers",
     ]),
     ("Fee Details", [
         "Tender Fee in ₹",
@@ -184,6 +187,10 @@ SECTIONS = [
         "Bid Submission End Date",
         "Bid Opening Date",
     ]),
+    ("Documents", [
+        "NIT Document",
+        "Work Item Documents",
+    ]),
     ("Tender Inviting Authority", [
         "Name",
         "Address",
@@ -200,6 +207,7 @@ TRANSLATE_VALUE_FIELDS = {
     "Form Of Contract",
     "Contract Type",
     "Payment Mode",
+    "Withdrawal Allowed",
     "Tender Fee Exemption Allowed",
     "EMD Fee Type",
     "EMD Exemption Allowed",
@@ -238,6 +246,12 @@ LABELS_MR = {
     "Tender Fee in ₹": "निविदा शुल्क (रु.)",
     "Processing Fee in ₹": "प्रक्रिया शुल्क (रु.)",
     "Tender Fee Exemption Allowed": "निविदा शुल्क सूट परवानगी",
+    "Withdrawal Allowed": "माघार घेण्याची परवानगी",
+    "No. of Covers": "लिफाफ्यांची संख्या",
+    "Online Bankers": "ऑनलाइन बँका",
+    "Documents": "दस्तऐवज",
+    "NIT Document": "निविदा सूचना दस्तऐवज",
+    "Work Item Documents": "कामाचे दस्तऐवज",
     "EMD Amount in ₹": "इसारा रक्कम (रु.)",
     "EMD Fee Type": "इसारा शुल्क प्रकार",
     "EMD Exemption Allowed": "इसारा सूट परवानगी",
@@ -1253,11 +1267,72 @@ def publisher(org_chain):
     return parts[-1] if parts else ""
 
 
+MAHA_DISTRICTS = [
+    "Chhatrapati Sambhajinagar", "Ahmednagar", "Akola", "Amravati",
+    "Aurangabad", "Beed", "Bhandara", "Buldhana", "Chandrapur", "Dhule",
+    "Gadchiroli", "Gondia", "Hingoli", "Jalgaon", "Jalna", "Kolhapur",
+    "Latur", "Mumbai", "Nagpur", "Nanded", "Nandurbar", "Nashik",
+    "Osmanabad", "Palghar", "Parbhani", "Pune", "Raigad", "Ratnagiri",
+    "Sangli", "Satara", "Sindhudurg", "Solapur", "Thane", "Wardha",
+    "Washim", "Yavatmal",
+]
+
+
+def normalize_city(location):
+    """Collapse the portal's free-text Location values to a city/district
+    level name for the filter dropdown: 'At Lasur Tal chopda Dist Jalgaon'
+    becomes 'Jalgaon'. Values naming a known district anywhere snap to it,
+    short clean values like 'Amalner' stay as they are."""
+    s = (location or "").strip()
+    if not s:
+        return ""
+    low = s.casefold()
+    if re.search(r"\b(csn|chh)\b", low):
+        return "Chhatrapati Sambhajinagar"
+    hits = [d for d in MAHA_DISTRICTS if d.casefold() in low]
+    if hits:
+        return max(hits, key=len)
+    m = re.search(r"dist(?:rict)?[\s.:,-]*([A-Za-z]+(?:\s+[A-Za-z]+)?)", s, re.I)
+    if m:
+        s = m.group(1).strip()
+    else:
+        s = re.sub(r"^(?:at|a/p)[\s.]+", "", s, flags=re.I).strip(" .,")
+    out = s[:30].strip().title()
+    if len(out) >= 5:
+        for d in MAHA_DISTRICTS:
+            if d.casefold().startswith(out.casefold()):
+                return d
+    return out
+
+
+def parse_inr(value_text):
+    digits = re.sub(r"[^\d]", "", value_text or "")
+    return int(digits) if digits else 0
+
+
+def format_inr(n):
+    """1,51,00,067 -> '1.51 Cr'; 45,00,000 -> '45 L'; 59,000 -> '59,000'."""
+    if not n:
+        return ""
+    if n >= 10**7:
+        s = "%.2f" % (n / 10**7)
+        return s.rstrip("0").rstrip(".") + " Cr"
+    if n >= 10**5:
+        s = "%.2f" % (n / 10**5)
+        return s.rstrip("0").rstrip(".") + " L"
+    return "{:,}".format(n)
+
+
+def portal_ts(text):
+    dt = parse_portal_datetime(text)
+    return int(dt.timestamp()) if dt else 0
+
+
 def dashboard_data():
     now = datetime.now()
     live = _dash["live"]
     seen = load_seen()
-    details_cached = set(load_details_cache())
+    details_all = load_details_cache()
     live_map = {r["tender_id"]: r for r in live}
     kw_names = keyword_watch_names()
 
@@ -1265,20 +1340,27 @@ def dashboard_data():
     for tid in set(live_map) | set(seen):
         r = live_map.get(tid)
         e = seen.get(tid, {})
+        d = details_all.get(tid, {})
         closing = (r or e).get("closing", "")
+        published = r.get("published", "") if r else e.get("published", "")
         cls, label = tender_status(closing, r is not None, now)
+        value = parse_inr(d.get("Tender Value in ₹", ""))
         tenders.append({
             "id": tid,
             "title": (r or e).get("title", ""),
             "ref": (r or e).get("ref_no", ""),
             "source": (r["source"] if r else e.get("source", "")) or "",
             "org": publisher((r or e).get("org_chain", "")),
-            "published": r.get("published", "") if r else e.get("published", ""),
+            "city": normalize_city(d.get("Location")),
+            "value": value,
+            "valueFmt": format_inr(value),
+            "published": published,
+            "publishedTs": portal_ts(published),
             "closing": closing,
             "opening": r.get("opening", "") if r else e.get("opening", ""),
             "first_seen": e.get("first_seen", ""),
             "live": r is not None,
-            "detail": tid in details_cached or r is not None,
+            "detail": tid in details_all or r is not None,
             "st": cls,
             "stLabel": label,
         })
@@ -1293,12 +1375,15 @@ def dashboard_data():
     soon = sum(1 for t in live_part if t["st"] in ("soon", "urgent"))
     kw_count = sum(1 for t in tenders if t["source"] in kw_names)
     sources = sorted({t["source"] for t in tenders if t["source"]})
+    cities = sorted({t["city"] for t in tenders if t["city"]},
+                    key=str.casefold)
     return {
         "generated": now.strftime("%d-%b-%Y %I:%M %p"),
         "refreshSeconds": DASHBOARD_CACHE_SECONDS,
         "stats": {"live": len(live_part), "soon": soon,
                   "keyword": kw_count, "total": len(seen)},
         "sources": sources,
+        "cities": cities,
         "tenders": tenders,
     }
 
@@ -1363,7 +1448,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 18px 22px 80px; }
 
 .tablewrap { background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; overflow: auto; max-height: calc(100vh - 320px); }
-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1120px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1150px; }
 thead th { position: sticky; top: 0; z-index: 1; background: #EFF4FB;
   text-align: left; font-weight: 600; color: var(--heading);
   padding: 9px 12px; border-bottom: 1px solid var(--border);
@@ -1384,6 +1469,8 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .badge.gone { background: var(--off-bg); color: var(--off); }
 .src { font-size: 11px; color: var(--muted-fg); white-space: nowrap; }
 .pub { font-size: 11px; color: var(--muted-fg); min-width: 140px; }
+td.val { font-family: "Fira Code", monospace; font-size: 12px;
+  text-align: right; white-space: nowrap; }
 .empty { padding: 26px; text-align: center; color: var(--muted-fg); }
 
 #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
@@ -1460,11 +1547,17 @@ td.nowrap, th.nowrap { white-space: nowrap; }
    <input id="q" type="search" placeholder="Search title, id, ref no..." aria-label="Search tenders">
   </div>
   <select id="f-src" aria-label="Filter by watch"><option value="">All watches</option></select>
+  <select id="f-city" aria-label="Filter by city"><option value="">All cities</option></select>
   <select id="f-st" aria-label="Filter by status">
    <option value="">All statuses</option>
    <option value="live">Live</option>
    <option value="soonish">Closing within 3 days</option>
    <option value="past">Closed / delisted</option>
+  </select>
+  <select id="f-sort" aria-label="Sort order">
+   <option value="closing">Sort: closing soonest</option>
+   <option value="value">Sort: value high to low</option>
+   <option value="published">Sort: newest published</option>
   </select>
   <span class="count" id="count"></span>
  </div>
@@ -1472,7 +1565,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
   <table aria-label="Tenders">
    <thead><tr>
     <th class="nowrap">Tender ID</th><th>Title</th><th>Watch</th>
-    <th>Publisher</th>
+    <th>Publisher</th><th class="nowrap">Value</th>
     <th class="nowrap">Published</th><th class="nowrap">Closing</th>
     <th class="nowrap">Opening</th><th class="nowrap">Status</th>
    </tr></thead>
@@ -1507,6 +1600,7 @@ var SECTIONS_SPEC = __SECTIONS_JSON__;
 var els = {
   rows: document.getElementById('rows'), q: document.getElementById('q'),
   src: document.getElementById('f-src'), st: document.getElementById('f-st'),
+  city: document.getElementById('f-city'), sort: document.getElementById('f-sort'),
   count: document.getElementById('count'), empty: document.getElementById('empty'),
   overlay: document.getElementById('overlay'), panel: document.getElementById('panel'),
   pbody: document.getElementById('pbody')
@@ -1520,6 +1614,10 @@ DATA.sources.forEach(function (s) {
   var o = document.createElement('option'); o.value = s; o.textContent = s;
   els.src.appendChild(o);
 });
+DATA.cities.forEach(function (c) {
+  var o = document.createElement('option'); o.value = c; o.textContent = c;
+  els.city.appendChild(o);
+});
 function esc(t) {
   return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
@@ -1527,18 +1625,30 @@ function esc(t) {
 }
 function matches(t) {
   var q = els.q.value.trim().toLowerCase();
-  if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source + ' ' + t.org)
-      .toLowerCase().indexOf(q) < 0) return false;
+  if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source + ' ' +
+      t.org + ' ' + t.city).toLowerCase().indexOf(q) < 0) return false;
   if (els.src.value && t.source !== els.src.value) return false;
+  if (els.city.value && t.city !== els.city.value) return false;
   var st = els.st.value;
   if (st === 'live' && !t.live) return false;
   if (st === 'soonish' && ['soon', 'urgent'].indexOf(t.st) < 0) return false;
   if (st === 'past' && t.live && t.st !== 'closed') return false;
   return true;
 }
+function sorted() {
+  var mode = els.sort.value;
+  var list = DATA.tenders.map(function (t, i) { t._i = i; return t; });
+  if (mode === 'value') {
+    list = list.slice().sort(function (a, b) { return (b.value || 0) - (a.value || 0); });
+  } else if (mode === 'published') {
+    list = list.slice().sort(function (a, b) { return (b.publishedTs || 0) - (a.publishedTs || 0); });
+  }
+  return list;
+}
 function render() {
   var shown = 0, html = '';
-  DATA.tenders.forEach(function (t, i) {
+  sorted().forEach(function (t) {
+    var i = t._i;
     if (!matches(t)) return;
     shown++;
     html += '<tr data-i="' + i + '" tabindex="0"' +
@@ -1547,9 +1657,10 @@ function render() {
       '<td>' + esc(t.title) + '</td>' +
       '<td class="src">' + esc(t.source) + '</td>' +
       '<td class="pub">' + esc(t.org) + '</td>' +
+      '<td class="val">' + esc(t.valueFmt) + '</td>' +
       '<td class="nowrap">' + esc((t.published || '').split(' ')[0]) + '</td>' +
       '<td class="nowrap">' + esc(t.closing) + '</td>' +
-      '<td class="nowrap">' + esc(t.opening) + '</td>' +
+      '<td class="nowrap">' + esc((t.opening || '').split(' ')[0]) + '</td>' +
       '<td><span class="badge ' + t.st + '">' + esc(t.stLabel) + '</span></td></tr>';
   });
   els.rows.innerHTML = html;
@@ -1557,9 +1668,9 @@ function render() {
   els.count.textContent = shown + ' of ' + DATA.tenders.length + ' tenders';
 }
 ['input', 'change'].forEach(function (ev) {
-  els.q.addEventListener(ev, render);
-  els.src.addEventListener(ev, render);
-  els.st.addEventListener(ev, render);
+  [els.q, els.src, els.st, els.city, els.sort].forEach(function (el) {
+    el.addEventListener(ev, render);
+  });
 });
 render();
 
