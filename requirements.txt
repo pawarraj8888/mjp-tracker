@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+lxml
+reportlab>=5.0
+uharfbuzz
+deep-translator
+pypdf
