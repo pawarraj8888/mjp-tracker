@@ -62,10 +62,16 @@ The workflow runs every 30 minutes and commits `seen.json` back to the repo.
 .venv/bin/python tracker.py --serve
 ```
 
-Serves http://localhost:8765 with three sections: live tenders across all
-watches sorted by closing date (with closing-soon badges), keyword-watch
-matches on record, and previously tracked tenders that are no longer listed.
-The page scrapes the portal at most every 5 minutes and auto-refreshes.
+Serves http://localhost:8765: stat tiles, search plus watch and status
+filters over every tender ever tracked (live and historical), published,
+closing and opening dates, and closing-soon badges. Clicking a row opens a
+detail panel with every parsed field and buttons that generate the English
+and Marathi PDFs on demand. The page re-scrapes the portal at most every
+15 minutes and auto-refreshes; the Refresh button forces it.
+
+Details are cached in `details_cache.json` (also filled by the GitHub
+Actions runs for every notified tender), so historical tenders stay
+inspectable after they leave the portal.
 
 `seen.json` is pre-seeded with the tenders that were live when the repo was
 created, so the first scheduled run only sends tenders published after that.

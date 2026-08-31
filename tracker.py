@@ -50,6 +50,7 @@ import os
 import re
 import socket
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -931,6 +932,10 @@ def build_both_pdfs(session, row):
             "Detail page for %s did not parse (got Tender ID %r), portal "
             "likely served an error page" % (
                 row["tender_id"], details.get("Tender ID")))
+    try:
+        cache_tender_details(row["tender_id"], details)
+    except OSError as exc:
+        log.warning("Could not cache details for %s: %s", row["tender_id"], exc)
     OUT_DIR.mkdir(exist_ok=True)
     tid = row["tender_id"]
     en_path = OUT_DIR / ("MJP_%s_EN.pdf" % tid)
@@ -988,6 +993,9 @@ def process_new_tender(session, row, seen):
         "title": row["title"],
         "ref_no": row["ref_no"],
         "closing": row["closing"],
+        "opening": row.get("opening", ""),
+        "published": row.get("published", ""),
+        "org_chain": row.get("org_chain", ""),
         "source": row.get("source", "MJP WSSD"),
         "first_seen": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
@@ -1048,7 +1056,31 @@ def run_real(session):
 # Local dashboard (python tracker.py --serve)
 # ---------------------------------------------------------------------------
 
-DASHBOARD_CACHE_SECONDS = 300
+DASHBOARD_CACHE_SECONDS = 900  # re-scrape the portal at most every 15 minutes
+DETAILS_CACHE_FILE = ROOT / "details_cache.json"
+
+_dash_lock = threading.Lock()
+_dash = {"ts": 0.0, "live": [], "session": None}
+
+
+def load_details_cache():
+    if DETAILS_CACHE_FILE.exists():
+        try:
+            with open(DETAILS_CACHE_FILE, encoding="utf-8") as fh:
+                return json.load(fh)
+        except (ValueError, OSError) as exc:
+            log.warning("details cache unreadable: %s", exc)
+    return {}
+
+
+def cache_tender_details(tid, details):
+    cache = load_details_cache()
+    cache[tid] = details
+    tmp = DETAILS_CACHE_FILE.with_suffix(".json.tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(cache, fh, indent=1, ensure_ascii=False, sort_keys=True)
+        fh.write("\n")
+    os.replace(tmp, DETAILS_CACHE_FILE)
 
 
 def parse_portal_datetime(text):
@@ -1058,174 +1090,534 @@ def parse_portal_datetime(text):
         return None
 
 
-def closing_badge(closing_text, now):
+def tender_status(closing_text, is_live, now):
+    """(css_class, label) for one tender row."""
     dt = parse_portal_datetime(closing_text)
+    if not is_live:
+        if dt and dt < now:
+            return "closed", "Closed"
+        return "gone", "No longer listed"
     if dt is None:
-        return "", "unknown"
+        return "open", "Live"
     days = (dt - now).total_seconds() / 86400.0
     if days < 0:
         return "closed", "Deadline passed"
     if days < 1:
         return "urgent", "Closes today"
     if days < 3:
-        return "soon", "%d day(s) left" % int(days)
-    return "open", "%d day(s) left" % int(days)
+        return "soon", "%dd left" % max(int(days), 1)
+    return "open", "%dd left" % int(days)
 
 
-def build_dashboard_html(live, seen):
+def refresh_live(force=False):
+    """Scrape the org watches into the module cache, at most every
+    DASHBOARD_CACHE_SECONDS unless forced. Returns the live row list."""
+    with _dash_lock:
+        if not force and _dash["live"] and \
+                time.time() - _dash["ts"] < DASHBOARD_CACHE_SECONDS:
+            return _dash["live"]
+        session = make_session()
+        _dash["live"] = fetch_all_watch_rows(session, include_keyword_scan=False)
+        _dash["session"] = session
+        _dash["ts"] = time.time()
+        return _dash["live"]
+
+
+def fetch_detail_for_tid(tid):
+    """Full detail dict for a tender: from the local cache first, else
+    fetched live (and cached). None when unavailable."""
+    cache = load_details_cache()
+    if tid in cache:
+        return cache[tid]
+    live = refresh_live()
+    row = next((r for r in live if r["tender_id"] == tid), None)
+    if row is None:
+        return None
+    try:
+        details = fetch_tender_details(_dash["session"], row["url"])
+        if details.get("Tender ID") != tid:
+            raise RuntimeError("stale detail link")
+    except Exception:
+        refresh_live(force=True)
+        row = next((r for r in _dash["live"] if r["tender_id"] == tid), None)
+        if row is None:
+            return None
+        details = fetch_tender_details(_dash["session"], row["url"])
+        if details.get("Tender ID") != tid:
+            return None
+    cache_tender_details(tid, details)
+    return details
+
+
+def detail_sections(details):
+    out = []
+    for name, fields in SECTIONS:
+        rows = [[label.replace("in ₹", "in Rs."), details[label]]
+                for label in fields if details.get(label)]
+        if rows:
+            out.append({"name": name, "rows": rows})
+    return out
+
+
+def dashboard_data():
     now = datetime.now()
-    live_ids = {r["tender_id"] for r in live}
+    live = _dash["live"]
+    seen = load_seen()
+    details_cached = set(load_details_cache())
+    live_map = {r["tender_id"]: r for r in live}
     kw_name = KEYWORD_WATCH["name"] if KEYWORD_WATCH else None
 
-    def esc(t):
-        return xml_escape(str(t or ""))
+    tenders = []
+    for tid in set(live_map) | set(seen):
+        r = live_map.get(tid)
+        e = seen.get(tid, {})
+        closing = (r or e).get("closing", "")
+        cls, label = tender_status(closing, r is not None, now)
+        tenders.append({
+            "id": tid,
+            "title": (r or e).get("title", ""),
+            "ref": (r or e).get("ref_no", ""),
+            "source": (r["source"] if r else e.get("source", "")) or "",
+            "published": r.get("published", "") if r else e.get("published", ""),
+            "closing": closing,
+            "opening": r.get("opening", "") if r else e.get("opening", ""),
+            "first_seen": e.get("first_seen", ""),
+            "live": r is not None,
+            "detail": tid in details_cached or r is not None,
+            "st": cls,
+            "stLabel": label,
+        })
 
-    def sort_key(closing_text):
-        dt = parse_portal_datetime(closing_text)
-        return dt or datetime.max
+    live_part = sorted([t for t in tenders if t["live"]],
+                       key=lambda t: parse_portal_datetime(t["closing"]) or datetime.max)
+    gone_part = sorted([t for t in tenders if not t["live"]],
+                       key=lambda t: parse_portal_datetime(t["closing"]) or datetime.min,
+                       reverse=True)
+    tenders = live_part + gone_part
 
-    def row_html(tid, title, source, closing, extra=""):
-        cls, badge = closing_badge(closing, now)
-        return (
-            '<tr class="st-%s"><td class="tid">%s</td><td>%s</td>'
-            '<td>%s</td><td class="nowrap">%s</td>'
-            '<td><span class="badge %s">%s</span>%s</td></tr>'
-            % (cls, esc(tid), esc(title), esc(source), esc(closing),
-               cls, esc(badge), extra))
+    soon = sum(1 for t in live_part if t["st"] in ("soon", "urgent"))
+    kw_count = sum(1 for t in tenders if t["source"] == kw_name)
+    sources = sorted({t["source"] for t in tenders if t["source"]})
+    return {
+        "generated": now.strftime("%d-%b-%Y %I:%M %p"),
+        "refreshSeconds": DASHBOARD_CACHE_SECONDS,
+        "stats": {"live": len(live_part), "soon": soon,
+                  "keyword": kw_count, "total": len(seen)},
+        "sources": sources,
+        "tenders": tenders,
+    }
 
-    live_rows = "".join(
-        row_html(r["tender_id"], r["title"], r["source"], r["closing"])
-        for r in sorted(live, key=lambda r: sort_key(r["closing"])))
 
-    kw_entries = [(tid, e) for tid, e in seen.items()
-                  if e.get("source") == kw_name]
-    kw_rows = "".join(
-        row_html(tid, e.get("title", ""), e.get("source", ""),
-                 e.get("closing", ""))
-        for tid, e in sorted(kw_entries,
-                             key=lambda te: sort_key(te[1].get("closing", ""))))
-
-    gone_entries = [(tid, e) for tid, e in seen.items()
-                    if tid not in live_ids and e.get("source") != kw_name]
-    gone_rows = "".join(
-        row_html(tid, e.get("title", ""), e.get("source", ""),
-                 e.get("closing", ""))
-        for tid, e in sorted(gone_entries,
-                             key=lambda te: sort_key(te[1].get("closing", "")),
-                             reverse=True)[:150])
-
-    watch_names = ", ".join(w["name"] for w in ORG_WATCHES)
-    return """<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<meta http-equiv="refresh" content="600">
-<title>Tender Dashboard</title>
+DASHBOARD_PAGE = r"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tender Watch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@450;600&family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
- body {{ font-family: -apple-system, "Segoe UI", Arial, sans-serif;
-        margin: 0; background: #f4f6fa; color: #1c2733; }}
- header {{ background: #1a3e6e; color: #fff; padding: 14px 24px; }}
- header h1 {{ margin: 0; font-size: 18px; }}
- header p {{ margin: 4px 0 0; font-size: 12px; opacity: .8; }}
- main {{ padding: 18px 24px 60px; max-width: 1200px; margin: 0 auto; }}
- h2 {{ font-size: 15px; margin: 26px 0 8px; color: #1a3e6e; }}
- input#q {{ width: 320px; padding: 6px 10px; margin: 14px 0 2px;
-           border: 1px solid #bcc7d6; border-radius: 6px; font-size: 13px; }}
- table {{ width: 100%; border-collapse: collapse; background: #fff;
-         border: 1px solid #dbe2ec; font-size: 13px; }}
- th {{ background: #eef2f7; text-align: left; padding: 7px 9px;
-      border-bottom: 1px solid #dbe2ec; position: sticky; top: 0; }}
- td {{ padding: 7px 9px; border-bottom: 1px solid #eef1f6;
-      vertical-align: top; }}
- td.tid {{ font-family: ui-monospace, Menlo, monospace; font-size: 12px;
-          white-space: nowrap; }}
- td.nowrap {{ white-space: nowrap; }}
- .badge {{ padding: 2px 8px; border-radius: 10px; font-size: 11px;
-          white-space: nowrap; }}
- .badge.open {{ background: #e2f4e6; color: #1d6f34; }}
- .badge.soon {{ background: #fdf0d7; color: #8a6100; }}
- .badge.urgent {{ background: #fddddd; color: #a11212; }}
- .badge.closed, .badge.unknown {{ background: #e8e8ec; color: #555; }}
- tr.st-closed td {{ color: #8b93a0; }}
- .empty {{ color: #8b93a0; font-size: 13px; padding: 10px 2px; }}
+:root {
+  --primary: #1E40AF; --primary-dark: #17346C; --on-primary: #FFFFFF;
+  --accent: #D97706; --bg: #F8FAFC; --card: #FFFFFF; --border: #DBEAFE;
+  --line: #E5EAF3; --fg: #0F172A; --heading: #1E3A8A;
+  --muted: #E9EEF6; --muted-fg: #475569; --ring: #1E40AF;
+  --ok: #15803D; --ok-bg: #DCFCE7; --warn: #92400E; --warn-bg: #FEF3C7;
+  --bad: #B91C1C; --bad-bg: #FEE2E2; --off: #475569; --off-bg: #E2E8F0;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg);
+  font: 400 14px/1.5 "Fira Sans", -apple-system, "Segoe UI", sans-serif; }
+.mono { font-family: "Fira Code", ui-monospace, Menlo, monospace;
+  font-variant-numeric: tabular-nums; }
+button, select, input { font: inherit; }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+header { background: var(--primary); color: var(--on-primary);
+  padding: 14px 22px; display: flex; flex-wrap: wrap; gap: 12px;
+  align-items: center; justify-content: space-between; }
+header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: .2px; }
+header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
+#refresh { display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid
+  rgba(255,255,255,.45); border-radius: 8px; padding: 9px 14px;
+  min-height: 40px; cursor: pointer; transition: background .2s; }
+#refresh:hover { background: rgba(255,255,255,.24); }
+#refresh svg { width: 15px; height: 15px; }
+
+main { max-width: 1280px; margin: 0 auto; padding: 18px 22px 80px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr));
+  gap: 10px; margin-bottom: 14px; }
+.tile { background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 14px; }
+.tile .v { font-family: "Fira Code", monospace; font-size: 24px;
+  font-weight: 600; color: var(--heading); }
+.tile .l { font-size: 12px; color: var(--muted-fg); margin-top: 2px; }
+
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-bottom: 10px; }
+.search { position: relative; flex: 1 1 260px; max-width: 420px; }
+.search svg { position: absolute; left: 10px; top: 50%;
+  transform: translateY(-50%); width: 15px; height: 15px; color: var(--muted-fg); }
+.search input { width: 100%; padding: 9px 12px 9px 32px; min-height: 40px;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
+.bar select { padding: 9px 10px; min-height: 40px; border: 1px solid
+  var(--border); border-radius: 8px; background: var(--card);
+  color: var(--fg); cursor: pointer; }
+.bar .count { font-size: 12px; color: var(--muted-fg); margin-left: auto; }
+
+.tablewrap { background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; overflow: auto; max-height: calc(100vh - 320px); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 980px; }
+thead th { position: sticky; top: 0; z-index: 1; background: #EFF4FB;
+  text-align: left; font-weight: 600; color: var(--heading);
+  padding: 9px 12px; border-bottom: 1px solid var(--border);
+  white-space: nowrap; }
+tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line);
+  vertical-align: top; }
+tbody tr { cursor: pointer; transition: background .15s; }
+tbody tr:hover { background: #F1F5FF; }
+tbody tr.gone-row td { color: var(--muted-fg); }
+td.tid { font-family: "Fira Code", monospace; font-size: 12px;
+  white-space: nowrap; }
+td.nowrap, th.nowrap { white-space: nowrap; }
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge.open { background: var(--ok-bg); color: var(--ok); }
+.badge.soon { background: var(--warn-bg); color: var(--warn); }
+.badge.urgent, .badge.closed { background: var(--bad-bg); color: var(--bad); }
+.badge.gone { background: var(--off-bg); color: var(--off); }
+.src { font-size: 11px; color: var(--muted-fg); white-space: nowrap; }
+.empty { padding: 26px; text-align: center; color: var(--muted-fg); }
+
+#overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
+  opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
+#overlay.show { opacity: 1; pointer-events: auto; }
+#panel { position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(680px, 94vw); background: var(--card); z-index: 50;
+  transform: translateX(102%); transition: transform .22s ease;
+  display: flex; flex-direction: column;
+  box-shadow: -12px 0 32px rgba(15,23,42,.18); }
+#panel.show { transform: translateX(0); }
+#panel .phead { padding: 16px 20px 12px; border-bottom: 1px solid var(--line);
+  display: flex; gap: 12px; align-items: flex-start; }
+#panel .phead h2 { margin: 0 0 4px; font-size: 15px; line-height: 1.4;
+  color: var(--heading); }
+#panel .phead .pid { font-family: "Fira Code", monospace; font-size: 12px;
+  color: var(--muted-fg); }
+#pclose { margin-left: auto; flex: none; width: 40px; height: 40px;
+  display: grid; place-items: center; background: none; border: 1px solid
+  var(--border); border-radius: 8px; cursor: pointer; color: var(--muted-fg);
+  transition: background .15s; }
+#pclose:hover { background: var(--muted); }
+#pbody { overflow-y: auto; padding: 6px 20px 20px; flex: 1; }
+#pbody h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .7px;
+  color: var(--muted-fg); margin: 20px 0 6px; }
+.kv { width: 100%; border-collapse: collapse; font-size: 13px; }
+.kv td { padding: 6px 8px; border-bottom: 1px solid var(--line);
+  vertical-align: top; }
+.kv td:first-child { width: 38%; color: var(--muted-fg); }
+.kv tr:last-child td { border-bottom: none; }
+.pfoot { padding: 12px 20px; border-top: 1px solid var(--line);
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pfoot a { display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; min-height: 40px; border-radius: 8px;
+  text-decoration: none; font-weight: 500; font-size: 13px;
+  transition: background .15s; }
+.pfoot a.en { background: var(--primary); color: var(--on-primary); }
+.pfoot a.en:hover { background: var(--primary-dark); }
+.pfoot a.mr { border: 1px solid var(--accent); color: var(--accent); }
+.pfoot a.mr:hover { background: #FEF7EC; }
+.pfoot .note { font-size: 11px; color: var(--muted-fg); }
+.spin { margin: 40px auto; width: 26px; height: 26px; border-radius: 50%;
+  border: 3px solid var(--muted); border-top-color: var(--primary);
+  animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.perr { margin: 30px 10px; color: var(--muted-fg); text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  #panel, #overlay, tbody tr, #refresh { transition: none; }
+  .spin { animation-duration: 1.6s; }
+}
 </style></head>
 <body>
 <header>
- <h1>Tender Dashboard</h1>
- <p>Watches: {watch_names} plus keyword watch "{kw_name}" |
-    generated {stamp} | auto refreshes every 10 minutes</p>
+ <div>
+  <h1>Tender Watch</h1>
+  <div class="sub">MJP WSSD · ZP Jalgaon DPDC · Collector Jalgaon · Amdar Nidhi keyword scan
+   &nbsp;|&nbsp; updated <span id="stamp"></span> · auto refresh every 15 min</div>
+ </div>
+ <button id="refresh" aria-label="Refresh data now">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
+  Refresh
+ </button>
 </header>
 <main>
-<input id="q" placeholder="Filter by any text..." onkeyup="flt()">
-<h2>Live tenders ({n_live})</h2>
-<table id="t-live"><tr><th>Tender ID</th><th>Title</th><th>Watch</th>
-<th>Closing Date</th><th>Status</th></tr>{live_rows}</table>
-{live_empty}
-<h2>Keyword watch matches on record ({n_kw})</h2>
-<table id="t-kw"><tr><th>Tender ID</th><th>Title</th><th>Watch</th>
-<th>Closing Date</th><th>Status</th></tr>{kw_rows}</table>
-{kw_empty}
-<h2>Previously tracked, no longer listed ({n_gone})</h2>
-<table id="t-gone"><tr><th>Tender ID</th><th>Title</th><th>Watch</th>
-<th>Closing Date</th><th>Status</th></tr>{gone_rows}</table>
-{gone_empty}
+ <div class="tiles">
+  <div class="tile"><div class="v" id="s-live"></div><div class="l">Live tenders</div></div>
+  <div class="tile"><div class="v" id="s-soon"></div><div class="l">Closing within 3 days</div></div>
+  <div class="tile"><div class="v" id="s-kw"></div><div class="l">Amdar Nidhi / DPDC matches</div></div>
+  <div class="tile"><div class="v" id="s-total"></div><div class="l">Tracked all time</div></div>
+ </div>
+ <div class="bar">
+  <div class="search">
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+   <input id="q" type="search" placeholder="Search title, id, ref no..." aria-label="Search tenders">
+  </div>
+  <select id="f-src" aria-label="Filter by watch"><option value="">All watches</option></select>
+  <select id="f-st" aria-label="Filter by status">
+   <option value="">All statuses</option>
+   <option value="live">Live</option>
+   <option value="soonish">Closing within 3 days</option>
+   <option value="past">Closed / delisted</option>
+  </select>
+  <span class="count" id="count"></span>
+ </div>
+ <div class="tablewrap">
+  <table aria-label="Tenders">
+   <thead><tr>
+    <th class="nowrap">Tender ID</th><th>Title</th><th>Watch</th>
+    <th class="nowrap">Published</th><th class="nowrap">Closing</th>
+    <th class="nowrap">Opening</th><th class="nowrap">Status</th>
+   </tr></thead>
+   <tbody id="rows"></tbody>
+  </table>
+  <div class="empty" id="empty" hidden>No tenders match the current filters.</div>
+ </div>
 </main>
+
+<div id="overlay"></div>
+<aside id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
+ <div class="phead">
+  <div>
+   <h2 id="ptitle"></h2>
+   <div class="pid mono" id="ppid"></div>
+  </div>
+  <button id="pclose" aria-label="Close details">
+   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+ </div>
+ <div id="pbody"></div>
+ <div class="pfoot">
+  <a class="en" id="pdf-en" target="_blank" rel="noopener">English PDF</a>
+  <a class="mr" id="pdf-mr" target="_blank" rel="noopener">Marathi PDF</a>
+  <span class="note">Marathi PDF is generated on demand and can take up to a minute.</span>
+ </div>
+</aside>
+
 <script>
-function flt() {{
-  var q = document.getElementById('q').value.toLowerCase();
-  ['t-live','t-kw','t-gone'].forEach(function(id) {{
-    var rows = document.getElementById(id).rows;
-    for (var i = 1; i < rows.length; i++) {{
-      rows[i].style.display =
-        rows[i].innerText.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
-    }}
-  }});
-}}
+var DATA = __DATA_JSON__;
+var els = {
+  rows: document.getElementById('rows'), q: document.getElementById('q'),
+  src: document.getElementById('f-src'), st: document.getElementById('f-st'),
+  count: document.getElementById('count'), empty: document.getElementById('empty'),
+  overlay: document.getElementById('overlay'), panel: document.getElementById('panel'),
+  pbody: document.getElementById('pbody')
+};
+document.getElementById('stamp').textContent = DATA.generated;
+document.getElementById('s-live').textContent = DATA.stats.live;
+document.getElementById('s-soon').textContent = DATA.stats.soon;
+document.getElementById('s-kw').textContent = DATA.stats.keyword;
+document.getElementById('s-total').textContent = DATA.stats.total;
+DATA.sources.forEach(function (s) {
+  var o = document.createElement('option'); o.value = s; o.textContent = s;
+  els.src.appendChild(o);
+});
+function esc(t) {
+  return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
+  });
+}
+function matches(t) {
+  var q = els.q.value.trim().toLowerCase();
+  if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source)
+      .toLowerCase().indexOf(q) < 0) return false;
+  if (els.src.value && t.source !== els.src.value) return false;
+  var st = els.st.value;
+  if (st === 'live' && !t.live) return false;
+  if (st === 'soonish' && ['soon', 'urgent'].indexOf(t.st) < 0) return false;
+  if (st === 'past' && t.live && t.st !== 'closed') return false;
+  return true;
+}
+function render() {
+  var shown = 0, html = '';
+  DATA.tenders.forEach(function (t, i) {
+    if (!matches(t)) return;
+    shown++;
+    html += '<tr data-i="' + i + '" tabindex="0"' +
+      (t.live ? '' : ' class="gone-row"') + '>' +
+      '<td class="tid">' + esc(t.id) + '</td>' +
+      '<td>' + esc(t.title) + '</td>' +
+      '<td class="src">' + esc(t.source) + '</td>' +
+      '<td class="nowrap">' + esc((t.published || '').split(' ')[0]) + '</td>' +
+      '<td class="nowrap">' + esc(t.closing) + '</td>' +
+      '<td class="nowrap">' + esc(t.opening) + '</td>' +
+      '<td><span class="badge ' + t.st + '">' + esc(t.stLabel) + '</span></td></tr>';
+  });
+  els.rows.innerHTML = html;
+  els.empty.hidden = shown > 0;
+  els.count.textContent = shown + ' of ' + DATA.tenders.length + ' tenders';
+}
+['input', 'change'].forEach(function (ev) {
+  els.q.addEventListener(ev, render);
+  els.src.addEventListener(ev, render);
+  els.st.addEventListener(ev, render);
+});
+render();
+
+function openPanel(t) {
+  document.getElementById('ptitle').textContent = t.title;
+  document.getElementById('ppid').textContent = t.id + (t.ref ? '  ·  ' + t.ref : '');
+  document.getElementById('pdf-en').href = '/pdf/' + t.id + '/en';
+  document.getElementById('pdf-mr').href = '/pdf/' + t.id + '/mr';
+  els.pbody.innerHTML = '<div class="spin" role="status" aria-label="Loading"></div>';
+  els.overlay.classList.add('show');
+  els.panel.classList.add('show');
+  fetch('/api/detail?id=' + encodeURIComponent(t.id))
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) {
+        els.pbody.innerHTML = '<p class="perr">' + esc(d.error ||
+          'Full details are not available for this tender.') + '</p>';
+        return;
+      }
+      var html = '';
+      d.sections.forEach(function (sec) {
+        html += '<h3>' + esc(sec.name) + '</h3><table class="kv">';
+        sec.rows.forEach(function (row) {
+          html += '<tr><td>' + esc(row[0]) + '</td><td>' + esc(row[1]) + '</td></tr>';
+        });
+        html += '</table>';
+      });
+      els.pbody.innerHTML = html || '<p class="perr">No fields parsed.</p>';
+    })
+    .catch(function () {
+      els.pbody.innerHTML = '<p class="perr">Could not load details. ' +
+        'The portal may be slow; try again.</p>';
+    });
+  document.getElementById('pclose').focus();
+}
+function closePanel() {
+  els.overlay.classList.remove('show');
+  els.panel.classList.remove('show');
+}
+els.rows.addEventListener('click', function (e) {
+  var tr = e.target.closest('tr[data-i]');
+  if (tr) openPanel(DATA.tenders[+tr.dataset.i]);
+});
+els.rows.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    var tr = e.target.closest('tr[data-i]');
+    if (tr) openPanel(DATA.tenders[+tr.dataset.i]);
+  }
+});
+document.getElementById('pclose').addEventListener('click', closePanel);
+els.overlay.addEventListener('click', closePanel);
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') closePanel();
+});
+document.getElementById('refresh').addEventListener('click', function () {
+  location.href = '/?refresh=1';
+});
+setTimeout(function () { location.reload(); }, DATA.refreshSeconds * 1000);
 </script>
-</body></html>""".format(
-        watch_names=esc(watch_names), kw_name=esc(kw_name or "none"),
-        stamp=now.strftime("%d-%b-%Y %I:%M %p"),
-        n_live=len(live), live_rows=live_rows,
-        live_empty="" if live else '<p class="empty">Nothing live right now.</p>',
-        n_kw=len(kw_entries), kw_rows=kw_rows,
-        kw_empty="" if kw_entries else
-            '<p class="empty">No keyword matches recorded yet.</p>',
-        n_gone=len(gone_entries), gone_rows=gone_rows,
-        gone_empty="" if gone_entries else
-            '<p class="empty">Nothing has dropped off yet.</p>')
+</body></html>"""
+
+
+def build_dashboard_page():
+    data = dashboard_data()
+    return DASHBOARD_PAGE.replace(
+        "__DATA_JSON__",
+        json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
+
+
+def dashboard_pdf(tid, lang):
+    details = fetch_detail_for_tid(tid)
+    if details is None:
+        return None
+    live_row = next((r for r in _dash["live"] if r["tender_id"] == tid), None)
+    if live_row is not None:
+        row = live_row
+    else:
+        e = load_seen().get(tid, {})
+        row = {
+            "tender_id": tid,
+            "title": e.get("title") or details.get("Title", ""),
+            "ref_no": e.get("ref_no") or details.get("Tender Reference Number", ""),
+            "closing": e.get("closing") or details.get("Bid Submission End Date", ""),
+            "opening": e.get("opening", ""),
+            "source": e.get("source", ""),
+        }
+    OUT_DIR.mkdir(exist_ok=True)
+    path = OUT_DIR / ("MJP_%s_%s.pdf" % (tid, lang.upper()))
+    build_tender_pdf(details, row, lang, path)
+    if lang == "mr":
+        verify_devanagari(path)
+    return path
 
 
 def serve_dashboard(port):
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from urllib.parse import urlparse, parse_qs
 
-    cache = {"html": "", "ts": 0.0}
-
-    def render():
-        if cache["html"] and time.time() - cache["ts"] < DASHBOARD_CACHE_SECONDS:
-            return cache["html"]
-        session = make_session()
-        live = fetch_all_watch_rows(session, include_keyword_scan=False)
-        cache["html"] = build_dashboard_html(live, load_seen())
-        cache["ts"] = time.time()
-        return cache["html"]
+    def send(handler, code, body, ctype):
+        handler.send_response(code)
+        handler.send_header("Content-Type", ctype)
+        handler.send_header("Content-Length", str(len(body)))
+        handler.end_headers()
+        handler.wfile.write(body)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
-            if self.path not in ("/", "/index.html"):
-                self.send_error(404)
-                return
+            url = urlparse(self.path)
             try:
-                body = render().encode("utf-8")
-            except Exception as exc:
-                log.error("Dashboard refresh failed: %s", exc)
-                if cache["html"]:
-                    body = cache["html"].encode("utf-8")
+                if url.path in ("/", "/index.html"):
+                    force = "refresh" in parse_qs(url.query)
+                    refresh_live(force=force)
+                    send(self, 200, build_dashboard_page().encode("utf-8"),
+                         "text/html; charset=utf-8")
+                elif url.path == "/api/detail":
+                    tid = parse_qs(url.query).get("id", [""])[0]
+                    if not TENDER_ID_RE.match(tid):
+                        payload = {"ok": False, "error": "bad tender id"}
+                    else:
+                        details = fetch_detail_for_tid(tid)
+                        if details is None:
+                            payload = {"ok": False, "error":
+                                       "This tender is no longer on the portal "
+                                       "and no cached details exist for it."}
+                        else:
+                            payload = {"ok": True,
+                                       "sections": detail_sections(details)}
+                    send(self, 200,
+                         json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                         "application/json; charset=utf-8")
+                elif url.path.startswith("/pdf/"):
+                    parts = url.path.strip("/").split("/")
+                    if len(parts) != 3 or parts[2] not in ("en", "mr") \
+                            or not TENDER_ID_RE.match(parts[1]):
+                        self.send_error(404)
+                        return
+                    path = dashboard_pdf(parts[1], parts[2])
+                    if path is None:
+                        self.send_error(404, "No details available")
+                        return
+                    with open(path, "rb") as fh:
+                        body = fh.read()
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/pdf")
+                    self.send_header("Content-Disposition",
+                                     'inline; filename="%s"' % path.name)
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
                 else:
-                    self.send_error(502, "Portal scrape failed: %s" % exc)
-                    return
-            self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
+                    self.send_error(404)
+            except Exception as exc:
+                log.error("dashboard request %s failed: %s", self.path, exc)
+                try:
+                    self.send_error(502, str(exc)[:150])
+                except OSError:
+                    pass
 
         def log_message(self, fmt, *args):
             log.info("dashboard: " + fmt, *args)
@@ -1233,7 +1625,6 @@ def serve_dashboard(port):
     log.info("Dashboard at http://localhost:%d (first load scrapes the "
              "portal, takes a moment)", port)
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
-
 
 def main():
     parser = argparse.ArgumentParser(description="MJP tender tracker")
