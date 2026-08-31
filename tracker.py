@@ -22,10 +22,12 @@ Every run:
      Marathi-side failure is logged but never blocks the English send.
 
 Besides the MJP WSSD organisation, additional watches are tracked (see
-ORG_WATCHES and KEYWORD_WATCH): full tracking of Zilla Parishad Jalgaon
+ORG_WATCHES and KEYWORD_WATCHES): full tracking of Zilla Parishad Jalgaon
 (RDD-CEO-JALGAON, where DPDC and Amdar Nidhi works are published) and the
-Collector Jalgaon office, plus a keyword scan of all RDD-CEO-* and
-COLLECTOR * organisations for Amdar Nidhi / DPDC related tenders.
+Collector Jalgaon office; a keyword scan of RDD-CEO-* and COLLECTOR *
+organisations for Amdar Nidhi / DPDC related tenders; and a portal wide
+scan of every organisation for anything mentioning Jalgaon (which also
+covers PWD and irrigation publishers in the district).
 
 Usage:
     python tracker.py            normal run (needs delivery env vars)
@@ -75,7 +77,7 @@ ORG_NAME = "Member Secretary(WSSD),Mumbai"
 # Watches. Two kinds:
 #  - ORG_WATCHES: every tender published by a matching organisation node is
 #    tracked ("org" is an exact name, "org_re" a regex on the org name).
-#  - KEYWORD_WATCH: the tender lists of all orgs matching org_re are scanned
+#  - KEYWORD_WATCHES: the tender lists of all orgs matching org_re are scanned
 #    and only rows whose title or org chain contains one of the keywords
 #    (case insensitive) are tracked. Used for Amdar Nidhi / DPDC works,
 #    which are published by Zilla Parishad (RDD-CEO-*) and Collector
@@ -90,15 +92,26 @@ ORG_WATCHES = [
     {"name": "Collector Jalgaon", "org_re": r"^COLLECTOR\s+JALGAON$"},
 ]
 
-KEYWORD_WATCH = {
-    "name": "Amdar Nidhi / DPDC",
-    "org_re": r"^(RDD-CEO-|COLLECTOR\s)",
-    "keywords": [
-        "amdar nidhi", "aamdar nidhi", "amdar fund", "mla fund",
-        "mla local development", "आमदार",
-        "dpdc", "जिल्हा नियोजन", "district planning",
-    ],
-}
+KEYWORD_WATCHES = [
+    {
+        "name": "Amdar Nidhi / DPDC",
+        "org_re": r"^(RDD-CEO-|COLLECTOR\s)",
+        "keywords": [
+            "amdar nidhi", "aamdar nidhi", "amdar fund", "mla fund",
+            "mla local development", "आमदार",
+            "dpdc", "जिल्हा नियोजन", "district planning",
+        ],
+    },
+    {
+        # Everything Jalgaon, from any publisher on the portal (PWD, WRD,
+        # municipal bodies, universities and so on). Matches the title and
+        # the full organisation chain, so "EE PWD Division Jalgaon" style
+        # publishers are caught even when the title does not say Jalgaon.
+        "name": "Jalgaon statewide",
+        "org_re": r".",
+        "keywords": ["jalgaon", "jalgaav", "jalgoan", "जळगाव"],
+    },
+]
 
 # Safety valve: at most this many new tenders are sent per run; the rest
 # stay unseen and go out on the next scheduled run.
@@ -112,7 +125,7 @@ HTTP_TIMEOUT = 90
 ROOT = Path(__file__).resolve().parent
 SEEN_FILE = ROOT / "seen.json"
 FONTS_DIR = ROOT / "fonts"
-OUT_DIR = ROOT / "out"
+OUT_DIR = Path(os.environ.get("OUT_DIR") or (ROOT / "out"))
 
 GRAPH_URL = "https://graph.facebook.com/v21.0"
 SEND_SLEEP_SECONDS = 3
@@ -450,19 +463,28 @@ def fetch_all_watch_rows(session, include_keyword_scan=True):
                 log.error("Watch %s org %s failed: %s", watch["name"], org_name, exc)
             time.sleep(0.5)
 
-    if include_keyword_scan and KEYWORD_WATCH:
-        kw = KEYWORD_WATCH
+    if include_keyword_scan and KEYWORD_WATCHES:
         for org_name in sorted(index):
-            if org_name in watched_orgs or not re.search(kw["org_re"], org_name):
+            if org_name in watched_orgs:
+                continue
+            applicable = [w for w in KEYWORD_WATCHES
+                          if re.search(w["org_re"], org_name)]
+            if not applicable:
                 continue
             try:
                 for row in fetch_rows_for_org(session, org_name, index):
-                    if keyword_hit(row, kw["keywords"]):
-                        add(row, kw["name"])
+                    for w in applicable:
+                        if keyword_hit(row, w["keywords"]):
+                            add(row, w["name"])
+                            break
             except Exception as exc:
                 log.error("Keyword scan org %s failed: %s", org_name, exc)
-            time.sleep(0.5)
+            time.sleep(0.35)
     return out
+
+
+def keyword_watch_names():
+    return {w["name"] for w in KEYWORD_WATCHES}
 
 
 def fetch_tender_rows(session):
@@ -903,19 +925,71 @@ def marathi_caption(row):
 # State
 # ---------------------------------------------------------------------------
 
+# State files live in the repo and are committed back by the workflow.
+# When STATE_REMOTE_BASE is set (the hosted dashboard on Vercel), state is
+# read from that URL base instead, so the dashboard always sees the
+# freshest committed state without a redeploy.
+
+LIVE_FILE = ROOT / "live.json"
+STATE_REMOTE_BASE = os.environ.get("STATE_REMOTE_BASE", "").rstrip("/")
+STATE_REMOTE_TTL = 180
+_remote_state = {}
+
+
+def _read_remote_json(name):
+    ts, data = _remote_state.get(name, (0.0, None))
+    if data is not None and time.time() - ts < STATE_REMOTE_TTL:
+        return data
+    try:
+        r = requests.get("%s/%s" % (STATE_REMOTE_BASE, name), timeout=30)
+        r.raise_for_status()
+        data = r.json()
+        _remote_state[name] = (time.time(), data)
+        return data
+    except Exception as exc:
+        log.warning("Remote state %s unavailable: %s", name, exc)
+        return data
+
+
+def _load_state(path, default):
+    if STATE_REMOTE_BASE:
+        data = _read_remote_json(path.name)
+        if data is not None:
+            return data
+    if path.exists():
+        try:
+            with open(path, encoding="utf-8") as fh:
+                return json.load(fh)
+        except (ValueError, OSError) as exc:
+            log.warning("State file %s unreadable: %s", path, exc)
+    return default
+
+
+def _save_state(path, data):
+    tmp = path.with_suffix(".json.tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=1, ensure_ascii=False, sort_keys=True)
+        fh.write("\n")
+    os.replace(tmp, path)
+
+
 def load_seen():
-    if SEEN_FILE.exists():
-        with open(SEEN_FILE, encoding="utf-8") as fh:
-            return json.load(fh)
-    return {}
+    return _load_state(SEEN_FILE, {})
 
 
 def save_seen(seen):
-    tmp = SEEN_FILE.with_suffix(".json.tmp")
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(seen, fh, indent=2, ensure_ascii=False, sort_keys=True)
-        fh.write("\n")
-    os.replace(tmp, SEEN_FILE)
+    _save_state(SEEN_FILE, seen)
+
+
+def load_live_snapshot():
+    return _load_state(LIVE_FILE, {"generated": "", "rows": []})
+
+
+def save_live(rows):
+    _save_state(LIVE_FILE, {
+        "generated": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+        "rows": rows,
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -1020,14 +1094,17 @@ def run_dry(session, rows):
 
 
 def run_real(session):
-    if not (smtp_configured() or whatsapp_configured()):
-        raise RuntimeError(
-            "No delivery channel configured: set SMTP_USER/SMTP_PASS for "
-            "email or WHATSAPP_TOKEN/WHATSAPP_PHONE_ID/WHATSAPP_TO")
     seen = load_seen()
     rows = fetch_all_watch_rows(session)
+    save_live(rows)
     new_rows = [r for r in rows if r["tender_id"] not in seen]
     log.info("%d live tenders across watches, %d new", len(rows), len(new_rows))
+    if not (smtp_configured() or whatsapp_configured()):
+        log.warning(
+            "No delivery channel configured (SMTP_USER/SMTP_PASS or the "
+            "WHATSAPP_* secrets). live.json refreshed; %d new tender(s) "
+            "stay pending until a channel is set up.", len(new_rows))
+        return 0
     if not new_rows:
         return 0
     if len(new_rows) > MAX_SENDS_PER_RUN:
@@ -1063,24 +1140,27 @@ _dash_lock = threading.Lock()
 _dash = {"ts": 0.0, "live": [], "session": None}
 
 
+_mem_details = {}  # overlay for read-only deployments (Vercel)
+
+
 def load_details_cache():
-    if DETAILS_CACHE_FILE.exists():
-        try:
-            with open(DETAILS_CACHE_FILE, encoding="utf-8") as fh:
-                return json.load(fh)
-        except (ValueError, OSError) as exc:
-            log.warning("details cache unreadable: %s", exc)
-    return {}
+    base = _load_state(DETAILS_CACHE_FILE, {})
+    if _mem_details:
+        base = dict(base, **_mem_details)
+    return base
 
 
 def cache_tender_details(tid, details):
-    cache = load_details_cache()
-    cache[tid] = details
-    tmp = DETAILS_CACHE_FILE.with_suffix(".json.tmp")
-    with open(tmp, "w", encoding="utf-8") as fh:
-        json.dump(cache, fh, indent=1, ensure_ascii=False, sort_keys=True)
-        fh.write("\n")
-    os.replace(tmp, DETAILS_CACHE_FILE)
+    if STATE_REMOTE_BASE:
+        _mem_details[tid] = details
+        return
+    try:
+        cache = _load_state(DETAILS_CACHE_FILE, {})
+        cache[tid] = details
+        _save_state(DETAILS_CACHE_FILE, cache)
+    except OSError as exc:
+        log.warning("Could not persist details for %s: %s", tid, exc)
+        _mem_details[tid] = details
 
 
 def parse_portal_datetime(text):
@@ -1110,14 +1190,23 @@ def tender_status(closing_text, is_live, now):
 
 
 def refresh_live(force=False):
-    """Scrape the org watches into the module cache, at most every
-    DASHBOARD_CACHE_SECONDS unless forced. Returns the live row list."""
+    """Live rows for the dashboard, at most every DASHBOARD_CACHE_SECONDS
+    unless forced. Org watches are scraped fresh; keyword watch rows come
+    from the live.json snapshot the scheduled runs refresh, since the full
+    all-organisations scan is too slow for a page load."""
     with _dash_lock:
         if not force and _dash["live"] and \
                 time.time() - _dash["ts"] < DASHBOARD_CACHE_SECONDS:
             return _dash["live"]
         session = make_session()
-        _dash["live"] = fetch_all_watch_rows(session, include_keyword_scan=False)
+        live = fetch_all_watch_rows(session, include_keyword_scan=False)
+        taken = {r["tender_id"] for r in live}
+        kw_names = keyword_watch_names()
+        for row in load_live_snapshot().get("rows", []):
+            if row.get("source") in kw_names and row["tender_id"] not in taken:
+                taken.add(row["tender_id"])
+                live.append(row)
+        _dash["live"] = live
         _dash["session"] = session
         _dash["ts"] = time.time()
         return _dash["live"]
@@ -1149,14 +1238,19 @@ def fetch_detail_for_tid(tid):
     return details
 
 
-def detail_sections(details):
-    out = []
-    for name, fields in SECTIONS:
-        rows = [[label.replace("in ₹", "in Rs."), details[label]]
-                for label in fields if details.get(label)]
-        if rows:
-            out.append({"name": name, "rows": rows})
-    return out
+def sections_spec():
+    """SECTIONS for the client: [{name, fields: [[portal_label,
+    display_label], ...]}]. The client looks values up by portal label in a
+    raw detail dict and shows the display label."""
+    return [{"name": name,
+             "fields": [[label, label.replace("in ₹", "in Rs.")]
+                        for label in fields]}
+            for name, fields in SECTIONS]
+
+
+def publisher(org_chain):
+    parts = [p.strip() for p in (org_chain or "").split("||") if p.strip()]
+    return parts[-1] if parts else ""
 
 
 def dashboard_data():
@@ -1165,7 +1259,7 @@ def dashboard_data():
     seen = load_seen()
     details_cached = set(load_details_cache())
     live_map = {r["tender_id"]: r for r in live}
-    kw_name = KEYWORD_WATCH["name"] if KEYWORD_WATCH else None
+    kw_names = keyword_watch_names()
 
     tenders = []
     for tid in set(live_map) | set(seen):
@@ -1178,6 +1272,7 @@ def dashboard_data():
             "title": (r or e).get("title", ""),
             "ref": (r or e).get("ref_no", ""),
             "source": (r["source"] if r else e.get("source", "")) or "",
+            "org": publisher((r or e).get("org_chain", "")),
             "published": r.get("published", "") if r else e.get("published", ""),
             "closing": closing,
             "opening": r.get("opening", "") if r else e.get("opening", ""),
@@ -1196,7 +1291,7 @@ def dashboard_data():
     tenders = live_part + gone_part
 
     soon = sum(1 for t in live_part if t["st"] in ("soon", "urgent"))
-    kw_count = sum(1 for t in tenders if t["source"] == kw_name)
+    kw_count = sum(1 for t in tenders if t["source"] in kw_names)
     sources = sorted({t["source"] for t in tenders if t["source"]})
     return {
         "generated": now.strftime("%d-%b-%Y %I:%M %p"),
@@ -1268,7 +1363,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 18px 22px 80px; }
 
 .tablewrap { background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; overflow: auto; max-height: calc(100vh - 320px); }
-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 980px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1120px; }
 thead th { position: sticky; top: 0; z-index: 1; background: #EFF4FB;
   text-align: left; font-weight: 600; color: var(--heading);
   padding: 9px 12px; border-bottom: 1px solid var(--border);
@@ -1288,6 +1383,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .badge.urgent, .badge.closed { background: var(--bad-bg); color: var(--bad); }
 .badge.gone { background: var(--off-bg); color: var(--off); }
 .src { font-size: 11px; color: var(--muted-fg); white-space: nowrap; }
+.pub { font-size: 11px; color: var(--muted-fg); min-width: 140px; }
 .empty { padding: 26px; text-align: center; color: var(--muted-fg); }
 
 #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
@@ -1343,7 +1439,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 <header>
  <div>
   <h1>Tender Watch</h1>
-  <div class="sub">MJP WSSD · ZP Jalgaon DPDC · Collector Jalgaon · Amdar Nidhi keyword scan
+  <div class="sub">MJP statewide · ZP Jalgaon DPDC · Collector Jalgaon · Amdar Nidhi / DPDC scan · all Jalgaon tenders statewide
    &nbsp;|&nbsp; updated <span id="stamp"></span> · auto refresh every 15 min</div>
  </div>
  <button id="refresh" aria-label="Refresh data now">
@@ -1376,6 +1472,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
   <table aria-label="Tenders">
    <thead><tr>
     <th class="nowrap">Tender ID</th><th>Title</th><th>Watch</th>
+    <th>Publisher</th>
     <th class="nowrap">Published</th><th class="nowrap">Closing</th>
     <th class="nowrap">Opening</th><th class="nowrap">Status</th>
    </tr></thead>
@@ -1406,6 +1503,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 
 <script>
 var DATA = __DATA_JSON__;
+var SECTIONS_SPEC = __SECTIONS_JSON__;
 var els = {
   rows: document.getElementById('rows'), q: document.getElementById('q'),
   src: document.getElementById('f-src'), st: document.getElementById('f-st'),
@@ -1429,7 +1527,7 @@ function esc(t) {
 }
 function matches(t) {
   var q = els.q.value.trim().toLowerCase();
-  if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source)
+  if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source + ' ' + t.org)
       .toLowerCase().indexOf(q) < 0) return false;
   if (els.src.value && t.source !== els.src.value) return false;
   var st = els.st.value;
@@ -1448,6 +1546,7 @@ function render() {
       '<td class="tid">' + esc(t.id) + '</td>' +
       '<td>' + esc(t.title) + '</td>' +
       '<td class="src">' + esc(t.source) + '</td>' +
+      '<td class="pub">' + esc(t.org) + '</td>' +
       '<td class="nowrap">' + esc((t.published || '').split(' ')[0]) + '</td>' +
       '<td class="nowrap">' + esc(t.closing) + '</td>' +
       '<td class="nowrap">' + esc(t.opening) + '</td>' +
@@ -1481,12 +1580,13 @@ function openPanel(t) {
         return;
       }
       var html = '';
-      d.sections.forEach(function (sec) {
-        html += '<h3>' + esc(sec.name) + '</h3><table class="kv">';
-        sec.rows.forEach(function (row) {
-          html += '<tr><td>' + esc(row[0]) + '</td><td>' + esc(row[1]) + '</td></tr>';
+      SECTIONS_SPEC.forEach(function (sec) {
+        var rows = '';
+        sec.fields.forEach(function (f) {
+          var v = d.details[f[0]];
+          if (v) rows += '<tr><td>' + esc(f[1]) + '</td><td>' + esc(v) + '</td></tr>';
         });
-        html += '</table>';
+        if (rows) html += '<h3>' + esc(sec.name) + '</h3><table class="kv">' + rows + '</table>';
       });
       els.pbody.innerHTML = html || '<p class="perr">No fields parsed.</p>';
     })
@@ -1524,10 +1624,11 @@ setTimeout(function () { location.reload(); }, DATA.refreshSeconds * 1000);
 
 
 def build_dashboard_page():
-    data = dashboard_data()
+    def js(obj):
+        return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
     return DASHBOARD_PAGE.replace(
-        "__DATA_JSON__",
-        json.dumps(data, ensure_ascii=False).replace("</", "<\\/"))
+        "__DATA_JSON__", js(dashboard_data())).replace(
+        "__SECTIONS_JSON__", js(sections_spec()))
 
 
 def dashboard_pdf(tid, lang):
@@ -1586,8 +1687,7 @@ def serve_dashboard(port):
                                        "This tender is no longer on the portal "
                                        "and no cached details exist for it."}
                         else:
-                            payload = {"ok": True,
-                                       "sections": detail_sections(details)}
+                            payload = {"ok": True, "details": details}
                     send(self, 200,
                          json.dumps(payload, ensure_ascii=False).encode("utf-8"),
                          "application/json; charset=utf-8")

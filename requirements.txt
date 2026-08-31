@@ -5,3 +5,4 @@ reportlab>=5.0
 uharfbuzz
 deep-translator
 pypdf
+flask

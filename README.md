@@ -5,17 +5,35 @@ detail page, builds a work-details PDF in English and a second one translated
 into Marathi, and delivers both by email (SMTP) and/or WhatsApp (Meta Cloud
 API), whichever is configured.
 
-Watched sources (see ORG_WATCHES / KEYWORD_WATCH in tracker.py):
+Watched sources (see ORG_WATCHES / KEYWORD_WATCHES in tracker.py):
 
-- Maharashtra Jeevan Pradhikaran: organisation "Member Secretary(WSSD),Mumbai"
+- Maharashtra Jeevan Pradhikaran statewide: organisation
+  "Member Secretary(WSSD),Mumbai"
 - Zilla Parishad Jalgaon (RDD-CEO-JALGAON) and Collector Jalgaon: everything
   they publish (this is where DPDC and Amdar Nidhi works appear)
 - Amdar Nidhi / DPDC keyword scan across all RDD-CEO-* and COLLECTOR *
   organisations statewide (keywords like amdar nidhi, aamdar, MLA fund,
   DPDC, jilha niyojan)
+- Jalgaon statewide: every organisation's tender list is scanned and
+  anything whose title or organisation chain mentions Jalgaon is tracked,
+  which also covers PWD, irrigation and municipal publishers in the area
 
-The portal's own search is captcha protected, so all watching goes through
-the captcha-free Tenders-by-Organisation listing.
+The portal's own search, archive, tenders-by-location and results pages are
+all captcha protected, so watching goes through the captcha-free
+Tenders-by-Organisation listing. Award / bid-result data is behind the
+captcha too and is therefore not collected.
+
+## Hosted dashboard
+
+The dynamic dashboard runs on Vercel (Mumbai region):
+https://tender-watch-eta.vercel.app
+
+It scrapes the org watches live on demand (15 minute cache), reads
+seen.json / live.json / details_cache.json straight from this repo's raw
+URLs (the scheduled runs refresh them every 15 minutes), and builds detail
+panels and English / Marathi PDFs on demand. Deploy updates with
+`vercel deploy --prod` from the repo root (project tender-watch, personal
+scope).
 
 ## How it works
 
@@ -54,7 +72,10 @@ Email sends one message per tender with both PDFs attached. WhatsApp sends
 the English PDF first with a full caption, then the Marathi PDF with a short
 Marathi caption.
 
-The workflow runs every 30 minutes and commits `seen.json` back to the repo.
+The workflow runs every 15 minutes, scans every organisation on the portal,
+and commits `seen.json`, `live.json` and `details_cache.json` back to the
+repo. Without any delivery secrets it still refreshes the dashboard state;
+new tenders just stay pending until a channel is configured.
 
 ## Local dashboard
 

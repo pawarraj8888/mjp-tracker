@@ -2,7 +2,7 @@ name: MJP Tender Tracker
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -45,7 +45,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add seen.json
-          git add details_cache.json 2>/dev/null || true
+          git add details_cache.json live.json 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Update seen state"
             for i in 1 2 3; do
