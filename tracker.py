@@ -1336,28 +1336,43 @@ def dashboard_data():
     live_map = {r["tender_id"]: r for r in live}
     kw_names = keyword_watch_names()
 
+    awards = load_awards()
     tenders = []
-    for tid in set(live_map) | set(seen):
+    for tid in set(live_map) | set(seen) | set(awards):
         r = live_map.get(tid)
         e = seen.get(tid, {})
-        d = details_all.get(tid, {})
-        closing = (r or e).get("closing", "")
-        published = r.get("published", "") if r else e.get("published", "")
-        cls, label = tender_status(closing, r is not None, now)
+        d = details_all.get(tid) or awards.get(tid, {}).get("fields", {})
+        closing = (r or e).get("closing") or d.get("Bid Submission End Date", "")
+        published = (r.get("published", "") if r else e.get("published", "")) \
+            or d.get("Published Date", "")
+        awarded = tid in awards
+        if r is None and tid not in seen:
+            cls, label = "awarded", "Awarded"
+        else:
+            cls, label = tender_status(closing, r is not None, now)
         value = parse_inr(d.get("Tender Value in ₹", ""))
         tenders.append({
             "id": tid,
-            "title": (r or e).get("title", ""),
-            "ref": (r or e).get("ref_no", ""),
-            "source": (r["source"] if r else e.get("source", "")) or "",
-            "org": publisher((r or e).get("org_chain", "")),
+            "title": (r or e).get("title") or d.get("Title", ""),
+            "ref": (r or e).get("ref_no") or
+                   d.get("Tender Reference Number", ""),
+            "source": (r["source"] if r else e.get("source", "")) or
+                      ("Results import" if awarded else ""),
+            "org": publisher((r or e).get("org_chain", "")) or
+                   awards.get(tid, {}).get("org", ""),
+            "awarded": awarded,
             "city": normalize_city(d.get("Location")),
             "value": value,
             "valueFmt": format_inr(value),
             "published": published,
             "publishedTs": portal_ts(published),
             "closing": closing,
-            "opening": r.get("opening", "") if r else e.get("opening", ""),
+            "closingTs": portal_ts(closing),
+            "opening": (r.get("opening", "") if r else e.get("opening", ""))
+                       or d.get("Bid Opening Date", ""),
+            "openingTs": portal_ts(
+                (r.get("opening", "") if r else e.get("opening", ""))
+                or d.get("Bid Opening Date", "")),
             "first_seen": e.get("first_seen", ""),
             "live": r is not None,
             "detail": tid in details_all or r is not None,
@@ -1386,6 +1401,242 @@ def dashboard_data():
         "cities": cities,
         "tenders": tenders,
     }
+
+
+# ---------------------------------------------------------------------------
+# Results of Tenders import (human in the loop captcha unlock)
+#
+# The portal's Results of Tenders section is captcha protected. The captcha
+# is never solved automatically: /unlock shows the portal's own captcha
+# image to the person, they type it, and the crawl then runs inside that
+# human-authorized session. Award data is stored in awards.json.
+# ---------------------------------------------------------------------------
+
+AWARDS_FILE = ROOT / "awards.json"
+RESULTS_URL = BASE_URL + "/nicgep/app?page=ResultOfTenders&service=page"
+RESULTS_RAW_DIR = Path(os.environ.get("OUT_DIR") or ROOT) / "results_raw"
+_mem_awards = {}
+_unlock = {"session": None, "fields": None}
+
+
+def load_awards():
+    base = _load_state(AWARDS_FILE, {})
+    if _mem_awards:
+        base = dict(base, **_mem_awards)
+    return base
+
+
+def save_awards(awards):
+    if STATE_REMOTE_BASE:
+        _mem_awards.update(awards)
+        return
+    try:
+        _save_state(AWARDS_FILE, awards)
+    except OSError as exc:
+        log.warning("Could not persist awards: %s", exc)
+        _mem_awards.update(awards)
+
+
+def _dump_page(name, html):
+    try:
+        RESULTS_RAW_DIR.mkdir(parents=True, exist_ok=True)
+        safe = re.sub(r"[^A-Za-z0-9._-]+", "_", name)[:120]
+        with open(RESULTS_RAW_DIR / (safe + ".html"), "w",
+                  encoding="utf-8") as fh:
+            fh.write(html)
+    except OSError:
+        pass
+
+
+def unlock_form_state():
+    """Fresh portal session + the Results search form fields and captcha
+    image (inline base64) for the person to solve."""
+    session = make_session()
+    r = portal_get(session, RESULTS_URL)
+    soup = BeautifulSoup(r.text, "lxml")
+    form = None
+    for f in soup.find_all("form"):
+        if f.find("input", {"name": "captchaText"}) is not None:
+            form = f
+            break
+    if form is None:
+        raise RuntimeError("Results page did not offer the expected form")
+    fields = {}
+    for inp in form.find_all("input"):
+        name = inp.get("name")
+        if name:
+            fields[name] = inp.get("value") or ""
+    img = soup.find("img", {"id": "captchaImage"})
+    captcha_src = img.get("src") if img else ""
+    _unlock["session"] = session
+    _unlock["fields"] = fields
+    return captcha_src
+
+
+UNLOCK_PAGE = """<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Import Tender Results</title>
+<style>
+body {{ font-family: "Fira Sans", -apple-system, sans-serif; background:
+ #F8FAFC; color: #0F172A; margin: 0; }}
+main {{ max-width: 560px; margin: 40px auto; background: #fff; border:
+ 1px solid #DBEAFE; border-radius: 12px; padding: 26px 30px; }}
+h1 {{ font-size: 17px; color: #1E3A8A; margin: 0 0 6px; }}
+p {{ font-size: 13px; line-height: 1.55; color: #475569; }}
+img.cap {{ border: 1px solid #DBEAFE; border-radius: 8px; margin: 10px 0;
+ display: block; }}
+input[type=text] {{ font: inherit; padding: 9px 12px; border: 1px solid
+ #DBEAFE; border-radius: 8px; width: 220px; }}
+button {{ font: inherit; background: #1E40AF; color: #fff; border: none;
+ border-radius: 8px; padding: 10px 18px; cursor: pointer; margin-left: 8px; }}
+button:hover {{ background: #17346C; }}
+.err {{ background: #FEE2E2; color: #B91C1C; padding: 9px 12px;
+ border-radius: 8px; font-size: 13px; }}
+.ok {{ background: #DCFCE7; color: #15803D; padding: 9px 12px;
+ border-radius: 8px; font-size: 13px; }}
+a {{ color: #1E40AF; }}
+</style></head><body><main>
+<h1>Import Results of Tenders</h1>
+<p>The portal protects its results section with a captcha. Type the code
+below exactly as shown; the import then crawls award information for the
+watched and Jalgaon related organisations in this one authorized session.
+This can take a few minutes.</p>
+{error}
+<form method="post" action="/unlock">
+ <img class="cap" src="{captcha}" alt="Portal captcha image">
+ <input type="text" name="captcha" autofocus autocomplete="off"
+  aria-label="Captcha code" placeholder="Captcha code">
+ <button type="submit">Unlock and import</button>
+</form>
+<p><a href="/">Back to dashboard</a></p>
+</main></body></html>"""
+
+
+def unlock_page_html(error=""):
+    captcha = unlock_form_state()
+    err = '<p class="err">%s</p>' % xml_escape(error) if error else ""
+    return UNLOCK_PAGE.format(error=err, captcha=xml_escape(captcha))
+
+
+def _org_of_interest(name):
+    low = name.casefold()
+    if "jalgaon" in low or name == ORG_NAME:
+        return True
+    return any(org_matches(name, w) for w in ORG_WATCHES)
+
+
+def _extract_pairs(soup):
+    pairs = {}
+    pending = None
+    for td in soup.find_all("td"):
+        cls = td.get("class") or []
+        if "td_caption" in cls:
+            pending = td.get_text(" ", strip=True)
+        elif "td_field" in cls and pending is not None:
+            pairs.setdefault(pending, td.get_text(" ", strip=True))
+            pending = None
+    return pairs
+
+
+def crawl_results(session, root_html):
+    """Walk the unlocked results listing: org drill-down pages for the
+    organisations of interest, then every tender link on them, collecting
+    all caption/field pairs. Every fetched page is dumped raw so parsing
+    can be improved later without another captcha."""
+    _dump_page("results_root", root_html)
+    soup = BeautifulSoup(root_html, "lxml")
+    org_pages = []
+    org_rows = []
+    for tr in soup.find_all("tr"):
+        tds = tr.find_all("td")
+        a = tr.find("a", href=True)
+        if len(tds) >= 3 and a and tds[0].get_text(strip=True).isdigit():
+            org_rows.append((tds[1].get_text(strip=True), BASE_URL + a["href"]))
+    if org_rows:
+        picked = [(n, u) for n, u in org_rows if _org_of_interest(n)][:40]
+        log.info("Results listing: %d orgs, crawling %d of interest",
+                 len(org_rows), len(picked))
+        for name, url in picked:
+            try:
+                html = portal_get(session, url).text
+                _dump_page("org_" + name, html)
+                org_pages.append((name, html))
+            except Exception as exc:
+                log.error("Results org %s failed: %s", name, exc)
+            time.sleep(0.4)
+    else:
+        org_pages = [("root", root_html)]
+
+    awards = load_awards()
+    fetched = 0
+    for org_name, html in org_pages:
+        psoup = BeautifulSoup(html, "lxml")
+        for a in psoup.find_all("a", href=True):
+            if "DirectLink" not in a["href"] or fetched >= 200:
+                continue
+            text = a.get_text(" ", strip=True)
+            if not text or text.isdigit():
+                continue
+            try:
+                page = portal_get(session, BASE_URL + a["href"]).text
+            except Exception:
+                continue
+            fetched += 1
+            time.sleep(0.4)
+            dsoup = BeautifulSoup(page, "lxml")
+            pairs = _extract_pairs(dsoup)
+            m = TENDER_ID_RE.search(" ".join(
+                [pairs.get("Tender ID", "")] +
+                re.findall(r"\d{4}_\w+_\d+_\d+", page)[:1]))
+            tid = pairs.get("Tender ID") or (m.group(0) if m else "")
+            if not TENDER_ID_RE.match(tid or ""):
+                _dump_page("unparsed_%d" % fetched, page)
+                continue
+            _dump_page("tender_" + tid, page)
+            entry = awards.get(tid, {"fields": {}})
+            entry["fields"].update(pairs)
+            entry["org"] = org_name if org_name != "root" else \
+                entry.get("org", "")
+            entry["fetched"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+            awards[tid] = entry
+    save_awards(awards)
+    return awards, fetched
+
+
+def unlock_submit(captcha_text):
+    """Submit the person's captcha answer and, on success, crawl."""
+    session = _unlock.get("session")
+    fields = _unlock.get("fields")
+    if session is None or fields is None:
+        return None, "The unlock session expired, try again."
+    data = dict(fields)
+    data["captchaText"] = captcha_text.strip()
+    data["submitname"] = "Search"
+    resp = session.post(BASE_URL + "/nicgep/app", data=data,
+                        timeout=HTTP_TIMEOUT, verify=session.verify)
+    html = resp.text
+    low = html.casefold()
+    if "invalid captcha" in low or "captcha entered" in low or (
+            "captchatext" in low and "DirectLink" not in html):
+        return None, "The portal rejected that captcha code, try the new one."
+    awards, fetched = crawl_results(session, html)
+    return (awards, fetched), None
+
+
+UNLOCK_RESULT_PAGE = """<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Results imported</title>
+<style>body {{ font-family: "Fira Sans", sans-serif; background: #F8FAFC;
+ margin: 0; }} main {{ max-width: 560px; margin: 40px auto; background:
+ #fff; border: 1px solid #DBEAFE; border-radius: 12px; padding: 26px 30px;
+ font-size: 14px; color: #0F172A; }} a {{ color: #1E40AF; }}</style>
+</head><body><main>
+<p><strong>Import finished.</strong></p>
+<p>{fetched} result pages read in the unlocked session; award records now
+exist for {count} tenders. Raw pages were saved for deeper parsing.</p>
+<p><a href="/">Back to the dashboard</a> (award details show inside each
+tender's popup).</p>
+</main></body></html>"""
 
 
 DASHBOARD_PAGE = r"""<!DOCTYPE html>
@@ -1453,6 +1704,12 @@ thead th { position: sticky; top: 0; z-index: 1; background: #EFF4FB;
   text-align: left; font-weight: 600; color: var(--heading);
   padding: 9px 12px; border-bottom: 1px solid var(--border);
   white-space: nowrap; }
+th.sortable { cursor: pointer; user-select: none; }
+th.sortable:hover { background: #E3EBF7; }
+th.sortable::after { content: "\2195"; opacity: .35; margin-left: 5px;
+  font-size: 11px; }
+th.sortable.asc::after { content: "\2191"; opacity: 1; }
+th.sortable.desc::after { content: "\2193"; opacity: 1; }
 tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line);
   vertical-align: top; }
 tbody tr { cursor: pointer; transition: background .15s; }
@@ -1467,6 +1724,7 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .badge.soon { background: var(--warn-bg); color: var(--warn); }
 .badge.urgent, .badge.closed { background: var(--bad-bg); color: var(--bad); }
 .badge.gone { background: var(--off-bg); color: var(--off); }
+.badge.awarded { background: #DBEAFE; color: #1E40AF; }
 .src { font-size: 11px; color: var(--muted-fg); white-space: nowrap; }
 .pub { font-size: 11px; color: var(--muted-fg); min-width: 140px; }
 td.val { font-family: "Fira Code", monospace; font-size: 12px;
@@ -1529,10 +1787,15 @@ td.val { font-family: "Fira Code", monospace; font-size: 12px;
   <div class="sub">MJP statewide · ZP Jalgaon DPDC · Collector Jalgaon · Amdar Nidhi / DPDC scan · all Jalgaon tenders statewide
    &nbsp;|&nbsp; updated <span id="stamp"></span> · auto refresh every 15 min</div>
  </div>
+ <div style="display:flex;gap:8px;align-items:center">
+ <a id="unlock-link" href="/unlock" style="color:#fff;font-size:12px;
+  border:1px solid rgba(255,255,255,.45);border-radius:8px;
+  padding:9px 14px;text-decoration:none">Import results</a>
  <button id="refresh" aria-label="Refresh data now">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
   Refresh
  </button>
+ </div>
 </header>
 <main>
  <div class="tiles">
@@ -1554,20 +1817,20 @@ td.val { font-family: "Fira Code", monospace; font-size: 12px;
    <option value="soonish">Closing within 3 days</option>
    <option value="past">Closed / delisted</option>
   </select>
-  <select id="f-sort" aria-label="Sort order">
-   <option value="closing">Sort: closing soonest</option>
-   <option value="value">Sort: value high to low</option>
-   <option value="published">Sort: newest published</option>
-  </select>
   <span class="count" id="count"></span>
  </div>
  <div class="tablewrap">
   <table aria-label="Tenders">
    <thead><tr>
-    <th class="nowrap">Tender ID</th><th>Title</th><th>Watch</th>
-    <th>Publisher</th><th class="nowrap">Value</th>
-    <th class="nowrap">Published</th><th class="nowrap">Closing</th>
-    <th class="nowrap">Opening</th><th class="nowrap">Status</th>
+    <th class="nowrap sortable" data-key="id">Tender ID</th>
+    <th class="sortable" data-key="title">Title</th>
+    <th class="sortable" data-key="source">Watch</th>
+    <th class="sortable" data-key="org">Publisher</th>
+    <th class="nowrap sortable num" data-key="value">Value</th>
+    <th class="nowrap sortable num" data-key="publishedTs">Published</th>
+    <th class="nowrap sortable num" data-key="closingTs">Closing</th>
+    <th class="nowrap sortable num" data-key="openingTs">Opening</th>
+    <th class="nowrap sortable" data-key="stLabel">Status</th>
    </tr></thead>
    <tbody id="rows"></tbody>
   </table>
@@ -1600,11 +1863,12 @@ var SECTIONS_SPEC = __SECTIONS_JSON__;
 var els = {
   rows: document.getElementById('rows'), q: document.getElementById('q'),
   src: document.getElementById('f-src'), st: document.getElementById('f-st'),
-  city: document.getElementById('f-city'), sort: document.getElementById('f-sort'),
+  city: document.getElementById('f-city'),
   count: document.getElementById('count'), empty: document.getElementById('empty'),
   overlay: document.getElementById('overlay'), panel: document.getElementById('panel'),
   pbody: document.getElementById('pbody')
 };
+var sortState = { key: null, dir: 1 };
 document.getElementById('stamp').textContent = DATA.generated;
 document.getElementById('s-live').textContent = DATA.stats.live;
 document.getElementById('s-soon').textContent = DATA.stats.soon;
@@ -1635,16 +1899,45 @@ function matches(t) {
   if (st === 'past' && t.live && t.st !== 'closed') return false;
   return true;
 }
+var NUM_KEYS = { value: 1, publishedTs: 1, closingTs: 1, openingTs: 1 };
 function sorted() {
-  var mode = els.sort.value;
   var list = DATA.tenders.map(function (t, i) { t._i = i; return t; });
-  if (mode === 'value') {
-    list = list.slice().sort(function (a, b) { return (b.value || 0) - (a.value || 0); });
-  } else if (mode === 'published') {
-    list = list.slice().sort(function (a, b) { return (b.publishedTs || 0) - (a.publishedTs || 0); });
-  }
-  return list;
+  var k = sortState.key;
+  if (!k) return list;
+  return list.slice().sort(function (a, b) {
+    var r;
+    if (NUM_KEYS[k]) {
+      r = (a[k] || 0) - (b[k] || 0);
+    } else {
+      r = String(a[k] || '').toLowerCase()
+        .localeCompare(String(b[k] || '').toLowerCase());
+    }
+    return r * sortState.dir;
+  });
 }
+document.querySelectorAll('th.sortable').forEach(function (th) {
+  th.setAttribute('tabindex', '0');
+  function toggle() {
+    var k = th.dataset.key;
+    if (sortState.key === k) {
+      sortState.dir = -sortState.dir;
+    } else {
+      sortState.key = k;
+      sortState.dir = NUM_KEYS[k] && k !== 'closingTs' ? -1 : 1;
+    }
+    document.querySelectorAll('th.sortable').forEach(function (h) {
+      h.classList.remove('asc', 'desc');
+      h.removeAttribute('aria-sort');
+    });
+    th.classList.add(sortState.dir === 1 ? 'asc' : 'desc');
+    th.setAttribute('aria-sort', sortState.dir === 1 ? 'ascending' : 'descending');
+    render();
+  }
+  th.addEventListener('click', toggle);
+  th.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+});
 function render() {
   var shown = 0, html = '';
   sorted().forEach(function (t) {
@@ -1661,14 +1954,16 @@ function render() {
       '<td class="nowrap">' + esc((t.published || '').split(' ')[0]) + '</td>' +
       '<td class="nowrap">' + esc(t.closing) + '</td>' +
       '<td class="nowrap">' + esc((t.opening || '').split(' ')[0]) + '</td>' +
-      '<td><span class="badge ' + t.st + '">' + esc(t.stLabel) + '</span></td></tr>';
+      '<td><span class="badge ' + t.st + '">' + esc(t.stLabel) + '</span>' +
+      (t.awarded && t.st !== 'awarded'
+        ? ' <span class="badge awarded">Awarded</span>' : '') + '</td></tr>';
   });
   els.rows.innerHTML = html;
   els.empty.hidden = shown > 0;
   els.count.textContent = shown + ' of ' + DATA.tenders.length + ' tenders';
 }
 ['input', 'change'].forEach(function (ev) {
-  [els.q, els.src, els.st, els.city, els.sort].forEach(function (el) {
+  [els.q, els.src, els.st, els.city].forEach(function (el) {
     el.addEventListener(ev, render);
   });
 });
@@ -1699,6 +1994,16 @@ function openPanel(t) {
         });
         if (rows) html += '<h3>' + esc(sec.name) + '</h3><table class="kv">' + rows + '</table>';
       });
+      if (d.award && d.award.fields) {
+        var arows = '';
+        Object.keys(d.award.fields).forEach(function (k) {
+          if (d.details[k]) return;
+          arows += '<tr><td>' + esc(k) + '</td><td>' +
+            esc(d.award.fields[k]) + '</td></tr>';
+        });
+        if (arows) html += '<h3>Result / Award</h3><table class="kv">' +
+          arows + '</table>';
+      }
       els.pbody.innerHTML = html || '<p class="perr">No fields parsed.</p>';
     })
     .catch(function () {
@@ -1789,19 +2094,13 @@ def serve_dashboard(port):
                          "text/html; charset=utf-8")
                 elif url.path == "/api/detail":
                     tid = parse_qs(url.query).get("id", [""])[0]
-                    if not TENDER_ID_RE.match(tid):
-                        payload = {"ok": False, "error": "bad tender id"}
-                    else:
-                        details = fetch_detail_for_tid(tid)
-                        if details is None:
-                            payload = {"ok": False, "error":
-                                       "This tender is no longer on the portal "
-                                       "and no cached details exist for it."}
-                        else:
-                            payload = {"ok": True, "details": details}
+                    payload = detail_payload(tid)
                     send(self, 200,
                          json.dumps(payload, ensure_ascii=False).encode("utf-8"),
                          "application/json; charset=utf-8")
+                elif url.path == "/unlock":
+                    send(self, 200, unlock_page_html().encode("utf-8"),
+                         "text/html; charset=utf-8")
                 elif url.path.startswith("/pdf/"):
                     parts = url.path.strip("/").split("/")
                     if len(parts) != 3 or parts[2] not in ("en", "mr") \
@@ -1830,12 +2129,49 @@ def serve_dashboard(port):
                 except OSError:
                     pass
 
+        def do_POST(self):
+            url = urlparse(self.path)
+            if url.path != "/unlock":
+                self.send_error(404)
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = parse_qs(self.rfile.read(length).decode("utf-8"))
+                captcha = body.get("captcha", [""])[0]
+                result, error = unlock_submit(captcha)
+                if error:
+                    html = unlock_page_html(error=error)
+                else:
+                    awards, fetched = result
+                    html = UNLOCK_RESULT_PAGE.format(
+                        fetched=fetched, count=len(awards))
+                send(self, 200, html.encode("utf-8"),
+                     "text/html; charset=utf-8")
+            except Exception as exc:
+                log.error("unlock failed: %s", exc)
+                try:
+                    self.send_error(502, str(exc)[:150])
+                except OSError:
+                    pass
+
         def log_message(self, fmt, *args):
             log.info("dashboard: " + fmt, *args)
 
     log.info("Dashboard at http://localhost:%d (first load scrapes the "
              "portal, takes a moment)", port)
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+
+
+def detail_payload(tid):
+    if not TENDER_ID_RE.match(tid):
+        return {"ok": False, "error": "bad tender id"}
+    details = fetch_detail_for_tid(tid)
+    award = load_awards().get(tid)
+    if details is None and award is None:
+        return {"ok": False, "error":
+                "This tender is no longer on the portal and no cached "
+                "details exist for it."}
+    return {"ok": True, "details": details or {}, "award": award}
 
 def main():
     parser = argparse.ArgumentParser(description="MJP tender tracker")

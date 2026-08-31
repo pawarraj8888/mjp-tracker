@@ -32,15 +32,25 @@ def index():
 
 @app.get("/api/detail")
 def detail():
-    tid = request.args.get("id", "")
-    if not tracker.TENDER_ID_RE.match(tid):
-        return jsonify({"ok": False, "error": "bad tender id"})
-    details = tracker.fetch_detail_for_tid(tid)
-    if details is None:
-        return jsonify({"ok": False, "error":
-                        "This tender is no longer on the portal and no "
-                        "cached details exist for it."})
-    return jsonify({"ok": True, "details": details})
+    return jsonify(tracker.detail_payload(request.args.get("id", "")))
+
+
+@app.get("/unlock")
+def unlock():
+    return Response(tracker.unlock_page_html(),
+                    mimetype="text/html; charset=utf-8")
+
+
+@app.post("/unlock")
+def unlock_post():
+    result, error = tracker.unlock_submit(request.form.get("captcha", ""))
+    if error:
+        html = tracker.unlock_page_html(error=error)
+    else:
+        awards, fetched = result
+        html = tracker.UNLOCK_RESULT_PAGE.format(
+            fetched=fetched, count=len(awards))
+    return Response(html, mimetype="text/html; charset=utf-8")
 
 
 @app.get("/pdf/<tid>/<lang>")
