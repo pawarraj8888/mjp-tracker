@@ -94,12 +94,19 @@ ORG_WATCHES = [
 
 KEYWORD_WATCHES = [
     {
+        # Scanned across every organisation: these fund markers appear in
+        # ZP, Collector, and municipal tenders alike.
         "name": "Amdar Nidhi / DPDC",
-        "org_re": r"^(RDD-CEO-|COLLECTOR\s)",
+        "org_re": r".",
         "keywords": [
+            # MLA / MP local area funds
             "amdar nidhi", "aamdar nidhi", "amdar fund", "mla fund",
-            "mla local development", "आमदार",
-            "dpdc", "जिल्हा नियोजन", "district planning",
+            "mla local", "आमदार", "khasdar", "खासदार", "mp fund", "mplad",
+            # District Planning Committee and its common schemes
+            "dpdc", "d.p.d.c", "d.p.c", "जिल्हा नियोजन", "district planning",
+            "planning committee", "vitta ayog", "vitt ayog",
+            "dalit vasti", "dalitvasti", "dalit wasti", "nagari dalit",
+            "vishesh ghatak", "2515",
         ],
     },
     {
@@ -453,48 +460,46 @@ def keyword_hit(row, keywords):
 
 
 def fetch_all_watch_rows(session, include_keyword_scan=True):
-    """All live tenders across every watch, each row tagged with a 'source'
-    watch name. A tender matched by several watches keeps the first one."""
+    """All live tenders across every watch. Each row carries a 'sources'
+    list of every watch it matches (org watches and keyword watches), and
+    'source' set to the first for display. A tender is fetched once even
+    when several watches point at its organisation."""
     index = fetch_org_index(session)
-    out = []
-    taken = set()
+    by_tid = {}
+    order = []
 
     def add(row, source):
-        if row["tender_id"] not in taken:
-            taken.add(row["tender_id"])
-            out.append(dict(row, source=source))
+        tid = row["tender_id"]
+        existing = by_tid.get(tid)
+        if existing is None:
+            row = dict(row, sources=[source], source=source)
+            by_tid[tid] = row
+            order.append(tid)
+        elif source not in existing["sources"]:
+            existing["sources"].append(source)
 
-    watched_orgs = set()
-    for watch in ORG_WATCHES:
-        for org_name in sorted(index):
-            if not org_matches(org_name, watch):
-                continue
-            watched_orgs.add(org_name)
-            try:
-                for row in fetch_rows_for_org(session, org_name, index):
-                    add(row, watch["name"])
-            except Exception as exc:
-                log.error("Watch %s org %s failed: %s", watch["name"], org_name, exc)
-            time.sleep(0.5)
-
-    if include_keyword_scan and KEYWORD_WATCHES:
-        for org_name in sorted(index):
-            if org_name in watched_orgs:
-                continue
-            applicable = [w for w in KEYWORD_WATCHES
-                          if re.search(w["org_re"], org_name)]
-            if not applicable:
-                continue
-            try:
-                for row in fetch_rows_for_org(session, org_name, index):
-                    for w in applicable:
-                        if keyword_hit(row, w["keywords"]):
-                            add(row, w["name"])
-                            break
-            except Exception as exc:
-                log.error("Keyword scan org %s failed: %s", org_name, exc)
-            time.sleep(0.35)
-    return out
+    # Decide, per organisation, which watches apply, then fetch that org's
+    # tender list at most once and tag each row with every matching watch.
+    kw_watches = KEYWORD_WATCHES if include_keyword_scan else []
+    for org_name in sorted(index):
+        org_watch_hits = [w for w in ORG_WATCHES if org_matches(org_name, w)]
+        kw_applicable = [w for w in kw_watches
+                         if re.search(w["org_re"], org_name)]
+        if not org_watch_hits and not kw_applicable:
+            continue
+        try:
+            rows = fetch_rows_for_org(session, org_name, index)
+        except Exception as exc:
+            log.error("Org %s scan failed: %s", org_name, exc)
+            continue
+        for row in rows:
+            for w in org_watch_hits:
+                add(row, w["name"])
+            for w in kw_applicable:
+                if keyword_hit(row, w["keywords"]):
+                    add(row, w["name"])
+        time.sleep(0.35)
+    return [by_tid[t] for t in order]
 
 
 def keyword_watch_names():
@@ -1085,6 +1090,7 @@ def process_new_tender(session, row, seen):
         "published": row.get("published", ""),
         "org_chain": row.get("org_chain", ""),
         "source": row.get("source", "MJP WSSD"),
+        "sources": row.get("sources") or [row.get("source", "MJP WSSD")],
         "first_seen": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
     save_seen(seen)
@@ -1107,10 +1113,30 @@ def run_dry(session, rows):
     return 0
 
 
+def cache_missing_details(session, rows):
+    """Fetch and cache detail fields for any live tender not already cached,
+    so the dashboard has city and value for everything even when no delivery
+    channel is configured. Failures are skipped, not fatal."""
+    cache = load_details_cache()
+    todo = [r for r in rows if r["tender_id"] not in cache]
+    if not todo:
+        return
+    log.info("Caching details for %d tender(s)", len(todo))
+    for r in todo:
+        try:
+            details = fetch_tender_details(session, r["url"])
+            if details.get("Tender ID") == r["tender_id"]:
+                cache_tender_details(r["tender_id"], details)
+        except Exception as exc:
+            log.warning("Detail cache for %s failed: %s", r["tender_id"], exc)
+        time.sleep(0.4)
+
+
 def run_real(session):
     seen = load_seen()
     rows = fetch_all_watch_rows(session)
     save_live(rows)
+    cache_missing_details(session, rows)
     new_rows = [r for r in rows if r["tender_id"] not in seen]
     log.info("%d live tenders across watches, %d new", len(rows), len(new_rows))
     if not (smtp_configured() or whatsapp_configured()):
@@ -1214,12 +1240,22 @@ def refresh_live(force=False):
             return _dash["live"]
         session = make_session()
         live = fetch_all_watch_rows(session, include_keyword_scan=False)
-        taken = {r["tender_id"] for r in live}
+        by_tid = {r["tender_id"]: r for r in live}
         kw_names = keyword_watch_names()
         for row in load_live_snapshot().get("rows", []):
-            if row.get("source") in kw_names and row["tender_id"] not in taken:
-                taken.add(row["tender_id"])
+            srcs = row.get("sources") or ([row["source"]] if row.get("source") else [])
+            if not any(s in kw_names for s in srcs):
+                continue
+            existing = by_tid.get(row["tender_id"])
+            if existing is None:
                 live.append(row)
+                by_tid[row["tender_id"]] = row
+            else:
+                # merge keyword-watch tags onto the freshly scraped row
+                merged = existing.setdefault("sources", [existing.get("source", "")])
+                for s in srcs:
+                    if s in kw_names and s not in merged:
+                        merged.append(s)
         _dash["live"] = live
         _dash["session"] = session
         _dash["ts"] = time.time()
@@ -1277,32 +1313,98 @@ MAHA_DISTRICTS = [
     "Washim", "Yavatmal",
 ]
 
+# Talukas of Jalgaon district. Any location in one of these rolls up to the
+# "Jalgaon" district group so one filter shows every Jalgaon taluka. The
+# city proper is shown as "Jalgaon City" (still inside the Jalgaon group).
+JALGAON_TALUKAS = {
+    "amalner", "bhadgaon", "bhusawal", "bhusaval", "bodwad", "chalisgaon",
+    "chopda", "dharangaon", "erandol", "jamner", "muktainagar", "edlabad",
+    "pachora", "parola", "raver", "yawal",
+}
+# Talukas that share a name with a district elsewhere are not auto-mapped
+# to Jalgaon (there are none here today, but keep the set explicit).
+
+JALGAON_DISTRICT = "Jalgaon"
+
+# Common terse spellings the portal uses in Location fields.
+CITY_ABBREV = {"rvr": "raver", "bsl": "bhusawal", "amn": "amalner",
+               "jal": "jalgaon", "csn": "chhatrapati sambhajinagar"}
+
+
+def _tokens(text):
+    return set(re.findall(r"[a-z]+", text.casefold()))
+
+
+def _is_district(city):
+    return city in MAHA_DISTRICTS or city == "Jalgaon City"
+
 
 def normalize_city(location):
-    """Collapse the portal's free-text Location values to a city/district
-    level name for the filter dropdown: 'At Lasur Tal chopda Dist Jalgaon'
-    becomes 'Jalgaon'. Values naming a known district anywhere snap to it,
-    short clean values like 'Amalner' stay as they are."""
+    """Collapse the portal's free-text Location into a district-level group
+    for the filter, so selecting a district shows all of its talukas.
+
+    'At Lasur Tal chopda Dist Jalgaon' -> 'Jalgaon' (Chopda is a Jalgaon
+    taluka). The Jalgaon city proper -> 'Jalgaon City'. Everything not
+    resolvable to a district keeps a cleaned short name."""
     s = (location or "").strip()
     if not s:
         return ""
-    low = s.casefold()
+    raw = re.findall(r"[a-z]+", s.casefold())
+    exp = [CITY_ABBREV.get(t, t) for t in raw]
+    low = " ".join(exp)
+    toks = set(exp)
+
+    # An explicit "Dist <name>" wins over any incidental town name.
+    m = re.search(r"dist(?:rict)?[\s.:,()-]*([a-z]+)", low)
+    named_dist = m.group(1) if m else ""
+
+    jalgaon = (named_dist == "jalgaon"
+               or bool(toks & JALGAON_TALUKAS)
+               or ("jalgaon" in toks and not named_dist))
+    if named_dist and named_dist != "jalgaon":
+        jalgaon = False  # an explicit other district wins
+    if jalgaon:
+        other_taluka = toks & JALGAON_TALUKAS
+        if ("jalgaon" in toks and not other_taluka
+                and not re.search(r"\bta(?:l|luka)?\b", low)):
+            return "Jalgaon City"
+        return JALGAON_DISTRICT
+
     if re.search(r"\b(csn|chh)\b", low):
         return "Chhatrapati Sambhajinagar"
-    hits = [d for d in MAHA_DISTRICTS if d.casefold() in low]
-    if hits:
-        return max(hits, key=len)
-    m = re.search(r"dist(?:rict)?[\s.:,-]*([A-Za-z]+(?:\s+[A-Za-z]+)?)", s, re.I)
-    if m:
-        s = m.group(1).strip()
-    else:
-        s = re.sub(r"^(?:at|a/p)[\s.]+", "", s, flags=re.I).strip(" .,")
-    out = s[:30].strip().title()
-    if len(out) >= 5:
+    # Match a district by its last word as a whole token (no substrings,
+    # so 'limbejalgaon' does not read as Jalgaon).
+    for d in sorted(MAHA_DISTRICTS, key=len, reverse=True):
+        if d.split()[-1].casefold() in toks:
+            return d
+    if named_dist:
         for d in MAHA_DISTRICTS:
-            if d.casefold().startswith(out.casefold()):
+            if d.casefold().startswith(named_dist):
                 return d
-    return out
+    s = re.sub(r"^(?:at|a/p)[\s.]+", "", s, flags=re.I).strip(" .,")
+    return s[:30].strip().title()
+
+
+def city_group(city):
+    """The district a normalized city belongs to, for filter grouping.
+    'Jalgaon City' groups under 'Jalgaon'."""
+    if city == "Jalgaon City":
+        return JALGAON_DISTRICT
+    return city
+
+
+def derive_city(location, org_chain, title):
+    """Best city for a tender: the Location field if it resolves to a known
+    district, otherwise the publisher name or organisation chain (which
+    usually names the town, e.g. 'Municipal Council Raver'), then title."""
+    first = normalize_city(location)
+    if _is_district(first):
+        return first
+    for extra in (publisher(org_chain), org_chain, title):
+        cand = normalize_city(extra)
+        if _is_district(cand):
+            return cand
+    return first or normalize_city(publisher(org_chain))
 
 
 def parse_inr(value_text):
@@ -1351,6 +1453,9 @@ def dashboard_data():
         else:
             cls, label = tender_status(closing, r is not None, now)
         value = parse_inr(d.get("Tender Value in ₹", ""))
+        org_chain = (r or e).get("org_chain", "")
+        city = derive_city(d.get("Location"), org_chain,
+                           (r or e).get("title", ""))
         tenders.append({
             "id": tid,
             "title": (r or e).get("title") or d.get("Title", ""),
@@ -1358,10 +1463,14 @@ def dashboard_data():
                    d.get("Tender Reference Number", ""),
             "source": (r["source"] if r else e.get("source", "")) or
                       ("Results import" if awarded else ""),
+            "sources": (r.get("sources") if r else e.get("sources"))
+                       or ([e.get("source")] if e.get("source") else [])
+                       or (["Results import"] if awarded else []),
             "org": publisher((r or e).get("org_chain", "")) or
                    awards.get(tid, {}).get("org", ""),
             "awarded": awarded,
-            "city": normalize_city(d.get("Location")),
+            "city": city,
+            "cityGroup": city_group(city),
             "value": value,
             "valueFmt": format_inr(value),
             "published": published,
@@ -1388,9 +1497,9 @@ def dashboard_data():
     tenders = live_part + gone_part
 
     soon = sum(1 for t in live_part if t["st"] in ("soon", "urgent"))
-    kw_count = sum(1 for t in tenders if t["source"] in kw_names)
-    sources = sorted({t["source"] for t in tenders if t["source"]})
-    cities = sorted({t["city"] for t in tenders if t["city"]},
+    kw_count = sum(1 for t in tenders if "Amdar Nidhi / DPDC" in t["sources"])
+    sources = sorted({s for t in tenders for s in t["sources"]})
+    cities = sorted({t["cityGroup"] for t in tenders if t["cityGroup"]},
                     key=str.casefold)
     return {
         "generated": now.strftime("%d-%b-%Y %I:%M %p"),
@@ -1699,7 +1808,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 18px 22px 80px; }
 
 .tablewrap { background: var(--card); border: 1px solid var(--border);
   border-radius: 10px; overflow: auto; max-height: calc(100vh - 320px); }
-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1150px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1260px; }
 thead th { position: sticky; top: 0; z-index: 1; background: #EFF4FB;
   text-align: left; font-weight: 600; color: var(--heading);
   padding: 9px 12px; border-bottom: 1px solid var(--border);
@@ -1727,8 +1836,11 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 .badge.awarded { background: #DBEAFE; color: #1E40AF; }
 .src { font-size: 11px; color: var(--muted-fg); white-space: nowrap; }
 .pub { font-size: 11px; color: var(--muted-fg); min-width: 140px; }
+.more { display: inline-block; background: var(--muted); color: var(--muted-fg);
+  border-radius: 6px; padding: 0 5px; font-size: 10px; cursor: help; }
 td.val { font-family: "Fira Code", monospace; font-size: 12px;
   text-align: right; white-space: nowrap; }
+td.city { font-size: 12px; white-space: nowrap; }
 .empty { padding: 26px; text-align: center; color: var(--muted-fg); }
 
 #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
@@ -1826,6 +1938,7 @@ td.val { font-family: "Fira Code", monospace; font-size: 12px;
     <th class="sortable" data-key="title">Title</th>
     <th class="sortable" data-key="source">Watch</th>
     <th class="sortable" data-key="org">Publisher</th>
+    <th class="sortable" data-key="city">City</th>
     <th class="nowrap sortable num" data-key="value">Value</th>
     <th class="nowrap sortable num" data-key="publishedTs">Published</th>
     <th class="nowrap sortable num" data-key="closingTs">Closing</th>
@@ -1891,8 +2004,8 @@ function matches(t) {
   var q = els.q.value.trim().toLowerCase();
   if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source + ' ' +
       t.org + ' ' + t.city).toLowerCase().indexOf(q) < 0) return false;
-  if (els.src.value && t.source !== els.src.value) return false;
-  if (els.city.value && t.city !== els.city.value) return false;
+  if (els.src.value && (t.sources || []).indexOf(els.src.value) < 0) return false;
+  if (els.city.value && t.cityGroup !== els.city.value) return false;
   var st = els.st.value;
   if (st === 'live' && !t.live) return false;
   if (st === 'soonish' && ['soon', 'urgent'].indexOf(t.st) < 0) return false;
@@ -1948,8 +2061,12 @@ function render() {
       (t.live ? '' : ' class="gone-row"') + '>' +
       '<td class="tid">' + esc(t.id) + '</td>' +
       '<td>' + esc(t.title) + '</td>' +
-      '<td class="src">' + esc(t.source) + '</td>' +
+      '<td class="src">' + esc(t.source) +
+        ((t.sources && t.sources.length > 1)
+          ? ' <span class="more" title="' + esc(t.sources.join(", ")) + '">+' +
+            (t.sources.length - 1) + '</span>' : '') + '</td>' +
       '<td class="pub">' + esc(t.org) + '</td>' +
+      '<td class="city">' + esc(t.city) + '</td>' +
       '<td class="val">' + esc(t.valueFmt) + '</td>' +
       '<td class="nowrap">' + esc((t.published || '').split(' ')[0]) + '</td>' +
       '<td class="nowrap">' + esc(t.closing) + '</td>' +
@@ -1960,6 +2077,34 @@ function render() {
   });
   els.rows.innerHTML = html;
   els.empty.hidden = shown > 0;
+  if (shown === 0) {
+    var active = [];
+    if (els.src.value) active.push('watch "' + els.src.value + '"');
+    if (els.city.value) active.push('city "' + els.city.value + '"');
+    if (els.st.value) active.push('status');
+    if (els.q.value.trim()) active.push('search "' + els.q.value.trim() + '"');
+    var msg = 'No tenders match ' +
+      (active.length ? active.join(' and ') : 'the current filters') + '.';
+    if (els.src.value && els.city.value) {
+      var inCity = DATA.tenders.filter(function (t) {
+        return t.cityGroup === els.city.value;
+      }).reduce(function (set, t) {
+        (t.sources || []).forEach(function (s) { set[s] = 1; }); return set;
+      }, {});
+      var names = Object.keys(inCity);
+      if (names.length) msg += ' In ' + els.city.value +
+        ' the available watches are: ' + names.join(', ') + '.';
+    }
+    els.empty.innerHTML = esc(msg) +
+      ' <button id="clearf" style="margin-left:8px;padding:6px 12px;' +
+      'border:1px solid var(--border);border-radius:8px;background:#fff;' +
+      'cursor:pointer">Clear filters</button>';
+    var cb = document.getElementById('clearf');
+    if (cb) cb.addEventListener('click', function () {
+      els.q.value = ''; els.src.value = ''; els.city.value = '';
+      els.st.value = ''; render();
+    });
+  }
   els.count.textContent = shown + ' of ' + DATA.tenders.length + ' tenders';
 }
 ['input', 'change'].forEach(function (ev) {
