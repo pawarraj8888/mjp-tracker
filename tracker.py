@@ -21,15 +21,24 @@ Every run:
   5. Marks the tender as seen only if the English send succeeded. A
      Marathi-side failure is logged but never blocks the English send.
 
-Usage:
-    python tracker.py            normal run (needs WhatsApp env vars)
-    python tracker.py --dry-run  scrape one tender, build both PDFs into
-                                 out/ and skip WhatsApp entirely
+Besides the MJP WSSD organisation, additional watches are tracked (see
+ORG_WATCHES and KEYWORD_WATCH): full tracking of Zilla Parishad Jalgaon
+(RDD-CEO-JALGAON, where DPDC and Amdar Nidhi works are published) and the
+Collector Jalgaon office, plus a keyword scan of all RDD-CEO-* and
+COLLECTOR * organisations for Amdar Nidhi / DPDC related tenders.
 
-Env vars (only needed for real runs):
-    WHATSAPP_TOKEN      Meta Cloud API access token
-    WHATSAPP_PHONE_ID   phone number id of the sending number
-    WHATSAPP_TO         destination number in international format
+Usage:
+    python tracker.py            normal run (needs delivery env vars)
+    python tracker.py --dry-run  scrape one tender, build both PDFs into
+                                 out/ and skip all delivery
+    python tracker.py --serve    local dashboard on http://localhost:8765
+                                 (change with --port)
+
+Delivery channels (each used when its env vars are set; at least one is
+required for a real run):
+    Email:    SMTP_USER, SMTP_PASS (and optionally SMTP_HOST, SMTP_PORT,
+              EMAIL_TO); defaults to Gmail SMTP, sending to SMTP_USER
+    WhatsApp: WHATSAPP_TOKEN, WHATSAPP_PHONE_ID, WHATSAPP_TO
 
 State: seen.json (committed back by .github/workflows/tracker.yml).
 """
@@ -42,6 +51,7 @@ import re
 import socket
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import requests
@@ -59,6 +69,39 @@ log = logging.getLogger("mjp-tracker")
 BASE_URL = "https://mahatenders.gov.in"
 ORG_LIST_URL = BASE_URL + "/nicgep/app?page=FrontEndTendersByOrganisation&service=page"
 ORG_NAME = "Member Secretary(WSSD),Mumbai"
+
+# ---------------------------------------------------------------------------
+# Watches. Two kinds:
+#  - ORG_WATCHES: every tender published by a matching organisation node is
+#    tracked ("org" is an exact name, "org_re" a regex on the org name).
+#  - KEYWORD_WATCH: the tender lists of all orgs matching org_re are scanned
+#    and only rows whose title or org chain contains one of the keywords
+#    (case insensitive) are tracked. Used for Amdar Nidhi / DPDC works,
+#    which are published by Zilla Parishad (RDD-CEO-*) and Collector
+#    offices around the state.
+# The portal's own full-text search is captcha protected, so watching is
+# done through the captcha-free Tenders-by-Organisation listing.
+# ---------------------------------------------------------------------------
+
+ORG_WATCHES = [
+    {"name": "MJP WSSD", "org": ORG_NAME},
+    {"name": "ZP Jalgaon DPDC", "org_re": r"^RDD-CEO-JALGAON$"},
+    {"name": "Collector Jalgaon", "org_re": r"^COLLECTOR\s+JALGAON$"},
+]
+
+KEYWORD_WATCH = {
+    "name": "Amdar Nidhi / DPDC",
+    "org_re": r"^(RDD-CEO-|COLLECTOR\s)",
+    "keywords": [
+        "amdar nidhi", "aamdar nidhi", "amdar fund", "mla fund",
+        "mla local development", "आमदार",
+        "dpdc", "जिल्हा नियोजन", "district planning",
+    ],
+}
+
+# Safety valve: at most this many new tenders are sent per run; the rest
+# stay unseen and go out on the next scheduled run.
+MAX_SENDS_PER_RUN = 20
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"
@@ -213,6 +256,7 @@ LABELS_MR = {
     "Name": "नाव",
     "Address": "पत्ता",
     "New MJP Tender": "नवीन एमजेपी निविदा",
+    "New Tender": "नवीन निविदा",
     "Closing Date": "अंतिम तारीख",
     "Source": "स्रोत",
 }
@@ -278,16 +322,22 @@ def portal_get(session, url):
     return r
 
 
-def find_org_link(session):
+def fetch_org_index(session):
+    """Map of organisation name to its (session scoped) tender list url,
+    for every org that currently has live tenders."""
     r = portal_get(session, ORG_LIST_URL)
     soup = BeautifulSoup(r.text, "lxml")
+    index = {}
     for tr in soup.find_all("tr"):
         tds = tr.find_all("td")
-        if len(tds) >= 3 and tds[1].get_text(strip=True) == ORG_NAME:
+        if len(tds) >= 3:
             a = tr.find("a", href=True)
-            if a:
-                return BASE_URL + a["href"]
-    raise RuntimeError("Organisation row not found: " + ORG_NAME)
+            name = tds[1].get_text(strip=True)
+            if a and name and tds[0].get_text(strip=True).isdigit():
+                index[name] = BASE_URL + a["href"]
+    if not index:
+        raise RuntimeError("No organisations parsed from listing page")
+    return index
 
 
 def parse_title_block(block):
@@ -317,13 +367,10 @@ def parse_title_block(block):
     return title, ref_no, tender_id
 
 
-def fetch_tender_rows(session):
-    """Return the live tender list for the organisation as a list of dicts
-    with tender_id, title, ref_no, published, closing, opening, org_chain
-    and the detail page url."""
-    org_link = find_org_link(session)
-    r = portal_get(session, org_link)
-    soup = BeautifulSoup(r.text, "lxml")
+def rows_from_list_html(html):
+    """Parse an organisation tender list page into row dicts with tender_id,
+    title, ref_no, published, closing, opening, org_chain and detail url."""
+    soup = BeautifulSoup(html, "lxml")
     rows = []
     for tr in soup.find_all("tr"):
         a = tr.find("a", href=True)
@@ -346,6 +393,80 @@ def fetch_tender_rows(session):
             "org_chain": cells[5],
             "url": BASE_URL + a["href"],
         })
+    return rows
+
+
+def fetch_rows_for_org(session, org_name, index):
+    """Tender rows for one organisation, or [] if it has no live tenders.
+    Session scoped links can go stale, so one retry re-fetches the index."""
+    for attempt in range(2):
+        if attempt:
+            index.clear()
+            index.update(fetch_org_index(session))
+        url = index.get(org_name)
+        if not url:
+            return []
+        rows = rows_from_list_html(portal_get(session, url).text)
+        if rows:
+            return rows
+    log.warning("Org %s listed but no rows parsed", org_name)
+    return []
+
+
+def org_matches(name, watch):
+    if "org" in watch:
+        return name == watch["org"]
+    return re.search(watch["org_re"], name) is not None
+
+
+def keyword_hit(row, keywords):
+    hay = (row["title"] + " " + row["org_chain"]).casefold()
+    return any(k.casefold() in hay for k in keywords)
+
+
+def fetch_all_watch_rows(session, include_keyword_scan=True):
+    """All live tenders across every watch, each row tagged with a 'source'
+    watch name. A tender matched by several watches keeps the first one."""
+    index = fetch_org_index(session)
+    out = []
+    taken = set()
+
+    def add(row, source):
+        if row["tender_id"] not in taken:
+            taken.add(row["tender_id"])
+            out.append(dict(row, source=source))
+
+    watched_orgs = set()
+    for watch in ORG_WATCHES:
+        for org_name in sorted(index):
+            if not org_matches(org_name, watch):
+                continue
+            watched_orgs.add(org_name)
+            try:
+                for row in fetch_rows_for_org(session, org_name, index):
+                    add(row, watch["name"])
+            except Exception as exc:
+                log.error("Watch %s org %s failed: %s", watch["name"], org_name, exc)
+            time.sleep(0.5)
+
+    if include_keyword_scan and KEYWORD_WATCH:
+        kw = KEYWORD_WATCH
+        for org_name in sorted(index):
+            if org_name in watched_orgs or not re.search(kw["org_re"], org_name):
+                continue
+            try:
+                for row in fetch_rows_for_org(session, org_name, index):
+                    if keyword_hit(row, kw["keywords"]):
+                        add(row, kw["name"])
+            except Exception as exc:
+                log.error("Keyword scan org %s failed: %s", org_name, exc)
+            time.sleep(0.5)
+    return out
+
+
+def fetch_tender_rows(session):
+    """The MJP WSSD organisation's live tenders (used by --dry-run)."""
+    rows = fetch_rows_for_org(session, ORG_NAME, fetch_org_index(session))
     if not rows:
         raise RuntimeError("No tender rows parsed from organisation listing")
     return rows
@@ -624,6 +745,11 @@ def verify_devanagari(pdf_path):
 # WhatsApp (Meta Cloud API)
 # ---------------------------------------------------------------------------
 
+def whatsapp_configured():
+    return all(os.environ.get(k) for k in
+               ("WHATSAPP_TOKEN", "WHATSAPP_PHONE_ID", "WHATSAPP_TO"))
+
+
 def whatsapp_config():
     token = os.environ.get("WHATSAPP_TOKEN")
     phone_id = os.environ.get("WHATSAPP_PHONE_ID")
@@ -689,9 +815,60 @@ def send_pdf(pdf_path, caption):
     wa_send_document(media_id, Path(pdf_path).name, clamp_caption(caption))
 
 
+# ---------------------------------------------------------------------------
+# Email (SMTP; the "for now" channel until WhatsApp secrets are configured).
+# One message per tender with both PDFs attached.
+# ---------------------------------------------------------------------------
+
+def smtp_configured():
+    return all(os.environ.get(k) for k in ("SMTP_USER", "SMTP_PASS"))
+
+
+def send_email_tender(row, details, en_path, mr_path):
+    import smtplib
+    from email.message import EmailMessage
+
+    host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+    port = int(os.environ.get("SMTP_PORT", "465"))
+    user = os.environ["SMTP_USER"]
+    password = os.environ["SMTP_PASS"]
+    to = os.environ.get("EMAIL_TO", user)
+
+    msg = EmailMessage()
+    msg["From"] = user
+    msg["To"] = to
+    subject = "%s: %s (closing %s)" % (
+        caption_header(row), row["title"][:120], row["closing"])
+    msg["Subject"] = sanitize(subject)
+    body = english_caption(row, details)
+    if mr_path is not None:
+        body += "\n\n" + marathi_caption(row)
+    else:
+        body += "\n\nMarathi PDF could not be generated for this tender."
+    msg.set_content(body)
+    for path in (en_path, mr_path):
+        if path is None:
+            continue
+        with open(path, "rb") as fh:
+            msg.add_attachment(
+                fh.read(), maintype="application", subtype="pdf",
+                filename=Path(path).name)
+    with smtplib.SMTP_SSL(host, port, timeout=60) as smtp:
+        smtp.login(user, password)
+        smtp.send_message(msg)
+    log.info("Emailed %s to %s", row["tender_id"], to)
+
+
+def caption_header(row):
+    source = row.get("source", "MJP WSSD")
+    if source == "MJP WSSD":
+        return "New MJP Tender"
+    return "New Tender - " + source
+
+
 def english_caption(row, details):
     lines = [
-        "New MJP Tender",
+        caption_header(row),
         "Title: " + row["title"][:300],
         "Tender ID: " + row["tender_id"],
         "Ref No: " + row["ref_no"],
@@ -711,8 +888,12 @@ def english_caption(row, details):
 
 def marathi_caption(row):
     title_mr = translate_text(row["title"])[:300]
+    if row.get("source", "MJP WSSD") == "MJP WSSD":
+        header = LABELS_MR["New MJP Tender"]
+    else:
+        header = LABELS_MR["New Tender"]
     return sanitize("%s\n%s: %s\n%s: %s" % (
-        LABELS_MR["New MJP Tender"],
+        header,
         LABELS_MR["Title"], title_mr,
         LABELS_MR["Closing Date"], row["closing"]))
 
@@ -767,30 +948,51 @@ def build_both_pdfs(session, row):
 
 
 def process_new_tender(session, row, seen):
-    """Returns True if the Marathi side also succeeded. Raises if the
-    English side failed (the tender then stays unseen and is retried)."""
+    """Delivers one new tender over every configured channel (email and/or
+    WhatsApp). Returns True if the Marathi side fully succeeded. Raises if
+    no channel delivered the English content (the tender then stays unseen
+    and is retried next run)."""
     tid = row["tender_id"]
-    log.info("Processing new tender %s: %s", tid, row["title"][:80])
+    log.info("Processing new tender %s [%s]: %s",
+             tid, row.get("source", "?"), row["title"][:80])
     details, en_path, mr_path, _ = build_both_pdfs(session, row)
 
-    send_pdf(en_path, english_caption(row, details))
+    delivered = False
+    mr_ok = mr_path is not None
+
+    if smtp_configured():
+        try:
+            send_email_tender(row, details, en_path, mr_path)
+            delivered = True
+        except Exception as exc:
+            log.error("Email send failed for %s: %s", tid, exc)
+
+    if whatsapp_configured():
+        try:
+            send_pdf(en_path, english_caption(row, details))
+            delivered = True
+            if mr_path is not None:
+                time.sleep(SEND_SLEEP_SECONDS)
+                try:
+                    send_pdf(mr_path, marathi_caption(row))
+                except Exception as exc:
+                    mr_ok = False
+                    log.error("Marathi send failed for %s: %s", tid, exc)
+        except Exception as exc:
+            log.error("WhatsApp send failed for %s: %s", tid, exc)
+
+    if not delivered:
+        raise RuntimeError("no delivery channel succeeded for " + tid)
+
     seen[tid] = {
         "title": row["title"],
         "ref_no": row["ref_no"],
         "closing": row["closing"],
+        "source": row.get("source", "MJP WSSD"),
         "first_seen": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
     }
     save_seen(seen)
-
-    if mr_path is None:
-        return False
-    time.sleep(SEND_SLEEP_SECONDS)
-    try:
-        send_pdf(mr_path, marathi_caption(row))
-    except Exception as exc:
-        log.error("Marathi send failed for %s: %s", tid, exc)
-        return False
-    return True
+    return mr_ok
 
 
 def run_dry(session, rows):
@@ -809,13 +1011,21 @@ def run_dry(session, rows):
     return 0
 
 
-def run_real(session, rows):
+def run_real(session):
+    if not (smtp_configured() or whatsapp_configured()):
+        raise RuntimeError(
+            "No delivery channel configured: set SMTP_USER/SMTP_PASS for "
+            "email or WHATSAPP_TOKEN/WHATSAPP_PHONE_ID/WHATSAPP_TO")
     seen = load_seen()
+    rows = fetch_all_watch_rows(session)
     new_rows = [r for r in rows if r["tender_id"] not in seen]
-    log.info("%d live tenders, %d new", len(rows), len(new_rows))
+    log.info("%d live tenders across watches, %d new", len(rows), len(new_rows))
     if not new_rows:
         return 0
-    whatsapp_config()  # fail fast if env is missing before any work
+    if len(new_rows) > MAX_SENDS_PER_RUN:
+        log.warning("Capping this run at %d of %d new tenders, the rest "
+                    "go out next run", MAX_SENDS_PER_RUN, len(new_rows))
+        new_rows = new_rows[:MAX_SENDS_PER_RUN]
     failures = 0
     mr_failures = 0
     for i, row in enumerate(new_rows):
@@ -834,11 +1044,208 @@ def run_real(session, rows):
     return 1 if failures else 0
 
 
+# ---------------------------------------------------------------------------
+# Local dashboard (python tracker.py --serve)
+# ---------------------------------------------------------------------------
+
+DASHBOARD_CACHE_SECONDS = 300
+
+
+def parse_portal_datetime(text):
+    try:
+        return datetime.strptime(text.strip(), "%d-%b-%Y %I:%M %p")
+    except (ValueError, AttributeError):
+        return None
+
+
+def closing_badge(closing_text, now):
+    dt = parse_portal_datetime(closing_text)
+    if dt is None:
+        return "", "unknown"
+    days = (dt - now).total_seconds() / 86400.0
+    if days < 0:
+        return "closed", "Deadline passed"
+    if days < 1:
+        return "urgent", "Closes today"
+    if days < 3:
+        return "soon", "%d day(s) left" % int(days)
+    return "open", "%d day(s) left" % int(days)
+
+
+def build_dashboard_html(live, seen):
+    now = datetime.now()
+    live_ids = {r["tender_id"] for r in live}
+    kw_name = KEYWORD_WATCH["name"] if KEYWORD_WATCH else None
+
+    def esc(t):
+        return xml_escape(str(t or ""))
+
+    def sort_key(closing_text):
+        dt = parse_portal_datetime(closing_text)
+        return dt or datetime.max
+
+    def row_html(tid, title, source, closing, extra=""):
+        cls, badge = closing_badge(closing, now)
+        return (
+            '<tr class="st-%s"><td class="tid">%s</td><td>%s</td>'
+            '<td>%s</td><td class="nowrap">%s</td>'
+            '<td><span class="badge %s">%s</span>%s</td></tr>'
+            % (cls, esc(tid), esc(title), esc(source), esc(closing),
+               cls, esc(badge), extra))
+
+    live_rows = "".join(
+        row_html(r["tender_id"], r["title"], r["source"], r["closing"])
+        for r in sorted(live, key=lambda r: sort_key(r["closing"])))
+
+    kw_entries = [(tid, e) for tid, e in seen.items()
+                  if e.get("source") == kw_name]
+    kw_rows = "".join(
+        row_html(tid, e.get("title", ""), e.get("source", ""),
+                 e.get("closing", ""))
+        for tid, e in sorted(kw_entries,
+                             key=lambda te: sort_key(te[1].get("closing", ""))))
+
+    gone_entries = [(tid, e) for tid, e in seen.items()
+                    if tid not in live_ids and e.get("source") != kw_name]
+    gone_rows = "".join(
+        row_html(tid, e.get("title", ""), e.get("source", ""),
+                 e.get("closing", ""))
+        for tid, e in sorted(gone_entries,
+                             key=lambda te: sort_key(te[1].get("closing", "")),
+                             reverse=True)[:150])
+
+    watch_names = ", ".join(w["name"] for w in ORG_WATCHES)
+    return """<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta http-equiv="refresh" content="600">
+<title>Tender Dashboard</title>
+<style>
+ body {{ font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+        margin: 0; background: #f4f6fa; color: #1c2733; }}
+ header {{ background: #1a3e6e; color: #fff; padding: 14px 24px; }}
+ header h1 {{ margin: 0; font-size: 18px; }}
+ header p {{ margin: 4px 0 0; font-size: 12px; opacity: .8; }}
+ main {{ padding: 18px 24px 60px; max-width: 1200px; margin: 0 auto; }}
+ h2 {{ font-size: 15px; margin: 26px 0 8px; color: #1a3e6e; }}
+ input#q {{ width: 320px; padding: 6px 10px; margin: 14px 0 2px;
+           border: 1px solid #bcc7d6; border-radius: 6px; font-size: 13px; }}
+ table {{ width: 100%; border-collapse: collapse; background: #fff;
+         border: 1px solid #dbe2ec; font-size: 13px; }}
+ th {{ background: #eef2f7; text-align: left; padding: 7px 9px;
+      border-bottom: 1px solid #dbe2ec; position: sticky; top: 0; }}
+ td {{ padding: 7px 9px; border-bottom: 1px solid #eef1f6;
+      vertical-align: top; }}
+ td.tid {{ font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+          white-space: nowrap; }}
+ td.nowrap {{ white-space: nowrap; }}
+ .badge {{ padding: 2px 8px; border-radius: 10px; font-size: 11px;
+          white-space: nowrap; }}
+ .badge.open {{ background: #e2f4e6; color: #1d6f34; }}
+ .badge.soon {{ background: #fdf0d7; color: #8a6100; }}
+ .badge.urgent {{ background: #fddddd; color: #a11212; }}
+ .badge.closed, .badge.unknown {{ background: #e8e8ec; color: #555; }}
+ tr.st-closed td {{ color: #8b93a0; }}
+ .empty {{ color: #8b93a0; font-size: 13px; padding: 10px 2px; }}
+</style></head>
+<body>
+<header>
+ <h1>Tender Dashboard</h1>
+ <p>Watches: {watch_names} plus keyword watch "{kw_name}" |
+    generated {stamp} | auto refreshes every 10 minutes</p>
+</header>
+<main>
+<input id="q" placeholder="Filter by any text..." onkeyup="flt()">
+<h2>Live tenders ({n_live})</h2>
+<table id="t-live"><tr><th>Tender ID</th><th>Title</th><th>Watch</th>
+<th>Closing Date</th><th>Status</th></tr>{live_rows}</table>
+{live_empty}
+<h2>Keyword watch matches on record ({n_kw})</h2>
+<table id="t-kw"><tr><th>Tender ID</th><th>Title</th><th>Watch</th>
+<th>Closing Date</th><th>Status</th></tr>{kw_rows}</table>
+{kw_empty}
+<h2>Previously tracked, no longer listed ({n_gone})</h2>
+<table id="t-gone"><tr><th>Tender ID</th><th>Title</th><th>Watch</th>
+<th>Closing Date</th><th>Status</th></tr>{gone_rows}</table>
+{gone_empty}
+</main>
+<script>
+function flt() {{
+  var q = document.getElementById('q').value.toLowerCase();
+  ['t-live','t-kw','t-gone'].forEach(function(id) {{
+    var rows = document.getElementById(id).rows;
+    for (var i = 1; i < rows.length; i++) {{
+      rows[i].style.display =
+        rows[i].innerText.toLowerCase().indexOf(q) >= 0 ? '' : 'none';
+    }}
+  }});
+}}
+</script>
+</body></html>""".format(
+        watch_names=esc(watch_names), kw_name=esc(kw_name or "none"),
+        stamp=now.strftime("%d-%b-%Y %I:%M %p"),
+        n_live=len(live), live_rows=live_rows,
+        live_empty="" if live else '<p class="empty">Nothing live right now.</p>',
+        n_kw=len(kw_entries), kw_rows=kw_rows,
+        kw_empty="" if kw_entries else
+            '<p class="empty">No keyword matches recorded yet.</p>',
+        n_gone=len(gone_entries), gone_rows=gone_rows,
+        gone_empty="" if gone_entries else
+            '<p class="empty">Nothing has dropped off yet.</p>')
+
+
+def serve_dashboard(port):
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    cache = {"html": "", "ts": 0.0}
+
+    def render():
+        if cache["html"] and time.time() - cache["ts"] < DASHBOARD_CACHE_SECONDS:
+            return cache["html"]
+        session = make_session()
+        live = fetch_all_watch_rows(session, include_keyword_scan=False)
+        cache["html"] = build_dashboard_html(live, load_seen())
+        cache["ts"] = time.time()
+        return cache["html"]
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path not in ("/", "/index.html"):
+                self.send_error(404)
+                return
+            try:
+                body = render().encode("utf-8")
+            except Exception as exc:
+                log.error("Dashboard refresh failed: %s", exc)
+                if cache["html"]:
+                    body = cache["html"].encode("utf-8")
+                else:
+                    self.send_error(502, "Portal scrape failed: %s" % exc)
+                    return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, fmt, *args):
+            log.info("dashboard: " + fmt, *args)
+
+    log.info("Dashboard at http://localhost:%d (first load scrapes the "
+             "portal, takes a moment)", port)
+    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+
+
 def main():
     parser = argparse.ArgumentParser(description="MJP tender tracker")
     parser.add_argument(
         "--dry-run", action="store_true",
         help="scrape one tender, build both PDFs into out/ and skip WhatsApp")
+    parser.add_argument(
+        "--serve", action="store_true",
+        help="serve the local dashboard instead of running the tracker")
+    parser.add_argument(
+        "--port", type=int, default=8765,
+        help="dashboard port for --serve (default 8765)")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -851,11 +1258,12 @@ def main():
     # Portal and WhatsApp calls pass explicit timeouts and are unaffected.
     socket.setdefaulttimeout(60)
 
+    if args.serve:
+        return serve_dashboard(args.port)
     session = make_session()
-    rows = fetch_tender_rows(session)
     if args.dry_run:
-        return run_dry(session, rows)
-    return run_real(session, rows)
+        return run_dry(session, fetch_tender_rows(session))
+    return run_real(session)
 
 
 if __name__ == "__main__":

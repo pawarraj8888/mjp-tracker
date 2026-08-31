@@ -1,9 +1,21 @@
 # mjp-tracker
 
-Tracks Maharashtra Jeevan Pradhikaran tenders on mahatenders.gov.in
-(organisation node "Member Secretary(WSSD),Mumbai"). For every new tender it
-parses the detail page, builds a work-details PDF in English and a second one
-translated into Marathi, and sends both to WhatsApp via the Meta Cloud API.
+Tracks tenders on mahatenders.gov.in. For every new tender it parses the
+detail page, builds a work-details PDF in English and a second one translated
+into Marathi, and delivers both by email (SMTP) and/or WhatsApp (Meta Cloud
+API), whichever is configured.
+
+Watched sources (see ORG_WATCHES / KEYWORD_WATCH in tracker.py):
+
+- Maharashtra Jeevan Pradhikaran: organisation "Member Secretary(WSSD),Mumbai"
+- Zilla Parishad Jalgaon (RDD-CEO-JALGAON) and Collector Jalgaon: everything
+  they publish (this is where DPDC and Amdar Nidhi works appear)
+- Amdar Nidhi / DPDC keyword scan across all RDD-CEO-* and COLLECTOR *
+  organisations statewide (keywords like amdar nidhi, aamdar, MLA fund,
+  DPDC, jilha niyojan)
+
+The portal's own search is captcha protected, so all watching goes through
+the captcha-free Tenders-by-Organisation listing.
 
 ## How it works
 
@@ -24,15 +36,36 @@ translated into Marathi, and sends both to WhatsApp via the Meta Cloud API.
 
 ## Setup
 
-Repository secrets needed by `.github/workflows/tracker.yml`:
+Repository secrets read by `.github/workflows/tracker.yml`. Configure email,
+WhatsApp, or both; at least one channel is required.
 
 | Secret | Value |
 | --- | --- |
+| `SMTP_USER` | Email delivery: sending address, e.g. yourname@gmail.com |
+| `SMTP_PASS` | Email delivery: SMTP password. For Gmail create an App Password (Google Account, Security, 2-Step Verification, App passwords) and paste it here |
+| `SMTP_HOST` | Optional, default smtp.gmail.com |
+| `SMTP_PORT` | Optional, default 465 (SSL) |
+| `EMAIL_TO` | Optional destination address, defaults to `SMTP_USER` |
 | `WHATSAPP_TOKEN` | Meta Cloud API access token |
 | `WHATSAPP_PHONE_ID` | Phone number id of the sending number |
 | `WHATSAPP_TO` | Destination number, international format, digits only |
 
+Email sends one message per tender with both PDFs attached. WhatsApp sends
+the English PDF first with a full caption, then the Marathi PDF with a short
+Marathi caption.
+
 The workflow runs every 30 minutes and commits `seen.json` back to the repo.
+
+## Local dashboard
+
+```
+.venv/bin/python tracker.py --serve
+```
+
+Serves http://localhost:8765 with three sections: live tenders across all
+watches sorted by closing date (with closing-soon badges), keyword-watch
+matches on record, and previously tracked tenders that are no longer listed.
+The page scrapes the portal at most every 5 minutes and auto-refreshes.
 
 `seen.json` is pre-seeded with the tenders that were live when the repo was
 created, so the first scheduled run only sends tenders published after that.
