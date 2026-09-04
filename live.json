@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-04T13:02:14+0000",
+ "generated": "2026-09-04T16:45:51+0000",
  "rows": [
   {
    "closing": "11-Sep-2026 06:15 PM",
@@ -20,20 +20,6 @@
    "opening": "18-Sep-2026 01:00 PM",
    "org_chain": "CE Tapi Irrigation Development Corporation Jalgaon||SE Dhule Irrigation Project Circle Dhule||EE Nandurbar Medium Project Division Nandurbar",
    "published": "02-Sep-2026 11:00 AM",
-   "ref_no": "E TENDER NOTICE NO.5 YEAR 2026-2027",
-   "source": "Jalgaon statewide",
-   "sources": [
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_TIDC_1333869_1",
-   "title": "Construction of Pipe Distribution Network System for Existing Left Bank Canal of Dehali Medium Project",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SwZOxGPZnr3pgH9ew6dymhQ%3D%3D"
-  },
-  {
-   "closing": "16-Sep-2026 06:15 PM",
-   "opening": "18-Sep-2026 01:00 PM",
-   "org_chain": "CE Tapi Irrigation Development Corporation Jalgaon||SE Dhule Irrigation Project Circle Dhule||EE Nandurbar Medium Project Division Nandurbar",
-   "published": "02-Sep-2026 11:00 AM",
    "ref_no": "E TENDER NOTICE NO.05/02 YEAR 2026-2027",
    "source": "Jalgaon statewide",
    "sources": [
@@ -42,6 +28,20 @@
    "tender_id": "2026_TIDC_1333973_1",
    "title": "Construction of Pipe Distribution network of Distributaries and its Minors of Right Bank Canal for Dara Medium Project",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDWpddR2IldMumyaQTIeXTQ%3D%3D"
+  },
+  {
+   "closing": "16-Sep-2026 06:15 PM",
+   "opening": "18-Sep-2026 01:00 PM",
+   "org_chain": "CE Tapi Irrigation Development Corporation Jalgaon||SE Dhule Irrigation Project Circle Dhule||EE Nandurbar Medium Project Division Nandurbar",
+   "published": "02-Sep-2026 11:00 AM",
+   "ref_no": "E TENDER NOTICE NO.5 YEAR 2026-2027",
+   "source": "Jalgaon statewide",
+   "sources": [
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_TIDC_1333869_1",
+   "title": "Construction of Pipe Distribution Network System for Existing Left Bank Canal of Dehali Medium Project",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SwZOxGPZnr3pgH9ew6dymhQ%3D%3D"
   },
   {
    "closing": "07-Sep-2026 06:00 PM",
@@ -160,20 +160,6 @@
    "opening": "14-Sep-2026 11:00 AM",
    "org_chain": "Directorate Of Municipal Administration||Municipal Administration, Jalgaon||Municipal Council Yawal",
    "published": "03-Sep-2026 10:00 AM",
-   "ref_no": "YMC/11/2026-27",
-   "source": "Jalgaon statewide",
-   "sources": [
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_DMA_1334190_1",
-   "title": "BABANAGAR AND KHIRNIPURA",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SuEjTD7DSdGKrp2uk0iZigQ%3D%3D"
-  },
-  {
-   "closing": "11-Sep-2026 06:00 PM",
-   "opening": "14-Sep-2026 11:00 AM",
-   "org_chain": "Directorate Of Municipal Administration||Municipal Administration, Jalgaon||Municipal Council Yawal",
-   "published": "03-Sep-2026 10:00 AM",
    "ref_no": "YMC/10/2026-27",
    "source": "Jalgaon statewide",
    "sources": [
@@ -182,6 +168,20 @@
    "tender_id": "2026_DMA_1334182_1",
    "title": "GAT NO 721/715",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=StztdaeECD4Ix6%2B0UhKj2DA%3D%3D"
+  },
+  {
+   "closing": "11-Sep-2026 06:00 PM",
+   "opening": "14-Sep-2026 11:00 AM",
+   "org_chain": "Directorate Of Municipal Administration||Municipal Administration, Jalgaon||Municipal Council Yawal",
+   "published": "03-Sep-2026 10:00 AM",
+   "ref_no": "YMC/11/2026-27",
+   "source": "Jalgaon statewide",
+   "sources": [
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_DMA_1334190_1",
+   "title": "BABANAGAR AND KHIRNIPURA",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SuEjTD7DSdGKrp2uk0iZigQ%3D%3D"
   },
   {
    "closing": "08-Sep-2026 06:00 PM",
@@ -409,34 +409,6 @@
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S1e23YBP6RQAMlgBnujjwlA%3D%3D"
   },
   {
-   "closing": "04-Sep-2026 06:55 PM",
-   "opening": "07-Sep-2026 11:00 AM",
-   "org_chain": "Public Works Region||Public Works Region - Aurangabad||Public Works Circle - Nanded||Public Works Division Nanded",
-   "published": "27-Aug-2026 06:00 PM",
-   "ref_no": "PWD/NANDED/2026-2027/ENo.11",
-   "source": "Amdar Nidhi / DPDC",
-   "sources": [
-    "Amdar Nidhi / DPDC"
-   ],
-   "tender_id": "2026_PWR_1332481_8",
-   "title": "CONSTRUCTION OF ANGANWADI BUILDING AT MONDHA IN N.P. AREA MUDKHED TQ. MUDKHED DIST. NANDED (UNDER MLA FUND)",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=Sp0ADuc2cQNiR3CaE91d4ig%3D%3D"
-  },
-  {
-   "closing": "04-Sep-2026 06:55 PM",
-   "opening": "07-Sep-2026 11:00 AM",
-   "org_chain": "Public Works Region||Public Works Region - Aurangabad||Public Works Circle - Nanded||Public Works Division Nanded",
-   "published": "27-Aug-2026 06:00 PM",
-   "ref_no": "PWD/NANDED/2026-2027/ENo.11",
-   "source": "Amdar Nidhi / DPDC",
-   "sources": [
-    "Amdar Nidhi / DPDC"
-   ],
-   "tender_id": "2026_PWR_1332481_7",
-   "title": "CONSTRUCTION OF ANGANWADI BUILDING AT NYAHALI IN N.P. MUDKHED TQ. MUDKHED DIST. NNANDED (UNDER MLA FUND)",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDikWf7E0WOKZaVyhFJMxmQ%3D%3D"
-  },
-  {
    "closing": "10-Sep-2026 05:00 PM",
    "opening": "11-Sep-2026 05:00 PM",
    "org_chain": "RDD-CEO-AHMEDNAGAR||AHMEDNAGAR-Dy. CEO V.P.||KARJAT||AMBI JALGAON",
@@ -502,9 +474,9 @@
    "sources": [
     "Amdar Nidhi / DPDC"
    ],
-   "tender_id": "2026_AURAN_1332352_1",
-   "title": "PIPELINE AND RCC ESR WORK, AT VILLAGE SHINDEPHAL (IN MLA FUND), TQ. SILLOD DIST. CHH. SAMBHAJINAGAR",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDmk5Yf4dwQOODVvEumX06w%3D%3D"
+   "tender_id": "2026_AURAN_1332352_2",
+   "title": "PIPELINE AND RCC ESR WORK, AT VILLAGE GHATNANDRA (IN MLA FUND), TQ. SILLOD DIST. CHH. SAMBHAJINAGAR",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SE8kfvSIS8jOtmt83sxvIPg%3D%3D"
   },
   {
    "closing": "11-Sep-2026 02:00 PM",
@@ -516,9 +488,9 @@
    "sources": [
     "Amdar Nidhi / DPDC"
    ],
-   "tender_id": "2026_AURAN_1332352_2",
-   "title": "PIPELINE AND RCC ESR WORK, AT VILLAGE GHATNANDRA (IN MLA FUND), TQ. SILLOD DIST. CHH. SAMBHAJINAGAR",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SE8kfvSIS8jOtmt83sxvIPg%3D%3D"
+   "tender_id": "2026_AURAN_1332352_1",
+   "title": "PIPELINE AND RCC ESR WORK, AT VILLAGE SHINDEPHAL (IN MLA FUND), TQ. SILLOD DIST. CHH. SAMBHAJINAGAR",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDmk5Yf4dwQOODVvEumX06w%3D%3D"
   },
   {
    "closing": "11-Sep-2026 05:00 PM",
