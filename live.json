@@ -1,5 +1,5 @@
 {
- "generated": "2026-09-06T23:10:35+0000",
+ "generated": "2026-09-07T01:00:50+0000",
  "rows": [
   {
    "closing": "11-Sep-2026 06:15 PM",
@@ -20,20 +20,6 @@
    "opening": "18-Sep-2026 01:00 PM",
    "org_chain": "CE Tapi Irrigation Development Corporation Jalgaon||SE Dhule Irrigation Project Circle Dhule||EE Nandurbar Medium Project Division Nandurbar",
    "published": "02-Sep-2026 11:00 AM",
-   "ref_no": "E TENDER NOTICE NO.5 YEAR 2026-2027",
-   "source": "Jalgaon statewide",
-   "sources": [
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_TIDC_1333869_1",
-   "title": "Construction of Pipe Distribution Network System for Existing Left Bank Canal of Dehali Medium Project",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SwZOxGPZnr3pgH9ew6dymhQ%3D%3D"
-  },
-  {
-   "closing": "16-Sep-2026 06:15 PM",
-   "opening": "18-Sep-2026 01:00 PM",
-   "org_chain": "CE Tapi Irrigation Development Corporation Jalgaon||SE Dhule Irrigation Project Circle Dhule||EE Nandurbar Medium Project Division Nandurbar",
-   "published": "02-Sep-2026 11:00 AM",
    "ref_no": "E TENDER NOTICE NO.05/02 YEAR 2026-2027",
    "source": "Jalgaon statewide",
    "sources": [
@@ -42,6 +28,20 @@
    "tender_id": "2026_TIDC_1333973_1",
    "title": "Construction of Pipe Distribution network of Distributaries and its Minors of Right Bank Canal for Dara Medium Project",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDWpddR2IldMumyaQTIeXTQ%3D%3D"
+  },
+  {
+   "closing": "16-Sep-2026 06:15 PM",
+   "opening": "18-Sep-2026 01:00 PM",
+   "org_chain": "CE Tapi Irrigation Development Corporation Jalgaon||SE Dhule Irrigation Project Circle Dhule||EE Nandurbar Medium Project Division Nandurbar",
+   "published": "02-Sep-2026 11:00 AM",
+   "ref_no": "E TENDER NOTICE NO.5 YEAR 2026-2027",
+   "source": "Jalgaon statewide",
+   "sources": [
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_TIDC_1333869_1",
+   "title": "Construction of Pipe Distribution Network System for Existing Left Bank Canal of Dehali Medium Project",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SwZOxGPZnr3pgH9ew6dymhQ%3D%3D"
   },
   {
    "closing": "07-Sep-2026 06:00 PM",
@@ -174,20 +174,6 @@
    "opening": "14-Sep-2026 11:00 AM",
    "org_chain": "Directorate Of Municipal Administration||Municipal Administration, Jalgaon||Municipal Council Yawal",
    "published": "03-Sep-2026 10:00 AM",
-   "ref_no": "YMC/10/2026-27",
-   "source": "Jalgaon statewide",
-   "sources": [
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_DMA_1334182_1",
-   "title": "GAT NO 721/715",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=StztdaeECD4Ix6%2B0UhKj2DA%3D%3D"
-  },
-  {
-   "closing": "11-Sep-2026 06:00 PM",
-   "opening": "14-Sep-2026 11:00 AM",
-   "org_chain": "Directorate Of Municipal Administration||Municipal Administration, Jalgaon||Municipal Council Yawal",
-   "published": "03-Sep-2026 10:00 AM",
    "ref_no": "YMC/11/2026-27",
    "source": "Jalgaon statewide",
    "sources": [
@@ -196,6 +182,20 @@
    "tender_id": "2026_DMA_1334190_1",
    "title": "BABANAGAR AND KHIRNIPURA",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SuEjTD7DSdGKrp2uk0iZigQ%3D%3D"
+  },
+  {
+   "closing": "11-Sep-2026 06:00 PM",
+   "opening": "14-Sep-2026 11:00 AM",
+   "org_chain": "Directorate Of Municipal Administration||Municipal Administration, Jalgaon||Municipal Council Yawal",
+   "published": "03-Sep-2026 10:00 AM",
+   "ref_no": "YMC/10/2026-27",
+   "source": "Jalgaon statewide",
+   "sources": [
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_DMA_1334182_1",
+   "title": "GAT NO 721/715",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=StztdaeECD4Ix6%2B0UhKj2DA%3D%3D"
   },
   {
    "closing": "08-Sep-2026 06:00 PM",
@@ -550,6 +550,51 @@
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SnSPvgQeQOr0nw7niNCO3Hg%3D%3D"
   },
   {
+   "closing": "11-Sep-2026 03:00 PM",
+   "opening": "12-Sep-2026 03:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||CHOPDA||GORGAWALE KH.",
+   "published": "04-Sep-2026 04:00 PM",
+   "ref_no": "JLVP/Gorgavale kh/E.T./02-2026/2027",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1335313_2",
+   "title": "Work At Village Gorgavale kh Tal Chopda Dist Jalgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SlmSBU2DgrcLydAL7oZMQlQ%3D%3D"
+  },
+  {
+   "closing": "10-Sep-2026 06:00 PM",
+   "opening": "12-Sep-2026 12:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JAMNER||PAHURPETH",
+   "published": "04-Sep-2026 04:00 PM",
+   "ref_no": "JLVP/PAHUR PETH/15th Fc/2026-27/2",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1334808_1",
+   "title": "1)PROVIDING FHTC CONNECTION AT PAHUR PETH 2)PROVIDING MESH ON WELL AT PAHUR PETH 3)PROVIDING PUMPING MACHINARY AT PAHUR PETH",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SEAXHXxE6rUMUh0TIqr%2FL%2Fw%3D%3D"
+  },
+  {
+   "closing": "11-Sep-2026 03:00 PM",
+   "opening": "12-Sep-2026 03:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||CHOPDA||GORGAWALE KH.",
+   "published": "04-Sep-2026 04:00 PM",
+   "ref_no": "JLVP/Gorgavale kh/E.T./02-2026/2027",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1335313_1",
+   "title": "Repairs of Grampanchayat Buildings, Anganwadi Buildings And Z P School Buildings At Gorgavale kh Tal Chopda Dist Jalgaon (T S 193, 195, 198)",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDqc7yVmBXUvGdBTxE4%2FmpA%3D%3D"
+  },
+  {
    "closing": "10-Sep-2026 06:00 PM",
    "opening": "12-Sep-2026 12:00 PM",
    "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JAMNER||PAHURPETH",
@@ -578,51 +623,6 @@
    "tender_id": "2026_JALGA_1335313_3",
    "title": "Repairs of Public Toilet At Gorgavale kh Tal Chopda Dist Jalgaon (T S 197)",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SbS8OpVwDnucSPUXaxqf3NQ%3D%3D"
-  },
-  {
-   "closing": "10-Sep-2026 06:00 PM",
-   "opening": "12-Sep-2026 12:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JAMNER||PAHURPETH",
-   "published": "04-Sep-2026 04:00 PM",
-   "ref_no": "JLVP/PAHUR PETH/15th Fc/2026-27/2",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1334808_1",
-   "title": "1)PROVIDING FHTC CONNECTION AT PAHUR PETH 2)PROVIDING MESH ON WELL AT PAHUR PETH 3)PROVIDING PUMPING MACHINARY AT PAHUR PETH",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SEAXHXxE6rUMUh0TIqr%2FL%2Fw%3D%3D"
-  },
-  {
-   "closing": "11-Sep-2026 03:00 PM",
-   "opening": "12-Sep-2026 03:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||CHOPDA||GORGAWALE KH.",
-   "published": "04-Sep-2026 04:00 PM",
-   "ref_no": "JLVP/Gorgavale kh/E.T./02-2026/2027",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1335313_2",
-   "title": "Work At Village Gorgavale kh Tal Chopda Dist Jalgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SlmSBU2DgrcLydAL7oZMQlQ%3D%3D"
-  },
-  {
-   "closing": "11-Sep-2026 03:00 PM",
-   "opening": "12-Sep-2026 03:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||CHOPDA||GORGAWALE KH.",
-   "published": "04-Sep-2026 04:00 PM",
-   "ref_no": "JLVP/Gorgavale kh/E.T./02-2026/2027",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1335313_1",
-   "title": "Repairs of Grampanchayat Buildings, Anganwadi Buildings And Z P School Buildings At Gorgavale kh Tal Chopda Dist Jalgaon (T S 193, 195, 198)",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SDqc7yVmBXUvGdBTxE4%2FmpA%3D%3D"
   },
   {
    "closing": "22-Sep-2026 11:00 AM",
@@ -715,21 +715,6 @@
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SaEUa6%2BlNXsHZILAUA1kTAQ%3D%3D"
   },
   {
-   "closing": "09-Sep-2026 06:00 PM",
-   "opening": "11-Sep-2026 09:00 AM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||KARANJ",
-   "published": "02-Sep-2026 03:00 PM",
-   "ref_no": "JLVP- eTender Karanj-03/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1334172_1",
-   "title": "Work under 15th Finance Commission",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S3Kp4n2xpJxPywH0%2FHqQyqw%3D%3D"
-  },
-  {
    "closing": "16-Sep-2026 06:00 PM",
    "opening": "18-Sep-2026 09:00 AM",
    "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||KARANJ",
@@ -743,6 +728,21 @@
    "tender_id": "2026_JALGA_1334169_1",
    "title": "Work under 15th Finance Commission",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SMQNv7HvdlHZxCo0HrlzErg%3D%3D"
+  },
+  {
+   "closing": "09-Sep-2026 06:00 PM",
+   "opening": "11-Sep-2026 09:00 AM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||KARANJ",
+   "published": "02-Sep-2026 03:00 PM",
+   "ref_no": "JLVP- eTender Karanj-03/2026-27",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1334172_1",
+   "title": "Work under 15th Finance Commission",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S3Kp4n2xpJxPywH0%2FHqQyqw%3D%3D"
   },
   {
    "closing": "09-Sep-2026 11:00 AM",
@@ -807,21 +807,6 @@
   {
    "closing": "07-Sep-2026 03:00 PM",
    "opening": "08-Sep-2026 03:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||VITNER",
-   "published": "31-Aug-2026 11:00 AM",
-   "ref_no": "JLVP-Vitner-01/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1332123_1",
-   "title": "VASANTRAO NAIK TANDA VASTI",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S3fNxB3k2cn6Oc%2FOb7gfxnw%3D%3D"
-  },
-  {
-   "closing": "07-Sep-2026 03:00 PM",
-   "opening": "08-Sep-2026 03:00 PM",
    "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||VASANTWADI",
    "published": "31-Aug-2026 11:00 AM",
    "ref_no": "JLVP/Vasantwadi/01-2025/26",
@@ -837,17 +822,17 @@
   {
    "closing": "07-Sep-2026 03:00 PM",
    "opening": "08-Sep-2026 03:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||CHOPDA||MOHIDE",
-   "published": "31-Aug-2026 09:00 AM",
-   "ref_no": "JLVP/Mohide/E.T./01-2026/2027",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||VITNER",
+   "published": "31-Aug-2026 11:00 AM",
+   "ref_no": "JLVP-Vitner-01/2026-27",
    "source": "ZP Jalgaon DPDC",
    "sources": [
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1331057_1",
-   "title": "Supply of Materials for Construction Work of Gram panchayat Office Building At Mohide Tal Chopda Dist Jalgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SHzhrEfo%2BuqRErbFOnrEYGg%3D%3D"
+   "tender_id": "2026_JALGA_1332123_1",
+   "title": "VASANTRAO NAIK TANDA VASTI",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S3fNxB3k2cn6Oc%2FOb7gfxnw%3D%3D"
   },
   {
    "closing": "07-Sep-2026 03:00 PM",
@@ -863,6 +848,21 @@
    "tender_id": "2026_JALGA_1333237_3",
    "title": "Constuction of C. C. Road At Lasur Tal Chopda Dist Jalgaon (T.S. 100)",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S2tZCu9zGmA%2Bd12YeSIv1PA%3D%3D"
+  },
+  {
+   "closing": "07-Sep-2026 03:00 PM",
+   "opening": "08-Sep-2026 03:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||CHOPDA||MOHIDE",
+   "published": "31-Aug-2026 09:00 AM",
+   "ref_no": "JLVP/Mohide/E.T./01-2026/2027",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1331057_1",
+   "title": "Supply of Materials for Construction Work of Gram panchayat Office Building At Mohide Tal Chopda Dist Jalgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SHzhrEfo%2BuqRErbFOnrEYGg%3D%3D"
   },
   {
    "closing": "07-Sep-2026 03:00 PM",
@@ -920,21 +920,6 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1331440_10",
-   "title": "10.\tConstruction of Sanvidhan Bhavan at Kalamsara Tal Pachora .",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SVF3QX%2FPpxecU219M0A3mag%3D%3D"
-  },
-  {
-   "closing": "10-Sep-2026 06:00 PM",
-   "opening": "15-Sep-2026 04:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
-   "published": "27-Aug-2026 03:00 PM",
-   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
    "tender_id": "2026_JALGA_1331440_13",
    "title": "13.\tConstruction of Vachanalaya with Furniture at  Takarkheda tal Jamner",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S6J1BWceGpQqNLFRKNBjglQ%3D%3D"
@@ -950,9 +935,39 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1331440_11",
-   "title": "11.\tConstruction Of Z.P. School Room At Malkheda   Tal Jamner Dist Jalgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=STHQXa%2Bf%2BuWga45vzt7JOmA%3D%3D"
+   "tender_id": "2026_JALGA_1331440_10",
+   "title": "10.\tConstruction of Sanvidhan Bhavan at Kalamsara Tal Pachora .",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SVF3QX%2FPpxecU219M0A3mag%3D%3D"
+  },
+  {
+   "closing": "10-Sep-2026 06:00 PM",
+   "opening": "15-Sep-2026 04:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
+   "published": "27-Aug-2026 03:00 PM",
+   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1331440_8",
+   "title": "8.\tSTBT to Naiknager Join  Road VR_128   in km 0/00  to 1/00     Tal -  Chalisgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=Si7%2FtrBDJGNNL13amO4UuAw%3D%3D"
+  },
+  {
+   "closing": "10-Sep-2026 06:00 PM",
+   "opening": "15-Sep-2026 04:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
+   "published": "27-Aug-2026 03:00 PM",
+   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1331440_9",
+   "title": "9.\tConstruction of Sanvidhan Bhavan at  LoharaTal Pachora .",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=Sn3s%2Fkc0SVSRbKnHAXhp%2BsA%3D%3D"
   },
   {
    "closing": "10-Sep-2026 06:00 PM",
@@ -1010,6 +1025,51 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
+   "tender_id": "2026_JALGA_1331440_7",
+   "title": "7.\tProviding  Internal and Outdoor Electrification to Primary Health Centre Staff Qtrs. Type II and III Building At  Shindad Tal Pachora  Dist  Jalgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SkD5x4jNTMSWFNUsEzovBjA%3D%3D"
+  },
+  {
+   "closing": "10-Sep-2026 06:00 PM",
+   "opening": "15-Sep-2026 04:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
+   "published": "27-Aug-2026 03:00 PM",
+   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1331440_11",
+   "title": "11.\tConstruction Of Z.P. School Room At Malkheda   Tal Jamner Dist Jalgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=STHQXa%2Bf%2BuWga45vzt7JOmA%3D%3D"
+  },
+  {
+   "closing": "10-Sep-2026 06:00 PM",
+   "opening": "15-Sep-2026 04:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
+   "published": "27-Aug-2026 03:00 PM",
+   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1331440_12",
+   "title": "12.\tConstruction Of Z.P. School 2 Room At_ Savatkheda Tal Jamner",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=ShCkNBXkS1o4t35PCycgsTQ%3D%3D"
+  },
+  {
+   "closing": "10-Sep-2026 06:00 PM",
+   "opening": "15-Sep-2026 04:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
+   "published": "27-Aug-2026 03:00 PM",
+   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
    "tender_id": "2026_JALGA_1331440_1",
    "title": "1.\tImprovement_to_Shri Ram Mandir Premices At-Asoda,Tal_Jalgaon_Dist_ Jalgaon.",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SE5W2UOKKycM1uhT2g5TxFA%3D%3D"
@@ -1045,66 +1105,6 @@
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SIAHBSnP3DJKj%2B60cjGp%2Byw%3D%3D"
   },
   {
-   "closing": "10-Sep-2026 06:00 PM",
-   "opening": "15-Sep-2026 04:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
-   "published": "27-Aug-2026 03:00 PM",
-   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1331440_12",
-   "title": "12.\tConstruction Of Z.P. School 2 Room At_ Savatkheda Tal Jamner",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=ShCkNBXkS1o4t35PCycgsTQ%3D%3D"
-  },
-  {
-   "closing": "10-Sep-2026 06:00 PM",
-   "opening": "15-Sep-2026 04:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
-   "published": "27-Aug-2026 03:00 PM",
-   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1331440_7",
-   "title": "7.\tProviding  Internal and Outdoor Electrification to Primary Health Centre Staff Qtrs. Type II and III Building At  Shindad Tal Pachora  Dist  Jalgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SkD5x4jNTMSWFNUsEzovBjA%3D%3D"
-  },
-  {
-   "closing": "10-Sep-2026 06:00 PM",
-   "opening": "15-Sep-2026 04:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
-   "published": "27-Aug-2026 03:00 PM",
-   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1331440_8",
-   "title": "8.\tSTBT to Naiknager Join  Road VR_128   in km 0/00  to 1/00     Tal -  Chalisgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=Si7%2FtrBDJGNNL13amO4UuAw%3D%3D"
-  },
-  {
-   "closing": "10-Sep-2026 06:00 PM",
-   "opening": "15-Sep-2026 04:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
-   "published": "27-Aug-2026 03:00 PM",
-   "ref_no": "ZPJL/Works/e.TenderNotice No.17/2026-27",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1331440_9",
-   "title": "9.\tConstruction of Sanvidhan Bhavan at  LoharaTal Pachora .",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=Sn3s%2Fkc0SVSRbKnHAXhp%2BsA%3D%3D"
-  },
-  {
    "closing": "08-Sep-2026 06:00 PM",
    "opening": "10-Sep-2026 09:00 AM",
    "org_chain": "RDD-CEO-JALGAON||JALGAON-Dy. CEO V.P.||JALGAON||AMODE BK",
@@ -1135,21 +1135,6 @@
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SRciaTEK1n5qAuQEb0nCqtg%3D%3D"
   },
   {
-   "closing": "11-Sep-2026 06:00 PM",
-   "opening": "15-Sep-2026 04:00 PM",
-   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
-   "published": "21-Aug-2026 03:00 PM",
-   "ref_no": "ZPJL/Works/e.TenderNotice No.39/2024-25",
-   "source": "ZP Jalgaon DPDC",
-   "sources": [
-    "ZP Jalgaon DPDC",
-    "Jalgaon statewide"
-   ],
-   "tender_id": "2026_JALGA_1330688_1",
-   "title": "Construction of Village Panchayat Office at Post Chamgaon Tal Dharangaon Dist Jalgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SjXsWmDtaZUwAujlSmtmklQ%3D%3D"
-  },
-  {
    "closing": "15-Sep-2026 06:00 PM",
    "opening": "17-Sep-2026 04:00 PM",
    "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
@@ -1163,6 +1148,21 @@
    "tender_id": "2026_JALGA_1329430_11",
    "title": "11 Construction Of Gymkhana Building _Vyayamshala_ At _ Hanumantkhrde_Tal _Parola.",
    "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SYln447WjCEyV0RtwLRI%2FqQ%3D%3D"
+  },
+  {
+   "closing": "11-Sep-2026 06:00 PM",
+   "opening": "15-Sep-2026 04:00 PM",
+   "org_chain": "RDD-CEO-JALGAON||JALGAON-WORKS DIV.",
+   "published": "21-Aug-2026 03:00 PM",
+   "ref_no": "ZPJL/Works/e.TenderNotice No.39/2024-25",
+   "source": "ZP Jalgaon DPDC",
+   "sources": [
+    "ZP Jalgaon DPDC",
+    "Jalgaon statewide"
+   ],
+   "tender_id": "2026_JALGA_1330688_1",
+   "title": "Construction of Village Panchayat Office at Post Chamgaon Tal Dharangaon Dist Jalgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SjXsWmDtaZUwAujlSmtmklQ%3D%3D"
   },
   {
    "closing": "15-Sep-2026 06:00 PM",
@@ -1205,9 +1205,9 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1329430_9",
-   "title": "9 Construction of Sabhamandap for Govt.Aadivasi Boys Hostel Premices At_BambhoriP.C.Tal_ Dharangaon_ Dist_ Jalgaon.",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SR%2B%2B%2BrZC0WnJZYnFjuJdcog%3D%3D"
+   "tender_id": "2026_JALGA_1329430_10",
+   "title": "10 CONSTRUCTING  SABHAMANDAP  AT_ BODARDE _ Mudi   TAL _ AMALNER  DIST_JALGAON",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S5V5mmb1HhPfNTtybSXvAJg%3D%3D"
   },
   {
    "closing": "15-Sep-2026 06:00 PM",
@@ -1220,9 +1220,9 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1329430_10",
-   "title": "10 CONSTRUCTING  SABHAMANDAP  AT_ BODARDE _ Mudi   TAL _ AMALNER  DIST_JALGAON",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S5V5mmb1HhPfNTtybSXvAJg%3D%3D"
+   "tender_id": "2026_JALGA_1329430_9",
+   "title": "9 Construction of Sabhamandap for Govt.Aadivasi Boys Hostel Premices At_BambhoriP.C.Tal_ Dharangaon_ Dist_ Jalgaon.",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SR%2B%2B%2BrZC0WnJZYnFjuJdcog%3D%3D"
   },
   {
    "closing": "09-Sep-2026 06:00 PM",
@@ -1250,9 +1250,9 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1310800_12",
-   "title": "12.\tConstructing New Gram Panchayat Building At HIWARKHEDE TANDA ,Tal.Parola, Dist. Jalgaon.",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S8sIDzfyN20YIzJsfLu%2BQRw%3D%3D"
+   "tender_id": "2026_JALGA_1310800_3",
+   "title": "Construction Of Village Panchayat Building At Post   Kothali  Tal  Bhadagav Dist  Jalgaon",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SgZ7fa%2FVhfU8e95yA8iBymg%3D%3D"
   },
   {
    "closing": "09-Sep-2026 06:00 PM",
@@ -1265,9 +1265,9 @@
     "ZP Jalgaon DPDC",
     "Jalgaon statewide"
    ],
-   "tender_id": "2026_JALGA_1310800_3",
-   "title": "Construction Of Village Panchayat Building At Post   Kothali  Tal  Bhadagav Dist  Jalgaon",
-   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=SgZ7fa%2FVhfU8e95yA8iBymg%3D%3D"
+   "tender_id": "2026_JALGA_1310800_12",
+   "title": "12.\tConstructing New Gram Panchayat Building At HIWARKHEDE TANDA ,Tal.Parola, Dist. Jalgaon.",
+   "url": "https://mahatenders.gov.in/nicgep/app?component=%24DirectLink&page=FrontEndViewTender&service=direct&session=T&sp=S8sIDzfyN20YIzJsfLu%2BQRw%3D%3D"
   },
   {
    "closing": "10-Sep-2026 05:30 PM",
