@@ -68,6 +68,30 @@ scope).
    Marathi pipeline fails, the English PDF still goes out and the error is
    logged.
 
+## Statewide pipeline (canonical store + analytics)
+
+Beyond the single-file tracker, `pipeline/` turns the scraped state into a
+canonical relational store and analytics. It is config-driven
+(`sources/registry.yaml`), backend-neutral (local SQLite by default; Supabase
+/ Postgres pluggable, see `docs/BLOCKERS.md`), and keeps the existing MJP
+tracker and dashboard working unchanged.
+
+```bash
+.venv/bin/pip install -r requirements-pipeline.txt   # optional: rapidfuzz, pyyaml
+.venv/bin/python -m pipeline init-db
+.venv/bin/python -m pipeline ingest        # tracker state -> canonical store
+.venv/bin/python -m pipeline analytics top
+.venv/bin/python -m pipeline serve-api     # read-only JSON analytics API
+```
+
+Modules: `store` (SQLite, canonical schema in `pipeline/schema.sql`),
+`adapters/mahatenders` (Tier 1, reuses the tracker; Tier 2/3 portals registered
+and planned), `dedupe` (cross-portal), `entities` (contractor resolution,
+auto-merge >=95 / review 85..95), `analytics`, `backfill` (resumable), `api`.
+Tests: `.venv/bin/python -m pytest tests/ --cov=pipeline`. See
+`docs/RUNBOOK.md`, `docs/ASSUMPTIONS.md`, `docs/BLOCKERS.md`,
+`docs/COMPLIANCE.md`, and `docs/portals/`.
+
 ## Setup
 
 Repository secrets read by `.github/workflows/tracker.yml`. Configure email,

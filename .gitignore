@@ -6,3 +6,5 @@ out/
 .vercel
 .env*
 results_raw/
+
+data/

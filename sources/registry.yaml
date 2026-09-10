@@ -1,0 +1,40 @@
+# Source registry: one entry per portal. Adapters live in pipeline/adapters/.
+# tier 1 = state e-procurement, tier 2 = parastatals/municipal, tier 3 =
+# goods/services & central agencies (marked funding_level: central).
+# status: implemented | planned. Only implemented adapters are ingested.
+
+sources:
+  - key: mahatenders
+    name: Maharashtra e-Procurement (NIC GePNIC)
+    tier: 1
+    base_url: https://mahatenders.gov.in
+    adapter: pipeline.adapters.mahatenders
+    engine: requests
+    funding_level: state
+    status: implemented
+    notes: >
+      All organisations. Live + corrigenda via the captcha-free
+      Tenders-by-Organisation listing; awards/AOC via the human-in-the-loop
+      keyword import. See docs/portals/mahatenders.md.
+
+  # --- Tier 2: parastatals & municipal corporations (planned) ---
+  - {key: msedcl,  name: MSEDCL e-Tender,        tier: 2, base_url: https://etender.mahadiscom.in, engine: playwright, funding_level: state, status: planned}
+  - {key: msetcl,  name: MSETCL,                 tier: 2, engine: playwright, funding_level: state, status: planned}
+  - {key: mahagenco, name: MahaGenco,            tier: 2, engine: playwright, funding_level: state, status: planned}
+  - {key: mmrda,   name: MMRDA,                  tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: bmc,     name: BMC (MCGM),             tier: 2, base_url: https://portal.mcgm.gov.in, engine: playwright, funding_level: local, status: planned}
+  - {key: cidco,   name: CIDCO,                  tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: msrdc,   name: MSRDC,                  tier: 2, engine: playwright, funding_level: state, status: planned}
+  - {key: mahametro, name: MahaMetro,            tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: midc,    name: MIDC,                   tier: 2, engine: playwright, funding_level: state, status: planned}
+  - {key: pmc,     name: Pune Municipal Corp,    tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: pcmc,    name: Pimpri-Chinchwad MC,    tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: nmc,     name: Nagpur Municipal Corp,  tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: nashik_mc, name: Nashik Municipal Corp, tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: tmc,     name: Thane Municipal Corp,   tier: 2, engine: playwright, funding_level: local, status: planned}
+  - {key: kdmc,    name: Kalyan-Dombivli MC,     tier: 2, engine: playwright, funding_level: local, status: planned}
+
+  # --- Tier 3: goods/services & central agencies in Maharashtra (planned) ---
+  - {key: gem,     name: GeM (Maharashtra buyers), tier: 3, base_url: https://gem.gov.in, engine: playwright, funding_level: central, status: planned}
+  - {key: cppp,    name: CPPP eProcure (MH filter), tier: 3, base_url: https://eprocure.gov.in, engine: requests, funding_level: central, status: planned}
+  - {key: ireps,   name: IREPS (Central & Western Railway), tier: 3, base_url: https://ireps.gov.in, engine: playwright, funding_level: central, status: planned}
