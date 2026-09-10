@@ -43,14 +43,24 @@ def unlock():
 
 @app.post("/unlock")
 def unlock_post():
-    result, error = tracker.unlock_submit(request.form.get("captcha", ""))
+    keyword = request.form.get("keyword", "")
+    result, error = tracker.unlock_submit(
+        request.form.get("captcha", ""), keyword,
+        request.form.get("tender_id", ""))
     if error:
-        html = tracker.unlock_page_html(error=error)
+        html = tracker.unlock_page_html(error=error, keyword=keyword or "jalgaon")
+    elif result.get("mode") == "started":
+        html = tracker.UNLOCK_STARTED_PAGE.format(
+            total=result["total"], keyword=tracker.xml_escape(result["keyword"]))
     else:
-        awards, fetched = result
         html = tracker.UNLOCK_RESULT_PAGE.format(
-            fetched=fetched, count=len(awards))
+            fetched=result["fetched"], count=result["count"])
     return Response(html, mimetype="text/html; charset=utf-8")
+
+
+@app.get("/import-status")
+def import_status():
+    return jsonify(tracker.import_status())
 
 
 @app.get("/pdf/<tid>/<lang>")

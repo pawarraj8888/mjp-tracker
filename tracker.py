@@ -1204,10 +1204,19 @@ def cache_tender_details(tid, details):
 
 
 def parse_portal_datetime(text):
-    try:
-        return datetime.strptime(text.strip(), "%d-%b-%Y %I:%M %p")
-    except (ValueError, AttributeError):
+    """Portal timestamps are '%d-%b-%Y %I:%M %p' on tender pages, but award /
+    result pages often carry a date only. Try the full form first, then
+    date-only fallbacks, so contract dates still sort."""
+    text = (text or "").strip()
+    if not text:
         return None
+    for fmt in ("%d-%b-%Y %I:%M %p", "%d-%b-%Y %H:%M",
+                "%d-%b-%Y", "%d-%m-%Y", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+    return None
 
 
 def tender_status(closing_text, is_live, now):
@@ -1513,6 +1522,303 @@ def dashboard_data():
 
 
 # ---------------------------------------------------------------------------
+# Contractor profiles (who is winning the contracts)
+#
+# Built entirely from awards.json, which the human-in-the-loop results
+# import (/unlock) populates. Live tender pages never name bidders, so a
+# contractor only appears here once the results of a tender it won have been
+# imported. Every award page is also dumped raw (results_raw/), so the
+# extraction below can be refined later without another captcha.
+# ---------------------------------------------------------------------------
+
+ENRICHMENT_FILE = ROOT / "enrichment.json"
+
+# Detail-page captions that carry the winning bidder / contract facts on the
+# GePNIC "Award of Contract" (AOC) pages. Matched case-insensitively, exact
+# caption first, then a loose "contains" pass.
+BIDDER_NAME_KEYS = [
+    "Name of the Selected Bidder", "Selected Bidder Name", "Selected Bidder",
+    "Name of Selected Bidder", "Awarded Bidder", "Successful Bidder",
+    "Name of the Contractor", "Contractor Name", "Name of Contractor",
+    "Bidder Name", "L1 Bidder", "Awarded to", "Name of Bidder",
+]
+AWARD_VALUE_KEYS = [
+    "Awarded Value in ₹", "Contract Value in ₹", "Awarded Value",
+    "Contract Value", "Contract Amount", "Value of Contract",
+    "Awarded Price", "Contract Price",
+]
+CONTRACT_DATE_KEYS = [
+    "Contract Date", "Award Date", "Date of Award", "AOC Date",
+    "Contract Award Date", "Date of Contract",
+]
+_AWARDED_STATUS_RE = re.compile(
+    r"award|accept|selected|successful|\bl-?1\b|\bl1\b", re.I)
+_BIDDER_HEAD_RE = re.compile(
+    r"bidder|company|firm|agency|contractor|vendor|name of", re.I)
+_STATUS_HEAD_RE = re.compile(r"status|rank|result|remark|position", re.I)
+_VALUE_HEAD_RE = re.compile(r"value|amount|price|quoted", re.I)
+
+
+def _first_pair(pairs, keys):
+    """First non-empty value for any caption in keys, exact match then loose."""
+    low = {k.strip().casefold(): v.strip()
+           for k, v in pairs.items() if v and v.strip()}
+    for k in keys:
+        v = low.get(k.casefold())
+        if v:
+            return v
+    for k in keys:
+        kc = k.casefold()
+        for pk, pv in low.items():
+            if kc in pk:
+                return pv
+    return ""
+
+
+def _cells(tr):
+    return [c.get_text(" ", strip=True) for c in tr.find_all(["td", "th"])]
+
+
+def parse_bidder_tables(soup):
+    """Pull the bidder list off a GePNIC AOC / result page. Returns
+    (bidders, awarded_name) where bidders is a list of {name, status, value}.
+
+    GePNIC uses deeply nested table layout, so the header row is located by
+    finding a row of short label cells that actually contains a 'Bidder Name'
+    (or company/agency) column, ignoring the concatenated outer wrapper rows.
+    The data rows are then read from that same table. On an 'Awarded Bids
+    List' every listed bidder is a winner, so the first data row is the
+    awarded contractor."""
+    header_row = None
+    name_idx = value_idx = status_idx = None
+    for tr in soup.find_all("tr"):
+        cells = _cells(tr)
+        # Real header cells are short labels, never the whole-page blob that
+        # the nested wrapper <tr>s stringify to.
+        if not cells or len(cells) < 2 or any(len(c) > 40 for c in cells):
+            continue
+        low = [c.casefold() for c in cells]
+        idx = next((i for i, c in enumerate(low)
+                    if c in ("bidder name", "company name", "name of bidder",
+                             "name of the bidder", "agency name", "firm name",
+                             "contractor name")), None)
+        if idx is None:
+            continue
+        name_idx = idx
+        value_idx = next((i for i, c in enumerate(low)
+                          if "awarded value" in c or "bid value" in c
+                          or c in ("value", "amount")), None)
+        status_idx = next((i for i, c in enumerate(low)
+                           if c in ("status", "result", "rank", "remarks")), None)
+        header_row = tr
+        break
+    if header_row is None:
+        return [], ""
+
+    table = header_row.find_parent("table") or header_row
+    bidders, awarded, started = [], "", False
+    for tr in table.find_all("tr"):
+        if tr is header_row:
+            started = True
+            continue
+        if not started:
+            continue
+        cells = _cells(tr)
+        if len(cells) <= name_idx:
+            continue
+        name = cells[name_idx].strip()
+        if not name or not re.search(r"[A-Za-z]", name):
+            continue
+        if name.casefold() in ("bidder name", "company name", "s.no", "total",
+                               "name of bidder", "contractor name"):
+            continue
+        if len(name) > 120:  # a merged/blob cell slipped through
+            continue
+        status = cells[status_idx].strip() if (
+            status_idx is not None and len(cells) > status_idx) else ""
+        value = cells[value_idx].strip() if (
+            value_idx is not None and len(cells) > value_idx) else ""
+        bidders.append({"name": name, "status": status, "value": value})
+        if status and _AWARDED_STATUS_RE.search(status) and not awarded:
+            awarded = name
+    # On the "Awarded Bids List" table there is no status column and every row
+    # is a winner, so fall back to the first listed bidder.
+    if not awarded and bidders:
+        awarded = bidders[0]["name"]
+    return bidders, awarded
+
+
+def extract_award_info(pairs, html):
+    """Structured award facts from one imported result page: the winning
+    contractor, the awarded value, the contract date and every bidder seen."""
+    info = {"contractor": "", "awarded_value": 0, "contract_date": "",
+            "bidders": []}
+    info["contractor"] = _first_pair(pairs, BIDDER_NAME_KEYS)
+    info["awarded_value"] = parse_inr(_first_pair(pairs, AWARD_VALUE_KEYS))
+    info["contract_date"] = _first_pair(pairs, CONTRACT_DATE_KEYS)
+    if html:
+        try:
+            bidders, awarded = parse_bidder_tables(BeautifulSoup(html, "lxml"))
+        except Exception as exc:
+            log.warning("Bidder table parse failed: %s", exc)
+            bidders, awarded = [], ""
+        info["bidders"] = bidders
+        if not info["contractor"]:
+            info["contractor"] = awarded or (
+                bidders[0]["name"] if len(bidders) == 1 else "")
+        if not info["awarded_value"]:
+            for b in bidders:
+                if b["name"] == info["contractor"] and b.get("value"):
+                    info["awarded_value"] = parse_inr(b["value"])
+                    break
+    return info
+
+
+_CONTRACTOR_LEAD_RE = re.compile(
+    r"^(m\s*/?\s*s\.?|messrs\.?|shri\.?|sri\.?|smt\.?|mr\.?|mrs\.?)\s+", re.I)
+
+
+def display_contractor(name):
+    """The contractor name exactly as the portal shows it, only tidied for
+    whitespace and punctuation. Used for what the dashboard displays."""
+    return re.sub(r"\s+", " ", sanitize(name or "")).strip(" .,-")
+
+
+def normalize_contractor(name):
+    """Name with honorifics and M/S dropped, for building the grouping key."""
+    s = display_contractor(name)
+    s = _CONTRACTOR_LEAD_RE.sub("", s)
+    return s.strip(" .,-")
+
+
+def contractor_key(name):
+    """Grouping key that folds spelling and legal-suffix variants together
+    ('M/s ABC Constructions Pvt. Ltd.' and 'ABC Constructions' -> the same
+    key) while keeping genuinely different firms apart."""
+    s = normalize_contractor(name).casefold()
+    s = re.sub(r"[.,&'\"()/\\-]", " ", s)
+    s = re.sub(r"\b(pvt|private|ltd|limited|co|company|corporation|corp)\b",
+               " ", s)
+    s = re.sub(r"\s+", " ", s).strip()
+    return s or normalize_contractor(name).casefold()
+
+
+def load_enrichment():
+    """Externally researched public info per contractor (enrichment.json),
+    keyed by contractor_key. Authored offline; the server only reads it."""
+    return _load_state(ENRICHMENT_FILE, {})
+
+
+def _award_of(entry):
+    ai = entry.get("award")
+    if not ai or not ai.get("contractor"):
+        ai = extract_award_info(entry.get("fields", {}), "")
+    return ai
+
+
+def contractors_data():
+    """Aggregate awards.json into one profile per contractor."""
+    awards = load_awards()
+    details_all = load_details_cache()
+    enrich = load_enrichment()
+    groups = {}
+
+    for tid, entry in awards.items():
+        pairs = entry.get("fields", {})
+        detail = details_all.get(tid, {})
+        ai = _award_of(entry)
+        name = display_contractor(ai.get("contractor", ""))
+        if not name:
+            continue
+        key = contractor_key(name)
+        value = ai.get("awarded_value") or parse_inr(
+            detail.get("Tender Value in ₹") or pairs.get("Tender Value in ₹", ""))
+        org_chain = detail.get("Organisation Chain") or \
+            pairs.get("Organisation Chain") or entry.get("org", "")
+        dept = publisher(org_chain) or entry.get("org", "")
+        title = detail.get("Title") or pairs.get("Title", "")
+        city = derive_city(detail.get("Location") or pairs.get("Location"),
+                           org_chain, title)
+        sector = (detail.get("Product Category") or pairs.get("Product Category")
+                  or detail.get("Tender Category") or pairs.get("Tender Category", ""))
+        cdate = ai.get("contract_date") or detail.get("Bid Opening Date") \
+            or pairs.get("Published Date", "")
+
+        g = groups.setdefault(key, {
+            "key": key, "names": {}, "contracts": [], "value": 0,
+            "departments": {}, "cities": {}, "sectors": {},
+            "competitors": {}, "dates": []})
+        g["names"][name] = g["names"].get(name, 0) + 1
+        g["value"] += value
+        if dept:
+            g["departments"][dept] = g["departments"].get(dept, 0) + 1
+        if city:
+            g["cities"][city] = g["cities"].get(city, 0) + 1
+        if sector:
+            g["sectors"][sector] = g["sectors"].get(sector, 0) + 1
+        if cdate:
+            g["dates"].append(cdate)
+        for b in ai.get("bidders", []):
+            bname = display_contractor(b.get("name", ""))
+            if bname and contractor_key(bname) != key:
+                ck = contractor_key(bname)
+                comp = g["competitors"].setdefault(ck, {"name": bname, "count": 0})
+                comp["count"] += 1
+        g["contracts"].append({
+            "id": tid, "title": title, "org": dept, "city": city,
+            "sector": sector, "value": value, "valueFmt": format_inr(value),
+            "date": cdate, "dateTs": portal_ts(cdate),
+        })
+
+    contractors = []
+    for key, g in groups.items():
+        name = max(g["names"], key=lambda n: (g["names"][n], len(n)))
+        contracts = sorted(g["contracts"], key=lambda c: c["dateTs"], reverse=True)
+        date_ts = [portal_ts(d) for d in g["dates"] if portal_ts(d)]
+        competitors = sorted(g["competitors"].values(),
+                             key=lambda c: c["count"], reverse=True)
+        contractors.append({
+            "key": key,
+            "name": name,
+            "count": len(contracts),
+            "value": g["value"],
+            "valueFmt": format_inr(g["value"]),
+            "avgFmt": format_inr(g["value"] // len(contracts)) if contracts else "",
+            "departments": sorted(g["departments"], key=lambda d: -g["departments"][d]),
+            "cities": sorted(g["cities"], key=lambda c: -g["cities"][c]),
+            "sectors": sorted(g["sectors"], key=lambda s: -g["sectors"][s]),
+            "competitors": competitors,
+            "contracts": contracts,
+            "lastDate": max(g["dates"], key=portal_ts) if g["dates"] else "",
+            "lastTs": max(date_ts) if date_ts else 0,
+            "enrichment": enrich.get(key),
+        })
+
+    contractors.sort(key=lambda c: (c["value"], c["count"]), reverse=True)
+    total_value = sum(c["value"] for c in contractors)
+    depts = sorted({d for c in contractors for d in c["departments"]},
+                   key=str.casefold)
+    cities = sorted({ct for c in contractors for ct in c["cities"]},
+                    key=str.casefold)
+    sectors = sorted({s for c in contractors for s in c["sectors"]},
+                     key=str.casefold)
+    return {
+        "stats": {
+            "contractors": len(contractors),
+            "contracts": sum(c["count"] for c in contractors),
+            "value": total_value,
+            "valueFmt": format_inr(total_value),
+            "enriched": sum(1 for c in contractors
+                            if c["enrichment"] and c["enrichment"].get("verified")),
+        },
+        "departments": depts,
+        "cities": cities,
+        "sectors": sectors,
+        "contractors": contractors,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Results of Tenders import (human in the loop captcha unlock)
 #
 # The portal's Results of Tenders section is captcha protected. The captcha
@@ -1597,8 +1903,12 @@ img.cap {{ border: 1px solid #DBEAFE; border-radius: 8px; margin: 10px 0;
  display: block; }}
 input[type=text] {{ font: inherit; padding: 9px 12px; border: 1px solid
  #DBEAFE; border-radius: 8px; width: 220px; }}
+label {{ display: block; font-size: 12px; color: #475569; margin: 12px 0 4px;
+ font-weight: 500; }}
+.row {{ display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
+ margin-top: 6px; }}
 button {{ font: inherit; background: #1E40AF; color: #fff; border: none;
- border-radius: 8px; padding: 10px 18px; cursor: pointer; margin-left: 8px; }}
+ border-radius: 8px; padding: 10px 18px; cursor: pointer; }}
 button:hover {{ background: #17346C; }}
 .err {{ background: #FEE2E2; color: #B91C1C; padding: 9px 12px;
  border-radius: 8px; font-size: 13px; }}
@@ -1607,25 +1917,35 @@ button:hover {{ background: #17346C; }}
 a {{ color: #1E40AF; }}
 </style></head><body><main>
 <h1>Import Results of Tenders</h1>
-<p>The portal protects its results section with a captcha. Type the code
-below exactly as shown; the import then crawls award information for the
-watched and Jalgaon related organisations in this one authorized session.
-This can take a few minutes.</p>
+<p>The portal's results section needs a search term plus a captcha. Enter a
+keyword (at least 4 letters, e.g. <b>jalgaon</b>, <b>jeevan</b>,
+<b>water supply</b>) or an exact tender id, type the captcha code shown, and
+the import crawls the award pages for every matching published result in this
+one authorized session. Run it again with other keywords to widen coverage.</p>
 {error}
 <form method="post" action="/unlock">
+ <label for="kw">Search keyword (title or work), at least 4 letters</label>
+ <input type="text" id="kw" name="keyword" value="{keyword}" autofocus
+  autocomplete="off" placeholder="e.g. jalgaon">
+ <label for="tid">or exact Tender ID (optional)</label>
+ <input type="text" id="tid" name="tender_id" autocomplete="off"
+  placeholder="2026_XXXXX_000000_0">
  <img class="cap" src="{captcha}" alt="Portal captcha image">
- <input type="text" name="captcha" autofocus autocomplete="off"
-  aria-label="Captcha code" placeholder="Captcha code">
- <button type="submit">Unlock and import</button>
+ <div class="row">
+  <input type="text" name="captcha" autocomplete="off"
+   aria-label="Captcha code" placeholder="Captcha code">
+  <button type="submit">Unlock and import</button>
+ </div>
 </form>
 <p><a href="/">Back to dashboard</a></p>
 </main></body></html>"""
 
 
-def unlock_page_html(error=""):
+def unlock_page_html(error="", keyword="jalgaon"):
     captcha = unlock_form_state()
     err = '<p class="err">%s</p>' % xml_escape(error) if error else ""
-    return UNLOCK_PAGE.format(error=err, captcha=xml_escape(captcha))
+    return UNLOCK_PAGE.format(error=err, captcha=xml_escape(captcha),
+                             keyword=xml_escape(keyword))
 
 
 def _org_of_interest(name):
@@ -1648,89 +1968,364 @@ def _extract_pairs(soup):
     return pairs
 
 
-def crawl_results(session, root_html):
-    """Walk the unlocked results listing: org drill-down pages for the
-    organisations of interest, then every tender link on them, collecting
-    all caption/field pairs. Every fetched page is dumped raw so parsing
-    can be improved later without another captcha."""
-    _dump_page("results_root", root_html)
+RESULT_FETCH_CAP = 400
+
+
+def _active_error(html):
+    """The portal's currently-shown error message, from the alert box it
+    renders server-side (table.message_box / td.alerttext). Returns '' when
+    no error is active. This is the reliable signal; the page's inline
+    JavaScript also contains captcha alert() strings that must be ignored."""
+    soup = BeautifulSoup(html, "lxml")
+    box = soup.find(class_="alerttext") or soup.find(class_="message_box")
+    if box:
+        return box.get_text(" ", strip=True)
+    return ""
+
+
+LINKS_PER_ROW = 2  # per results row: the Title detail link + the first AOC link
+_result_seq = [0]
+
+
+def _results_rows(html):
+    """Parse a Results-of-Tenders search table into one dict per matching
+    tender: {title, org, links}. The table columns are S.No, AOC Date,
+    e-Published Date, Title (DirectLink), Organisation Chain, AOC (DirectLinks).
+    The Title link opens the full tender detail; the AOC link opens the award
+    detail with the winning bidder."""
+    soup = BeautifulSoup(html, "lxml")
+    dl = soup.find("a", href=re.compile("DirectLink"))
+    if dl is None:
+        return []
+    table = dl.find_parent("table")
+    if table is None:
+        return []
+    rows = []
+    for tr in table.find_all("tr"):
+        cells = tr.find_all("td")
+        if len(cells) < 4:
+            continue
+        if not cells[0].get_text(strip=True).rstrip(".").isdigit():
+            continue  # skip header / spacer rows
+        title, org, links = "", "", []
+        for c in cells:
+            for a in c.find_all("a", href=True):
+                if "directlink" in a["href"].lower():
+                    full = (a["href"] if a["href"].startswith("http")
+                            else BASE_URL + a["href"])
+                    links.append(full)
+                    txt = a.get_text(" ", strip=True).strip("[] ")
+                    if txt and not title:
+                        title = txt
+            ctext = c.get_text(" ", strip=True)
+            if "||" in ctext and not org:
+                org = ctext
+        if links:
+            rows.append({"title": title, "org": org, "links": links})
+    return rows
+
+
+def _merge_award(old, new):
+    """Combine award facts from two pages of the same tender, preferring a
+    found contractor and value and unioning the bidder list."""
+    out = dict(old or {})
+    for k in ("contractor", "contract_date"):
+        if new.get(k) and not out.get(k):
+            out[k] = new[k]
+    if new.get("awarded_value") and not out.get("awarded_value"):
+        out["awarded_value"] = new["awarded_value"]
+    bidders = {b["name"]: b for b in (out.get("bidders") or [])}
+    for b in new.get("bidders") or []:
+        bidders.setdefault(b["name"], b)
+    out["bidders"] = list(bidders.values())
+    out.setdefault("contractor", "")
+    out.setdefault("awarded_value", 0)
+    out.setdefault("contract_date", "")
+    return out
+
+
+def _store_result_page(session, url, awards, org_name="", title_hint="",
+                       tid_hint=""):
+    """Fetch one result page, parse it, and merge it into the award entry for
+    its tender. Non-HTML responses (AOC PDFs) are skipped. Returns the tender
+    id touched, or '' when the page could not be attached to a tender."""
+    try:
+        resp = portal_get(session, url)
+    except Exception as exc:
+        log.warning("Result page fetch failed: %s", exc)
+        return ""
+    time.sleep(0.25)
+    if "html" not in (resp.headers.get("Content-Type", "").lower()):
+        return tid_hint  # e.g. an AOC PDF; nothing to parse, keep the hint
+    page = resp.text
+    pairs = _extract_pairs(BeautifulSoup(page, "lxml"))
+    tid = pairs.get("Tender ID") or ""
+    if not TENDER_ID_RE.match(tid):
+        m = TENDER_ID_RE.search(
+            " ".join(re.findall(r"\d{4}_\w+_\d+_\d+", page)[:1]))
+        tid = m.group(0) if m else (tid_hint or "")
+    if not TENDER_ID_RE.match(tid or ""):
+        _result_seq[0] += 1
+        _dump_page("unparsed_%d" % _result_seq[0], page)
+        return ""
+    _result_seq[0] += 1
+    _dump_page("tender_%s_%d" % (tid, _result_seq[0]), page)
+    entry = awards.get(tid, {"fields": {}})
+    entry["fields"].update(pairs)
+    if org_name and not entry.get("org"):
+        entry["org"] = org_name
+    if title_hint and not entry["fields"].get("Title"):
+        entry["fields"]["Title"] = title_hint
+    entry["fetched"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
+    entry["award"] = _merge_award(entry.get("award"),
+                                  extract_award_info(entry["fields"], page))
+    awards[tid] = entry
+    return tid
+
+
+def _crawl_results_orgs(session, root_html, awards):
+    """Fallback for an organisation listing: drill into orgs of interest and
+    fetch each tender result row inside them."""
     soup = BeautifulSoup(root_html, "lxml")
-    org_pages = []
     org_rows = []
     for tr in soup.find_all("tr"):
         tds = tr.find_all("td")
         a = tr.find("a", href=True)
         if len(tds) >= 3 and a and tds[0].get_text(strip=True).isdigit():
             org_rows.append((tds[1].get_text(strip=True), BASE_URL + a["href"]))
-    if org_rows:
-        picked = [(n, u) for n, u in org_rows if _org_of_interest(n)][:40]
-        log.info("Results listing: %d orgs, crawling %d of interest",
-                 len(org_rows), len(picked))
-        for name, url in picked:
-            try:
-                html = portal_get(session, url).text
-                _dump_page("org_" + name, html)
-                org_pages.append((name, html))
-            except Exception as exc:
-                log.error("Results org %s failed: %s", name, exc)
-            time.sleep(0.4)
-    else:
-        org_pages = [("root", root_html)]
-
-    awards = load_awards()
+    picked = [(n, u) for n, u in org_rows if _org_of_interest(n)][:40]
+    log.info("Results listing looks org-level: %d orgs, crawling %d of interest",
+             len(org_rows), len(picked))
     fetched = 0
-    for org_name, html in org_pages:
-        psoup = BeautifulSoup(html, "lxml")
-        for a in psoup.find_all("a", href=True):
-            if "DirectLink" not in a["href"] or fetched >= 200:
-                continue
-            text = a.get_text(" ", strip=True)
-            if not text or text.isdigit():
-                continue
-            try:
-                page = portal_get(session, BASE_URL + a["href"]).text
-            except Exception:
-                continue
-            fetched += 1
-            time.sleep(0.4)
-            dsoup = BeautifulSoup(page, "lxml")
-            pairs = _extract_pairs(dsoup)
-            m = TENDER_ID_RE.search(" ".join(
-                [pairs.get("Tender ID", "")] +
-                re.findall(r"\d{4}_\w+_\d+_\d+", page)[:1]))
-            tid = pairs.get("Tender ID") or (m.group(0) if m else "")
-            if not TENDER_ID_RE.match(tid or ""):
-                _dump_page("unparsed_%d" % fetched, page)
-                continue
-            _dump_page("tender_" + tid, page)
-            entry = awards.get(tid, {"fields": {}})
-            entry["fields"].update(pairs)
-            entry["org"] = org_name if org_name != "root" else \
-                entry.get("org", "")
-            entry["fetched"] = time.strftime("%Y-%m-%dT%H:%M:%S%z")
-            awards[tid] = entry
+    for name, url in picked:
+        try:
+            html = portal_get(session, url).text
+            _dump_page("org_" + name, html)
+        except Exception as exc:
+            log.error("Results org %s failed: %s", name, exc)
+            continue
+        time.sleep(0.4)
+        for row in _results_rows(html):
+            if fetched >= RESULT_FETCH_CAP:
+                break
+            tid_hint = ""
+            for link in row["links"][:LINKS_PER_ROW]:
+                tid = _store_result_page(session, link, awards,
+                                         org_name=publisher(row["org"]) or name,
+                                         title_hint=row["title"],
+                                         tid_hint=tid_hint)
+                if tid:
+                    tid_hint = tid
+            if tid_hint:
+                fetched += 1
     save_awards(awards)
     return awards, fetched
 
 
-def unlock_submit(captcha_text):
-    """Submit the person's captcha answer and, on success, crawl."""
+def crawl_results(session, root_html, progress=None):
+    """Walk the unlocked results section. A keyword or tender-id search
+    returns a flat table of matching tenders; for each row the Title link
+    (full tender detail) and the first AOC link (award detail with the
+    winning bidder) are fetched and merged by tender id. If instead an
+    organisation listing came back, fall back to drilling into orgs of
+    interest. Every fetched page is dumped raw so parsing can be refined
+    without another captcha. progress(done, total) is called as it goes."""
+    _dump_page("results_root", root_html)
+    awards = load_awards()
+    _result_seq[0] = 0
+    rows = _results_rows(root_html)
+    if not rows:
+        return _crawl_results_orgs(session, root_html, awards)
+    log.info("Results search: %d matching tender(s)", len(rows))
+    if progress:
+        progress(0, len(rows))
+    fetched = 0
+    for row in rows:
+        if fetched >= RESULT_FETCH_CAP:
+            log.info("hit result fetch cap of %d", RESULT_FETCH_CAP)
+            break
+        tid_hint = ""
+        for link in row["links"][:LINKS_PER_ROW]:
+            tid = _store_result_page(session, link, awards,
+                                     org_name=publisher(row["org"]),
+                                     title_hint=row["title"],
+                                     tid_hint=tid_hint)
+            if tid:
+                tid_hint = tid
+        if tid_hint:
+            fetched += 1
+        if progress:
+            progress(fetched, len(rows))
+        if fetched and fetched % 25 == 0:
+            save_awards(awards)  # checkpoint a long crawl
+            log.info("... %d/%d tenders imported", fetched, len(rows))
+    save_awards(awards)
+    return awards, fetched
+
+
+# Background import state, so a long crawl does not block the browser POST.
+_import_status = {"running": False, "done": 0, "total": 0,
+                  "keyword": "", "error": "", "finished": False}
+
+
+def import_status():
+    return dict(_import_status)
+
+
+def _run_import(session, root_html):
+    def progress(done, total):
+        _import_status["done"] = done
+        _import_status["total"] = total
+    try:
+        _awards, fetched = crawl_results(session, root_html, progress=progress)
+        _import_status["done"] = fetched
+    except Exception as exc:
+        log.error("Background import failed: %s", exc)
+        _import_status["error"] = str(exc)[:200]
+    finally:
+        _import_status["running"] = False
+        _import_status["finished"] = True
+
+
+def reparse_from_dumps():
+    """Rebuild awards.json from the raw result pages dumped during the last
+    import (results_raw/), so the extraction can be refined offline without
+    solving the captcha again."""
+    raw = RESULTS_RAW_DIR
+    if not raw.exists():
+        log.error("No raw result dumps found at %s", raw)
+        return 1
+    # Rebuild cleanly from all dumps so the result is deterministic and free of
+    # any stale entries. The tender id must come from the page content; the
+    # dump filename is never used (its trailing _<seq> would slip past the
+    # tender-id shape).
+    awards = {}
+    n = 0
+    for path in sorted(raw.glob("tender_*.html")):
+        html = path.read_text(encoding="utf-8", errors="replace")
+        pairs = _extract_pairs(BeautifulSoup(html, "lxml"))
+        tid = (pairs.get("Tender ID") or pairs.get("Tender ID :") or "").strip()
+        if not TENDER_ID_RE.match(tid):
+            m = re.search(r"\b(\d{4}_[A-Za-z0-9]+_\d+_\d+)\b", html)
+            tid = m.group(1) if m else ""
+        if not TENDER_ID_RE.match(tid or ""):
+            continue  # e.g. a signature-only page with no tender id
+        entry = awards.get(tid, {"fields": {}})
+        entry["fields"].update(pairs)
+        entry["award"] = _merge_award(entry.get("award"),
+                                      extract_award_info(entry["fields"], html))
+        awards[tid] = entry
+        n += 1
+    save_awards(awards)
+    named = sum(1 for e in awards.values()
+                if (e.get("award") or {}).get("contractor"))
+    log.info("Reparsed %d result page(s); %d have a contractor name", n, named)
+    return 0
+
+
+MIN_KEYWORD_LEN = 4  # portal rule: keyword must be at least 4 characters
+
+
+def unlock_submit(captcha_text, keyword="", tender_id=""):
+    """Submit the person's captcha answer plus a search term and, on success,
+    crawl. The Results section requires a keyword (>= 4 chars) or an exact
+    tender id; an empty search is rejected regardless of the captcha. Errors
+    are read from the portal's own alert box, not from the inline JavaScript.
+    The raw response is always dumped for inspection."""
     session = _unlock.get("session")
     fields = _unlock.get("fields")
     if session is None or fields is None:
-        return None, "The unlock session expired, try again."
+        return None, "The unlock session expired, reload the page and try again."
+    keyword = (keyword or "").strip()
+    tender_id = (tender_id or "").strip()
+    if not keyword and not tender_id:
+        return None, ("Enter a search keyword (at least %d letters) or an exact "
+                      "tender id before importing." % MIN_KEYWORD_LEN)
+    if keyword and not tender_id and len(keyword) < MIN_KEYWORD_LEN:
+        return None, ("The keyword needs at least %d characters (a portal rule)."
+                      % MIN_KEYWORD_LEN)
     data = dict(fields)
     data["captchaText"] = captcha_text.strip()
+    data["Keyword"] = keyword
+    data["TenderId"] = tender_id
     data["submitname"] = "Search"
     resp = session.post(BASE_URL + "/nicgep/app", data=data,
                         timeout=HTTP_TIMEOUT, verify=session.verify)
     html = resp.text
-    low = html.casefold()
-    if "invalid captcha" in low or "captcha entered" in low or (
-            "captchatext" in low and "DirectLink" not in html):
-        return None, "The portal rejected that captcha code, try the new one."
-    awards, fetched = crawl_results(session, html)
-    return (awards, fetched), None
+    _dump_page("post_response", html)
+    err = _active_error(html)
+    low = err.casefold()
+    log.info("unlock POST: %d bytes, active_error=%r", len(html), err[:90])
+    if "captcha" in low:
+        return None, ("The portal rejected the captcha code. Reload the page "
+                      "for a fresh code and try again.")
+    if "tender id or keyword" in low:
+        return None, ("The portal did not accept that search term; try a "
+                      "different keyword.")
+    if "no results" in low:
+        return None, ("The captcha worked, but no published results match "
+                      "'%s'. Try another keyword." % (tender_id or keyword))
+    rows = _results_rows(html)
+    if not rows:
+        # Organisation listing or an unexpected page: crawl synchronously once
+        # (the fallback is small) so nothing is silently lost.
+        awards, fetched = crawl_results(session, html)
+        if fetched == 0:
+            return None, ("The captcha worked and the search ran, but no "
+                          "result rows could be read. The raw response was "
+                          "saved; try another keyword meanwhile.")
+        return {"mode": "done", "fetched": fetched, "count": len(awards)}, None
+    if _import_status["running"]:
+        return None, ("An import is already running (%d of %d done). Let it "
+                      "finish before starting another." %
+                      (_import_status["done"], _import_status["total"]))
+    _import_status.update({"running": True, "done": 0, "total": len(rows),
+                           "keyword": keyword or tender_id, "error": "",
+                           "finished": False})
+    threading.Thread(target=_run_import, args=(session, html),
+                     daemon=True).start()
+    return {"mode": "started", "total": len(rows),
+            "keyword": keyword or tender_id}, None
+
+
+UNLOCK_STARTED_PAGE = """<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Import running</title>
+<style>body {{ font-family: "Fira Sans", sans-serif; background: #F8FAFC;
+ margin: 0; }} main {{ max-width: 560px; margin: 40px auto; background: #fff;
+ border: 1px solid #DBEAFE; border-radius: 12px; padding: 26px 30px;
+ font-size: 14px; color: #0F172A; }} a {{ color: #1E40AF; }}
+ .prog {{ background: #EFF4FB; border: 1px solid #DBEAFE; border-radius: 8px;
+ padding: 12px 14px; font-size: 14px; margin: 14px 0; }}
+ .bar {{ height: 8px; background: #E2E8F0; border-radius: 999px; margin-top: 8px;
+ overflow: hidden; }} .bar i {{ display: block; height: 100%; width: 0;
+ background: #1E40AF; transition: width .3s; }}</style>
+</head><body><main>
+<h1 style="color:#1E3A8A;font-size:17px">Import running</h1>
+<p>Captcha accepted. Importing award records for the {total} tenders whose
+results match "<b>{keyword}</b>". This runs in the background, so you can
+leave this page open or head straight to the dashboard.</p>
+<div class="prog"><span id="msg">Starting...</span>
+ <div class="bar"><i id="bar"></i></div></div>
+<p><a href="/#contractors">Open the Contractors tab</a> - it fills in as
+records are parsed. Run the import again with another keyword to widen it.</p>
+<script>
+setInterval(function () {{
+  fetch('/import-status').then(function (r) {{ return r.json(); }})
+    .then(function (s) {{
+      var m = document.getElementById('msg'), b = document.getElementById('bar');
+      var pct = s.total ? Math.round(100 * s.done / s.total) : 0;
+      b.style.width = pct + '%';
+      if (s.error) {{ m.textContent = 'Stopped: ' + s.error; return; }}
+      if (s.finished || !s.running) {{
+        m.textContent = 'Done. ' + s.done + ' of ' + s.total +
+          ' tenders imported.';
+      }} else {{
+        m.textContent = 'Imported ' + s.done + ' of ' + s.total + '...';
+      }}
+    }}).catch(function () {{}});
+}}, 2000);
+</script>
+</main></body></html>"""
 
 
 UNLOCK_RESULT_PAGE = """<!DOCTYPE html>
@@ -1843,6 +2438,46 @@ td.val { font-family: "Fira Code", monospace; font-size: 12px;
 td.city { font-size: 12px; white-space: nowrap; }
 .empty { padding: 26px; text-align: center; color: var(--muted-fg); }
 
+.tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid
+  var(--border); }
+.tab { background: none; border: none; border-bottom: 2px solid transparent;
+  padding: 10px 18px; font-size: 14px; font-weight: 500; color: var(--muted-fg);
+  cursor: pointer; margin-bottom: -1px; min-height: 40px; }
+.tab:hover { color: var(--heading); }
+.tab.active { color: var(--heading); border-bottom-color: var(--primary); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { display: inline-block; border-radius: 999px; padding: 2px 9px;
+  font-size: 11px; background: var(--muted); color: var(--muted-fg);
+  white-space: nowrap; }
+.chip.dept { background: #EEF2FF; color: #3730A3; }
+.chip.city { background: #ECFDF5; color: #047857; }
+.chip.sector { background: #FEF3F2; color: #B42318; }
+td.cname { font-weight: 500; color: var(--heading); }
+td.cnum { font-family: "Fira Code", monospace; text-align: right;
+  white-space: nowrap; }
+.badge.enriched { background: #DCFCE7; color: var(--ok); }
+.prof-head { display: flex; flex-wrap: wrap; gap: 14px 26px; margin: 2px 0 6px; }
+.prof-stat .v { font-family: "Fira Code", monospace; font-size: 20px;
+  font-weight: 600; color: var(--heading); }
+.prof-stat .l { font-size: 11px; color: var(--muted-fg); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.links a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+  min-height: 36px; border: 1px solid var(--border); border-radius: 8px;
+  text-decoration: none; font-size: 12px; color: var(--primary);
+  background: var(--card); transition: background .15s; }
+.links a:hover { background: #F1F5FF; }
+.enrich { background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; line-height: 1.55; }
+.enrich .missing { color: var(--muted-fg); }
+.ctable { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 2px; }
+.ctable th { text-align: left; color: var(--muted-fg); font-weight: 500;
+  padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.ctable td { padding: 6px 8px; border-bottom: 1px solid var(--line);
+  vertical-align: top; overflow-wrap: anywhere; }
+.ctable td.v { font-family: "Fira Code", monospace; text-align: right;
+  white-space: nowrap; }
+.ctable tr:last-child td { border-bottom: none; }
+
 #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
   opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
 #overlay.show { opacity: 1; pointer-events: auto; }
@@ -1863,12 +2498,12 @@ td.city { font-size: 12px; white-space: nowrap; }
   var(--border); border-radius: 8px; cursor: pointer; color: var(--muted-fg);
   transition: background .15s; }
 #pclose:hover { background: var(--muted); }
-#pbody { overflow-y: auto; padding: 6px 20px 20px; flex: 1; }
+#pbody { overflow-y: auto; overflow-x: hidden; padding: 6px 20px 20px; flex: 1; }
 #pbody h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .7px;
   color: var(--muted-fg); margin: 20px 0 6px; }
 .kv { width: 100%; border-collapse: collapse; font-size: 13px; }
 .kv td { padding: 6px 8px; border-bottom: 1px solid var(--line);
-  vertical-align: top; }
+  vertical-align: top; overflow-wrap: anywhere; }
 .kv td:first-child { width: 38%; color: var(--muted-fg); }
 .kv tr:last-child td { border-bottom: none; }
 .pfoot { padding: 12px 20px; border-top: 1px solid var(--line);
@@ -1910,6 +2545,13 @@ td.city { font-size: 12px; white-space: nowrap; }
  </div>
 </header>
 <main>
+ <div class="tabs" role="tablist">
+  <button class="tab active" id="tab-tenders" role="tab" aria-selected="true"
+   aria-controls="view-tenders">Tenders</button>
+  <button class="tab" id="tab-contractors" role="tab" aria-selected="false"
+   aria-controls="view-contractors">Contractors</button>
+ </div>
+ <section id="view-tenders" role="tabpanel" aria-labelledby="tab-tenders">
  <div class="tiles">
   <div class="tile"><div class="v" id="s-live"></div><div class="l">Live tenders</div></div>
   <div class="tile"><div class="v" id="s-soon"></div><div class="l">Closing within 3 days</div></div>
@@ -1949,6 +2591,41 @@ td.city { font-size: 12px; white-space: nowrap; }
   </table>
   <div class="empty" id="empty" hidden>No tenders match the current filters.</div>
  </div>
+ </section>
+
+ <section id="view-contractors" role="tabpanel" aria-labelledby="tab-contractors" hidden>
+ <div class="tiles">
+  <div class="tile"><div class="v" id="c-count"></div><div class="l">Contractors</div></div>
+  <div class="tile"><div class="v" id="c-contracts"></div><div class="l">Contracts awarded</div></div>
+  <div class="tile"><div class="v" id="c-value"></div><div class="l">Total awarded value</div></div>
+  <div class="tile"><div class="v" id="c-enriched"></div><div class="l">With public records</div></div>
+ </div>
+ <div class="bar">
+  <div class="search">
+   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+   <input id="cq" type="search" placeholder="Search contractor, department, city..." aria-label="Search contractors">
+  </div>
+  <select id="c-dept" aria-label="Filter by department"><option value="">All departments</option></select>
+  <select id="c-city" aria-label="Filter by city"><option value="">All cities</option></select>
+  <select id="c-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
+  <span class="count" id="ccount"></span>
+ </div>
+ <div class="tablewrap">
+  <table aria-label="Contractors">
+   <thead><tr>
+    <th class="sortable" data-ckey="name">Contractor</th>
+    <th class="nowrap sortable num" data-ckey="count">Contracts</th>
+    <th class="nowrap sortable num" data-ckey="value">Total value</th>
+    <th class="nowrap num" data-ckey="avg">Avg</th>
+    <th data-ckey="departments">Departments</th>
+    <th data-ckey="cities">Cities</th>
+    <th class="nowrap sortable num" data-ckey="lastTs">Last award</th>
+   </tr></thead>
+   <tbody id="crows"></tbody>
+  </table>
+  <div class="empty" id="cempty" hidden></div>
+ </div>
+ </section>
 </main>
 
 <div id="overlay"></div>
@@ -1963,7 +2640,7 @@ td.city { font-size: 12px; white-space: nowrap; }
   </button>
  </div>
  <div id="pbody"></div>
- <div class="pfoot">
+ <div class="pfoot" id="pfoot">
   <a class="en" id="pdf-en" target="_blank" rel="noopener">English PDF</a>
   <a class="mr" id="pdf-mr" target="_blank" rel="noopener">Marathi PDF</a>
   <span class="note">Marathi PDF is generated on demand and can take up to a minute.</span>
@@ -1973,6 +2650,7 @@ td.city { font-size: 12px; white-space: nowrap; }
 <script>
 var DATA = __DATA_JSON__;
 var SECTIONS_SPEC = __SECTIONS_JSON__;
+var CONTRACTORS = __CONTRACTORS_JSON__;
 var els = {
   rows: document.getElementById('rows'), q: document.getElementById('q'),
   src: document.getElementById('f-src'), st: document.getElementById('f-st'),
@@ -2115,6 +2793,7 @@ function render() {
 render();
 
 function openPanel(t) {
+  document.getElementById('pfoot').style.display = 'flex';
   document.getElementById('ptitle').textContent = t.title;
   document.getElementById('ppid').textContent = t.id + (t.ref ? '  ·  ' + t.ref : '');
   document.getElementById('pdf-en').href = '/pdf/' + t.id + '/en';
@@ -2179,6 +2858,249 @@ document.addEventListener('keydown', function (e) {
 document.getElementById('refresh').addEventListener('click', function () {
   location.href = '/?refresh=1';
 });
+
+/* -------------------------------------------------------------- */
+/* Contractors view                                               */
+/* -------------------------------------------------------------- */
+var cels = {
+  rows: document.getElementById('crows'), q: document.getElementById('cq'),
+  dept: document.getElementById('c-dept'), city: document.getElementById('c-city'),
+  sector: document.getElementById('c-sector'),
+  count: document.getElementById('ccount'), empty: document.getElementById('cempty')
+};
+var csort = { key: 'value', dir: -1 };
+function addOpt(sel, v) {
+  var o = document.createElement('option'); o.value = v; o.textContent = v;
+  sel.appendChild(o);
+}
+document.getElementById('c-count').textContent = CONTRACTORS.stats.contractors;
+document.getElementById('c-contracts').textContent = CONTRACTORS.stats.contracts;
+document.getElementById('c-value').textContent = CONTRACTORS.stats.valueFmt || '0';
+document.getElementById('c-enriched').textContent = CONTRACTORS.stats.enriched;
+CONTRACTORS.departments.forEach(function (d) { addOpt(cels.dept, d); });
+CONTRACTORS.cities.forEach(function (c) { addOpt(cels.city, c); });
+CONTRACTORS.sectors.forEach(function (s) { addOpt(cels.sector, s); });
+
+function cmatches(c) {
+  var q = cels.q.value.trim().toLowerCase();
+  if (q) {
+    var hay = (c.name + ' ' + c.departments.join(' ') + ' ' +
+      c.cities.join(' ') + ' ' + c.sectors.join(' ')).toLowerCase();
+    if (hay.indexOf(q) < 0) return false;
+  }
+  if (cels.dept.value && c.departments.indexOf(cels.dept.value) < 0) return false;
+  if (cels.city.value && c.cities.indexOf(cels.city.value) < 0) return false;
+  if (cels.sector.value && c.sectors.indexOf(cels.sector.value) < 0) return false;
+  return true;
+}
+var CNUM = { count: 1, value: 1, lastTs: 1 };
+function csorted() {
+  var list = CONTRACTORS.contractors.map(function (c, i) { c._i = i; return c; });
+  var k = csort.key;
+  return list.slice().sort(function (a, b) {
+    var r;
+    if (CNUM[k]) r = (a[k] || 0) - (b[k] || 0);
+    else r = String(a[k] || '').toLowerCase()
+      .localeCompare(String(b[k] || '').toLowerCase());
+    return r * csort.dir;
+  });
+}
+function chipHtml(items, cls, max) {
+  max = max || 3;
+  var out = items.slice(0, max).map(function (x) {
+    return '<span class="chip ' + cls + '">' + esc(x) + '</span>';
+  }).join(' ');
+  if (items.length > max) out += ' <span class="chip">+' + (items.length - max) + '</span>';
+  return '<div class="chips">' + out + '</div>';
+}
+function crender() {
+  var shown = 0, html = '';
+  csorted().forEach(function (c) {
+    if (!cmatches(c)) return;
+    shown++;
+    html += '<tr data-ci="' + c._i + '" tabindex="0">' +
+      '<td class="cname">' + esc(c.name) +
+        (c.enrichment && c.enrichment.verified
+          ? ' <span class="badge enriched">records</span>' : '') + '</td>' +
+      '<td class="cnum">' + c.count + '</td>' +
+      '<td class="cnum">' + esc(c.valueFmt || '-') + '</td>' +
+      '<td class="cnum">' + esc(c.avgFmt || '-') + '</td>' +
+      '<td>' + chipHtml(c.departments, 'dept') + '</td>' +
+      '<td>' + chipHtml(c.cities, 'city') + '</td>' +
+      '<td class="nowrap">' + esc((c.lastDate || '').split(' ')[0]) + '</td></tr>';
+  });
+  cels.rows.innerHTML = html;
+  var none = shown === 0;
+  cels.empty.hidden = !none;
+  if (none) {
+    if (!CONTRACTORS.contractors.length) {
+      cels.empty.innerHTML = 'No award data imported yet. Contractor names live ' +
+        'in the portal\'s captcha-protected results section. Use ' +
+        '<a href="/unlock">Import results</a> to unlock and pull them in.';
+    } else {
+      cels.empty.textContent = 'No contractors match the current filters.';
+    }
+  }
+  cels.count.textContent = shown + ' of ' +
+    CONTRACTORS.contractors.length + ' contractors';
+}
+document.querySelectorAll('th[data-ckey].sortable').forEach(function (th) {
+  th.setAttribute('tabindex', '0');
+  function toggle() {
+    var k = th.dataset.ckey;
+    if (csort.key === k) csort.dir = -csort.dir;
+    else { csort.key = k; csort.dir = CNUM[k] ? -1 : 1; }
+    document.querySelectorAll('th[data-ckey]').forEach(function (h) {
+      h.classList.remove('asc', 'desc'); h.removeAttribute('aria-sort');
+    });
+    th.classList.add(csort.dir === 1 ? 'asc' : 'desc');
+    th.setAttribute('aria-sort', csort.dir === 1 ? 'ascending' : 'descending');
+    crender();
+  }
+  th.addEventListener('click', toggle);
+  th.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+});
+['input', 'change'].forEach(function (ev) {
+  [cels.q, cels.dept, cels.city, cels.sector].forEach(function (el) {
+    el.addEventListener(ev, crender);
+  });
+});
+crender();
+
+function statBox(v, l) {
+  return '<div class="prof-stat"><div class="v">' + esc(v) +
+    '</div><div class="l">' + esc(l) + '</div></div>';
+}
+function extArrow() {
+  return '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" ' +
+    'stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
+    '<path d="M7 17 17 7M8 7h9v9"/></svg>';
+}
+function deepLinks(name) {
+  var q = encodeURIComponent(name);
+  return [
+    ['Google', 'https://www.google.com/search?q=' +
+      encodeURIComponent(name + ' Maharashtra contractor')],
+    ['News', 'https://news.google.com/search?q=' + q],
+    ['Zauba Corp', 'https://www.zaubacorp.com/companysearchresults/' + q],
+    ['Tofler', 'https://www.tofler.in/search?query=' + q],
+    ['MCA filings', 'https://www.google.com/search?q=' +
+      encodeURIComponent(name + ' site:mca.gov.in')],
+    ['GST search', 'https://www.knowyourgst.com/gst-number-search/?q=' + q],
+    ['IndiaMART', 'https://dir.indiamart.com/search.mp?ss=' + q],
+    ['LinkedIn', 'https://www.linkedin.com/search/results/companies/?keywords=' + q]
+  ];
+}
+function openContractor(c) {
+  document.getElementById('pfoot').style.display = 'none';
+  document.getElementById('ptitle').textContent = c.name;
+  document.getElementById('ppid').textContent =
+    c.count + ' contract' + (c.count === 1 ? '' : 's') +
+    (c.valueFmt ? '  ·  ' + c.valueFmt + ' total' : '');
+  var h = '<div class="prof-head">' +
+    statBox(c.valueFmt || '-', 'Total awarded') +
+    statBox(String(c.count), 'Contracts') +
+    statBox(c.avgFmt || '-', 'Average') +
+    statBox(String(c.departments.length), 'Departments') + '</div>';
+
+  h += '<h3>Public records</h3>';
+  var e = c.enrichment;
+  h += '<div class="enrich">';
+  if (e) {
+    if (e.summary) h += '<p style="margin:0 0 8px">' + esc(e.summary) + '</p>';
+    var fields = [['Type', e.type], ['Location', e.location],
+      ['Incorporated', e.incorporated], ['CIN', e.cin], ['GSTIN', e.gstin],
+      ['Directors', (e.directors || []).join(', ')], ['Status', e.status]];
+    var fr = fields.filter(function (f) { return f[1]; }).map(function (f) {
+      return '<tr><td>' + esc(f[0]) + '</td><td>' + esc(f[1]) + '</td></tr>';
+    }).join('');
+    if (fr) h += '<table class="kv">' + fr + '</table>';
+    if (e.notes) h += '<p style="margin:8px 0 0;color:var(--muted-fg)">' +
+      esc(e.notes) + '</p>';
+    if (e.sources && e.sources.length) {
+      h += '<div class="links" style="margin-top:8px">';
+      e.sources.forEach(function (s) {
+        h += '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
+          esc(s.label || 'Source') + ' ' + extArrow() + '</a>';
+      });
+      h += '</div>';
+    }
+  } else {
+    h += '<span class="missing">No external records compiled for this ' +
+      'contractor yet. Search the public sources below.</span>';
+  }
+  h += '</div>';
+
+  h += '<div class="links">';
+  deepLinks(c.name).forEach(function (l) {
+    h += '<a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' +
+      esc(l[0]) + ' ' + extArrow() + '</a>';
+  });
+  h += '</div>';
+
+  if (c.sectors.length)
+    h += '<h3>Sectors</h3>' + chipHtml(c.sectors, 'sector', 14);
+  if (c.cities.length)
+    h += '<h3>Where they work</h3>' + chipHtml(c.cities, 'city', 14);
+
+  h += '<h3>Contracts won (' + c.contracts.length + ')</h3>' +
+    '<table class="ctable"><thead><tr><th>Tender</th><th>Department</th>' +
+    '<th>City</th><th class="v">Value</th><th>Date</th></tr></thead><tbody>';
+  c.contracts.forEach(function (ct) {
+    h += '<tr><td>' + esc(ct.title || ct.id) +
+      '<div class="mono" style="font-size:11px;color:var(--muted-fg)">' +
+      esc(ct.id) + '</div></td>' +
+      '<td>' + esc(ct.org) + '</td><td>' + esc(ct.city) + '</td>' +
+      '<td class="v">' + esc(ct.valueFmt || '-') + '</td>' +
+      '<td class="nowrap">' + esc((ct.date || '').split(' ')[0]) + '</td></tr>';
+  });
+  h += '</tbody></table>';
+
+  if (c.competitors && c.competitors.length) {
+    h += '<h3>Also bid against (' + c.competitors.length + ')</h3><div class="chips">';
+    c.competitors.slice(0, 24).forEach(function (comp) {
+      h += '<span class="chip">' + esc(comp.name) + ' · ' + comp.count + '</span>';
+    });
+    h += '</div>';
+  }
+
+  els.pbody.innerHTML = h;
+  els.overlay.classList.add('show');
+  els.panel.classList.add('show');
+  document.getElementById('pclose').focus();
+}
+cels.rows.addEventListener('click', function (e) {
+  var tr = e.target.closest('tr[data-ci]');
+  if (tr) openContractor(CONTRACTORS.contractors[+tr.dataset.ci]);
+});
+cels.rows.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    var tr = e.target.closest('tr[data-ci]');
+    if (tr) openContractor(CONTRACTORS.contractors[+tr.dataset.ci]);
+  }
+});
+
+/* -------------------------------------------------------------- */
+/* Tab switching                                                  */
+/* -------------------------------------------------------------- */
+function showTab(name) {
+  var t = name === 'contractors';
+  document.getElementById('view-tenders').hidden = t;
+  document.getElementById('view-contractors').hidden = !t;
+  document.getElementById('tab-tenders').classList.toggle('active', !t);
+  document.getElementById('tab-contractors').classList.toggle('active', t);
+  document.getElementById('tab-tenders').setAttribute('aria-selected', String(!t));
+  document.getElementById('tab-contractors').setAttribute('aria-selected', String(t));
+  try { history.replaceState(null, '', t ? '#contractors' : '#'); } catch (err) {}
+}
+document.getElementById('tab-tenders').addEventListener('click',
+  function () { showTab('tenders'); });
+document.getElementById('tab-contractors').addEventListener('click',
+  function () { showTab('contractors'); });
+if (location.hash === '#contractors') showTab('contractors');
+
 setTimeout(function () { location.reload(); }, DATA.refreshSeconds * 1000);
 </script>
 </body></html>"""
@@ -2189,7 +3111,8 @@ def build_dashboard_page():
         return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
     return DASHBOARD_PAGE.replace(
         "__DATA_JSON__", js(dashboard_data())).replace(
-        "__SECTIONS_JSON__", js(sections_spec()))
+        "__SECTIONS_JSON__", js(sections_spec())).replace(
+        "__CONTRACTORS_JSON__", js(contractors_data()))
 
 
 def dashboard_pdf(tid, lang):
@@ -2246,6 +3169,10 @@ def serve_dashboard(port):
                 elif url.path == "/unlock":
                     send(self, 200, unlock_page_html().encode("utf-8"),
                          "text/html; charset=utf-8")
+                elif url.path == "/import-status":
+                    send(self, 200,
+                         json.dumps(import_status()).encode("utf-8"),
+                         "application/json; charset=utf-8")
                 elif url.path.startswith("/pdf/"):
                     parts = url.path.strip("/").split("/")
                     if len(parts) != 3 or parts[2] not in ("en", "mr") \
@@ -2283,13 +3210,19 @@ def serve_dashboard(port):
                 length = int(self.headers.get("Content-Length", "0"))
                 body = parse_qs(self.rfile.read(length).decode("utf-8"))
                 captcha = body.get("captcha", [""])[0]
-                result, error = unlock_submit(captcha)
+                keyword = body.get("keyword", [""])[0]
+                tender_id = body.get("tender_id", [""])[0]
+                result, error = unlock_submit(captcha, keyword, tender_id)
                 if error:
-                    html = unlock_page_html(error=error)
+                    html = unlock_page_html(error=error,
+                                            keyword=keyword or "jalgaon")
+                elif result.get("mode") == "started":
+                    html = UNLOCK_STARTED_PAGE.format(
+                        total=result["total"],
+                        keyword=xml_escape(result["keyword"]))
                 else:
-                    awards, fetched = result
                     html = UNLOCK_RESULT_PAGE.format(
-                        fetched=fetched, count=len(awards))
+                        fetched=result["fetched"], count=result["count"])
                 send(self, 200, html.encode("utf-8"),
                      "text/html; charset=utf-8")
             except Exception as exc:
@@ -2329,6 +3262,9 @@ def main():
     parser.add_argument(
         "--port", type=int, default=8765,
         help="dashboard port for --serve (default 8765)")
+    parser.add_argument(
+        "--reparse", action="store_true",
+        help="rebuild awards.json from raw result dumps (no captcha needed)")
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -2341,6 +3277,8 @@ def main():
     # Portal and WhatsApp calls pass explicit timeouts and are unaffected.
     socket.setdefaulttimeout(60)
 
+    if args.reparse:
+        return reparse_from_dumps()
     if args.serve:
         return serve_dashboard(args.port)
     session = make_session()

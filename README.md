@@ -20,8 +20,24 @@ Watched sources (see ORG_WATCHES / KEYWORD_WATCHES in tracker.py):
 
 The portal's own search, archive, tenders-by-location and results pages are
 all captcha protected, so watching goes through the captcha-free
-Tenders-by-Organisation listing. Award / bid-result data is behind the
-captcha too and is therefore not collected.
+Tenders-by-Organisation listing.
+
+## Contractors (who is winning the work)
+
+The dashboard has a **Contractors** tab that profiles who is being awarded the
+contracts: for each contractor it aggregates every contract they have won, the
+total and average awarded value, the departments and cities they work in, the
+dates, and (where the portal lists more than the winner) co-bidders. Each
+contractor opens a profile panel with all of that plus a **Public records**
+section and one-click deep links to Google, Zauba Corp, Tofler, MCA, GST
+lookup, IndiaMART and LinkedIn for that name. Where public records have been
+researched and confidently matched, they are shown inline (company type,
+registered office, CIN, GSTIN, incorporation, directors, status, sources);
+this is kept in `enrichment.json`, keyed by a normalised contractor key.
+
+Award data itself is behind the portal's captcha, so it is collected through
+the human-in-the-loop import described below; the Contractors tab is empty
+until at least one import has run.
 
 ## Hosted dashboard
 
@@ -98,6 +114,25 @@ inspectable after they leave the portal.
 created, so the first scheduled run only sends tenders published after that.
 Delete entries from `seen.json` (or the whole file) to have those tenders
 sent again.
+
+## Importing award / contractor data
+
+The portal's Results-of-Tenders section is captcha protected and, unlike the
+tender listing, it also requires a search term. The import is human in the
+loop and never solves the captcha automatically:
+
+1. Open `/unlock` (the **Import results** button on the dashboard).
+2. Enter a keyword (at least 4 letters, e.g. `jalgaon`, `jeevan`,
+   `water supply`) or an exact tender id, and type the portal's captcha.
+3. On submit, the crawl runs in the background inside that authorised session:
+   for every matching published result it opens the tender's AOC (Award of
+   Contract) page and records the winning contractor, awarded value, contract
+   date and any listed bidders into `awards.json`. Progress is shown live.
+
+Each import covers one keyword (a portal rule), so run it again with other
+keywords to widen coverage. Every fetched page is also saved under
+`results_raw/`, so the extraction can be rebuilt offline with
+`tracker.py --reparse` (no new captcha needed) if the parsing is improved.
 
 ## Local dry run
 

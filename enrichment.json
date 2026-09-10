@@ -1,0 +1,76 @@
+{
+ "a b dongre": {
+  "gstin": "27AAMFA1878N1ZT",
+  "incorporated": "GST registration date 01/07/2017 (this is the GST-rollout date; the firm's actual establishment year is not confirmed in any public registry)",
+  "location": "Gojira Niwas 1, Mangalwar Peth, Ambajogai, Beed district, Maharashtra 431517 (GST jurisdiction: Aurangabad, MH002)",
+  "notes": "Strong match: name \"A B DONGRE CO\" = \"A B DONGRE AND COMPANY\"; firm's location Ambajogai matches the publishing department \"Public Works Division Ambejogai,\" and its GST jurisdiction is Aurangabad (MH002), matching the known district (Ambajogai/Beed falls under the Aurangabad division). No CIN reported because it is a partnership firm, not an MCA-registered company; no company record found on zaubacorp/tofler/MCA, which is expected. GST active/cancelled status was not explicitly shown on the source page, so status is left blank. No partners/directors are listed in the public GST record, so the directors field is left empty.",
+  "sources": [
+   {
+    "label": "KnowYourGST - A B Dongre And Company GST registration (GSTIN, entity type, address, nature of business, Aurangabad jurisdiction)",
+    "url": "https://www.knowyourgst.com/gst-number-search/a-b-dongre-and-company-27AAMFA1878N1ZT/"
+   },
+   {
+    "label": "IndiaMART - A B Dongre And Company, Ambajogai (partnership, GST, building/road construction services)",
+    "url": "https://www.indiamart.com/company/3369555/"
+   }
+  ],
+  "summary": "A B Dongre And Company is a partnership firm based in Ambajogai (Beed district, Maharashtra) whose registered nature of business is \"Works Contract, Others\"; it provides building and road construction services and holds GSTIN 27AAMFA1878N1ZT under the Aurangabad GST jurisdiction. As a partnership firm it has no CIN.",
+  "type": "Partnership firm (works-contract / construction contractor)",
+  "verified": true
+ },
+ "famous construction": {
+  "summary": "No company, GST or registry record could be confidently matched to this exact name and location; likely a small local proprietorship or partnership. Use the search links below to check.",
+  "verified": false
+ },
+ "indraprastha ventures": {
+  "summary": "No company, GST or registry record could be confidently matched to this exact name and location; likely a small local proprietorship or partnership. Use the search links below to check.",
+  "verified": false
+ },
+ "mathurai ventures": {
+  "summary": "No company, GST or registry record could be confidently matched to this exact name and location; likely a small local proprietorship or partnership. Use the search links below to check.",
+  "verified": false
+ },
+ "navjivan mss valwadi": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ },
+ "priyadarshani mss rozoda tal raver": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ },
+ "rohini majoor sahakari sosayatyltd raver": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ },
+ "sant gajanan baba majur sah sanstha kolgaon": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ },
+ "shaurya construction": {
+  "incorporated": "23-Sep-2024 (Udyam/MSME registration date)",
+  "location": "Beed, Maharashtra 431122",
+  "notes": "Match confidence is high: name (\"M/S Shaurya Construction\") and location (Beed, Maharashtra) both align with the contractor and its Public Works Division Beed department. As a proprietorship the firm has no CIN, and no GSTIN or proprietor name is publicly disclosed on the sources found, so those fields are left empty. The registration date (23-Sep-2024) is the Udyam/MSME registration date, not a company incorporation date. Several other similarly named firms exist in other states (Shaurya Constructions Pvt Ltd in Goa, M/S Shaurya Constructions in Gautam Buddha Nagar/Greater Noida UP, Shaurya Construction in Mainpuri UP) and were excluded as non-matches on location. Could not confirm the entity directly against the Maharashtra e-procurement or PWD/MJP registered-contractor lists.",
+  "sources": [
+   {
+    "label": "TheCompanyCheck - M/S Shaurya Construction, Beed, Maharashtra",
+    "url": "https://www.thecompanycheck.com/org/shaurya-construction/1b0dc550ce"
+   }
+  ],
+  "status": "Active",
+  "summary": "M/S Shaurya Construction is a proprietorship firm based in Beed, Maharashtra, registered as a Micro enterprise under Udyam (UDYAM-MH-05-0024174) on 23-Sep-2024. Its recorded activity is construction of buildings, including alteration, addition, repair and maintenance carried out on own-account or contract basis.",
+  "type": "Proprietorship (Udyam-registered Micro enterprise)",
+  "verified": true
+ },
+ "shivrashtra majur soc chandsar": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ },
+ "siddheshwar majur sahakari sanstha jalgaon": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ },
+ "utkarsh majur sahakari society samner tal pachora": {
+  "summary": "Labour cooperative society (Majur Sahakari Sanstha). These register with the Maharashtra Registrar of Co-operative Societies, not the MCA, so they carry no CIN and usually have no online company record. Use the search links below.",
+  "verified": false
+ }
+}
