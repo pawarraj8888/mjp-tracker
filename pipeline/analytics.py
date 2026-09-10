@@ -45,13 +45,25 @@ def retender_rate(store: Store) -> list[dict]:
 
 
 def time_to_award(store: Store) -> list[dict]:
-    """Average days from bid close to award, per org (SQLite julianday)."""
-    return store.query(
-        "SELECT t.publishing_org org, COUNT(*) n,"
-        " AVG(julianday(a.award_date) - julianday(t.bid_submission_end)) avg_days"
+    """Average days from bid close to award, per org. Computed in Python because
+    the portal dates are '%d-%b-%Y' style, which SQLite julianday cannot parse."""
+    from .dedupe import _day
+    rows = store.query(
+        "SELECT t.publishing_org org, a.award_date ad, t.bid_submission_end be"
         " FROM awards a JOIN tenders t ON t.id = a.tender_id"
-        " WHERE a.award_date != '' AND t.bid_submission_end != ''"
-        " GROUP BY org HAVING n > 0 ORDER BY avg_days DESC")
+        " WHERE a.award_date != '' AND t.bid_submission_end != ''")
+    agg: dict = {}
+    for r in rows:
+        d1, d2 = _day(r["ad"]), _day(r["be"])
+        if d1 is None or d2 is None:
+            continue
+        bucket = agg.setdefault(r["org"], [])
+        bucket.append((d1 - d2).days)
+    out = [{"org": org, "n": len(days),
+            "avg_days": round(sum(days) / len(days), 1)}
+           for org, days in agg.items() if days]
+    out.sort(key=lambda x: x["avg_days"], reverse=True)
+    return out
 
 
 def contractor_pairs(store: Store, limit: int = 25) -> list[dict]:

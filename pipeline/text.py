@@ -50,7 +50,10 @@ def normalize_name(name: str | None) -> str:
 
 
 def tokens(text: str) -> set[str]:
-    return set(t for t in re.findall(r"[a-z0-9]+", (text or "").casefold()) if t)
+    # \w with re.UNICODE keeps Devanagari letters, so Marathi/Hindi names are
+    # not silently reduced to an empty token set.
+    return set(t for t in re.findall(r"\w+", (text or "").casefold(), re.UNICODE)
+               if t)
 
 
 def _ratio(a: str, b: str) -> float:
@@ -65,7 +68,9 @@ def token_set_ratio(a: str, b: str) -> float:
         return float(_rf_fuzz.token_set_ratio(a, b))
     ta, tb = tokens(a), tokens(b)
     if not ta and not tb:
-        return 100.0
+        # Only identical (or identically-empty) inputs are a perfect match;
+        # two different strings that both tokenised to nothing are NOT.
+        return 100.0 if a.strip().casefold() == b.strip().casefold() else 0.0
     inter = " ".join(sorted(ta & tb))
     sa = (inter + " " + " ".join(sorted(ta - tb))).strip()
     sb = (inter + " " + " ".join(sorted(tb - ta))).strip()

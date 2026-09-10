@@ -9,6 +9,7 @@ values are within 2%. The surviving record keeps both source ids.
 from __future__ import annotations
 
 import hashlib
+import math
 from datetime import datetime
 
 from .store import Store
@@ -36,7 +37,9 @@ def dedupe_hash(rec: dict) -> str:
     title = " ".join(sorted(normalize_name(rec.get("title")).split()))
     day = _day(rec.get("bid_submission_end"))
     value = rec.get("estimated_value_inr") or 0
-    bucket = int(value / max(value * VALUE_TOLERANCE, 1)) if value else 0
+    # Log-scale bucket so values within VALUE_TOLERANCE land together while
+    # far-apart values separate (a flat int(value/(value*tol)) was constant).
+    bucket = int(math.log(value) / math.log(1 + VALUE_TOLERANCE)) if value > 0 else 0
     key = "|".join([org, title, str(day or ""), str(bucket)])
     return hashlib.sha1(key.encode("utf-8")).hexdigest()
 

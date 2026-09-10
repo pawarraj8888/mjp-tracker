@@ -95,7 +95,7 @@ def ingest_awards(store: Store, portal: str, recs: list[dict],
                 "bidder_name": bname,
                 "contractor_id": resolve_contractor(store, bname, seen=_now()),
                 "quoted_value_inr": _inr(b.get("value")),
-                "rank": b.get("status", ""),
+                "rank": "",  # portal AOC list does not expose a numeric rank
                 "status": b.get("status", ""),
             })
         n += 1
@@ -111,25 +111,32 @@ def _inr(v) -> int | None:
 
 
 def recompute_coverage(store: Store) -> None:
+    """Per org per year, the share of non-live tenders that have an award.
+    Year is parsed in Python (dates are '%d-%b-%Y' style, not ISO), so an
+    off-format date is skipped rather than crashing the ingest."""
+    from .dedupe import _day
+    awarded_ids = {r["tender_id"] for r in
+                   store.query("SELECT DISTINCT tender_id FROM awards")}
     rows = store.query(
-        "SELECT publishing_org org,"
-        " substr(bid_submission_end, 8, 4) yr,"
-        " COUNT(*) closed,"
-        " SUM(CASE WHEN status IN ('awarded') OR id IN"
-        "   (SELECT tender_id FROM awards) THEN 1 ELSE 0 END) awarded"
-        " FROM tenders WHERE status != 'live'"
-        " GROUP BY org, yr")
-    now = _now()
+        "SELECT id, publishing_org org, bid_submission_end be, status"
+        " FROM tenders WHERE status != 'live'")
+    agg: dict = {}
     for r in rows:
-        if not r["yr"]:
+        d = _day(r["be"])
+        if d is None:
             continue
-        closed = r["closed"] or 0
-        awarded = r["awarded"] or 0
+        key = (r["org"] or "", d.year)
+        cell = agg.setdefault(key, [0, 0])
+        cell[0] += 1
+        if r["status"] == "awarded" or r["id"] in awarded_ids:
+            cell[1] += 1
+    now = _now()
+    for (org, year), (closed, awarded) in agg.items():
         store.conn.execute(
             "INSERT OR REPLACE INTO metrics_award_coverage"
             " (org, year, closed, awarded, coverage, computed_at)"
             " VALUES (?,?,?,?,?,?)",
-            (r["org"], int(r["yr"]), closed, awarded,
+            (org, year, closed, awarded,
              round(awarded / closed, 3) if closed else 0.0, now))
     store.conn.commit()
 

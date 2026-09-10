@@ -148,8 +148,7 @@ CREATE TABLE IF NOT EXISTS backfill_checkpoints (
 );
 
 -- Analytics views ---------------------------------------------------------
-DROP VIEW IF EXISTS v_floated_value_by_org_month;
-CREATE VIEW v_floated_value_by_org_month AS
+CREATE VIEW IF NOT EXISTS v_floated_value_by_org_month AS
   SELECT publishing_org AS org,
          substr(publish_date, 8, 4) || '-' ||
            substr(publish_date, 4, 3) AS month,
@@ -159,8 +158,7 @@ CREATE VIEW v_floated_value_by_org_month AS
   WHERE status != 'retendered' OR status IS NULL
   GROUP BY org, month;
 
-DROP VIEW IF EXISTS v_award_ratio;
-CREATE VIEW v_award_ratio AS
+CREATE VIEW IF NOT EXISTS v_award_ratio AS
   SELECT t.publishing_org AS org,
          a.contractor_name_raw AS contractor,
          t.estimated_value_inr AS estimated,
@@ -169,8 +167,7 @@ CREATE VIEW v_award_ratio AS
               THEN 1.0 * a.award_value_inr / t.estimated_value_inr END AS ratio
   FROM awards a JOIN tenders t ON t.id = a.tender_id;
 
-DROP VIEW IF EXISTS v_top_contractors;
-CREATE VIEW v_top_contractors AS
+CREATE VIEW IF NOT EXISTS v_top_contractors AS
   SELECT c.canonical_name AS contractor,
          COUNT(a.id) AS contracts,
          SUM(COALESCE(a.award_value_inr, 0)) AS total_value_inr
@@ -178,8 +175,7 @@ CREATE VIEW v_top_contractors AS
   GROUP BY c.id
   ORDER BY total_value_inr DESC;
 
-DROP VIEW IF EXISTS v_single_bidder;
-CREATE VIEW v_single_bidder AS
+CREATE VIEW IF NOT EXISTS v_single_bidder AS
   SELECT t.publishing_org AS org,
          COUNT(*) AS awarded,
          SUM(CASE WHEN a.bidder_count = 1 THEN 1 ELSE 0 END) AS single_bidder,

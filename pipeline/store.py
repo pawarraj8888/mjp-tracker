@@ -56,6 +56,15 @@ class Store:
         self.init_schema()
 
     def init_schema(self) -> None:
+        # Run the schema script only when the DB is empty. It uses IF NOT
+        # EXISTS throughout, but skipping the re-run avoids needless work (and
+        # any DDL contention) when many short-lived Store() connections open,
+        # e.g. one per API request.
+        have = self.conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='tenders'"
+        ).fetchone()
+        if have:
+            return
         self.conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
         self.conn.commit()
 

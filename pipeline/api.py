@@ -15,11 +15,20 @@ from urllib.parse import parse_qs, urlparse
 from . import analytics
 from .store import Store
 
+
+def _limit(q, default: int) -> int:
+    try:
+        v = int(q.get("limit", [str(default)])[0])
+    except (ValueError, TypeError):
+        return default
+    return v if v >= 0 else default
+
+
 ROUTES = {
     "/health": lambda s, q: {"ok": True, "counts": s.counts()},
     "/summary": lambda s, q: analytics.summary(s),
     "/analytics/top-contractors":
-        lambda s, q: analytics.top_contractors(s, int(q.get("limit", ["25"])[0])),
+        lambda s, q: analytics.top_contractors(s, _limit(q, 25)),
     "/analytics/floated-value": lambda s, q: analytics.floated_value_by_org_month(s),
     "/analytics/award-ratio": lambda s, q: analytics.award_ratio(s),
     "/analytics/single-bidder": lambda s, q: analytics.single_bidder(s),
@@ -33,7 +42,7 @@ ROUTES = {
     "/tenders": lambda s, q: s.query(
         "SELECT source_tender_id, publishing_org, title, estimated_value_inr,"
         " district, status FROM tenders ORDER BY estimated_value_inr DESC"
-        " LIMIT ?", (int(q.get("limit", ["100"])[0]),)),
+        " LIMIT ?", (_limit(q, 100),)),
 }
 
 

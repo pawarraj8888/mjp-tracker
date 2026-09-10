@@ -8,3 +8,5 @@ out/
 results_raw/
 
 data/
+.coverage
+.pytest_cache/
