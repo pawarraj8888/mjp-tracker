@@ -160,8 +160,11 @@ def ingest_from_state(store: Store, portal: str = "mahatenders",
     arecs = adapter.award_records(state.get("awards"), state.get("details"))
     new, upd, alias_map = ingest_tenders(store, portal, trecs)
     n_awards = ingest_awards(store, portal, arecs, alias_map)
+    from .retender import link_retenders
+    retenders = link_retenders(store)
     recompute_coverage(store)
     store.record_run(portal, started, _now(), new, upd, 0,
-                     note="tenders=%d awards=%d" % (len(trecs), n_awards))
+                     note="tenders=%d awards=%d retenders=%d"
+                     % (len(trecs), n_awards, retenders))
     return {"tenders": len(trecs), "new": new, "updated": upd,
-            "awards": n_awards, "counts": store.counts()}
+            "awards": n_awards, "retenders": retenders, "counts": store.counts()}

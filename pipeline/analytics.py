@@ -76,8 +76,61 @@ def contractor_pairs(store: Store, limit: int = 25) -> list[dict]:
         " GROUP BY a, b HAVING shared > 1 ORDER BY shared DESC LIMIT ?", (limit,))
 
 
+def by_district(store: Store, limit: int = 40) -> list[dict]:
+    return store.query(
+        "SELECT COALESCE(NULLIF(district,''),'(unknown)') district,"
+        " COUNT(*) tenders, SUM(COALESCE(estimated_value_inr,0)) floated_inr"
+        " FROM tenders GROUP BY district ORDER BY floated_inr DESC LIMIT ?",
+        (limit,))
+
+
+def by_funding_scheme(store: Store) -> list[dict]:
+    return store.query(
+        "SELECT COALESCE(NULLIF(funding_scheme,''),'(unclassified)') scheme,"
+        " COUNT(*) tenders, SUM(COALESCE(estimated_value_inr,0)) floated_inr"
+        " FROM tenders GROUP BY scheme ORDER BY tenders DESC")
+
+
+def value_bands(store: Store) -> list[dict]:
+    return store.query(
+        "SELECT band, COUNT(*) count FROM ("
+        "  SELECT CASE"
+        "    WHEN estimated_value_inr >= 1000000000 THEN '100 Cr +'"
+        "    WHEN estimated_value_inr >= 100000000  THEN '10-100 Cr'"
+        "    WHEN estimated_value_inr >= 10000000   THEN '1-10 Cr'"
+        "    WHEN estimated_value_inr >= 1000000    THEN '10 L - 1 Cr'"
+        "    WHEN estimated_value_inr > 0           THEN '< 10 L'"
+        "    ELSE '(no value)' END band,"
+        "  CASE"
+        "    WHEN estimated_value_inr >= 1000000000 THEN 5"
+        "    WHEN estimated_value_inr >= 100000000  THEN 4"
+        "    WHEN estimated_value_inr >= 10000000   THEN 3"
+        "    WHEN estimated_value_inr >= 1000000    THEN 2"
+        "    WHEN estimated_value_inr > 0           THEN 1 ELSE 0 END ord"
+        "  FROM tenders) GROUP BY band, ord ORDER BY ord DESC")
+
+
 def summary(store: Store) -> dict:
     c = store.counts()
     val = store.query(
         "SELECT SUM(COALESCE(award_value_inr,0)) v FROM awards")[0]["v"] or 0
-    return {"counts": c, "total_awarded_value_inr": val}
+    floated = store.query(
+        "SELECT SUM(COALESCE(estimated_value_inr,0)) v FROM tenders")[0]["v"] or 0
+    return {"counts": c, "total_awarded_value_inr": val,
+            "total_floated_value_inr": floated}
+
+
+def export_bundle(store: Store) -> dict:
+    """A compact analytics bundle for the dashboard Analytics tab. Numeric
+    only; the client formats values."""
+    return {
+        "summary": summary(store),
+        "top_contractors": top_contractors(store, 25),
+        "single_bidder": single_bidder(store),
+        "coverage": coverage(store),
+        "by_district": by_district(store, 25),
+        "by_funding_scheme": by_funding_scheme(store),
+        "value_bands": value_bands(store),
+        "time_to_award": time_to_award(store)[:25],
+        "award_ratio": award_ratio(store, 25),
+    }

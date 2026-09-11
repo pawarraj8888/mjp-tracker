@@ -14,7 +14,17 @@ the committed `awards.json` / `live.json` / `seen.json` / `details_cache.json`).
 .venv/bin/python -m pipeline analytics coverage
 .venv/bin/python -m pipeline analytics ratio|floated|retender|time-to-award|pairs
 .venv/bin/python -m pipeline serve-api --port 8790   # read-only JSON API
+.venv/bin/python -m pipeline export-analytics        # write analytics.json for the dashboard
+.venv/bin/python -m pipeline review                  # list contractor merges awaiting a human
+.venv/bin/python -m pipeline retender                # (via ingest) link cancelled->new tenders
 ```
+
+`export-analytics` writes `analytics.json` (committed, read via
+`STATE_REMOTE_BASE`), which powers the dashboard's **Analytics** tab
+(value bands, top districts, funding schemes, single-bidder rate, top
+contractors, award coverage). Regenerate after each ingest:
+`python -m pipeline ingest && python -m pipeline export-analytics`, then commit
+`analytics.json`.
 
 Analytics API routes (stdlib http): `/health`, `/summary`,
 `/analytics/top-contractors`, `/analytics/floated-value`,

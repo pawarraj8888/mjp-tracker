@@ -1709,6 +1709,16 @@ def load_enrichment():
     return _load_state(ENRICHMENT_FILE, {})
 
 
+ANALYTICS_FILE = ROOT / "analytics.json"
+
+
+def load_analytics():
+    """Pipeline analytics bundle (analytics.json), produced by
+    `python -m pipeline export-analytics`. Read like the other state files so
+    the hosted dashboard shows it without a redeploy."""
+    return _load_state(ANALYTICS_FILE, {})
+
+
 def _award_of(entry):
     ai = entry.get("award")
     if not ai or not ai.get("contractor"):
@@ -2478,6 +2488,23 @@ td.cnum { font-family: "Fira Code", monospace; text-align: right;
   white-space: nowrap; }
 .ctable tr:last-child td { border-bottom: none; }
 
+.agrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px,1fr));
+  gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px 16px; }
+.card h3 { margin: 0 0 10px; font-size: 13px; color: var(--heading);
+  text-transform: none; letter-spacing: 0; }
+.bitem { margin: 8px 0; }
+.btop { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.btop .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btop .val { font-family: "Fira Code", monospace; color: var(--muted-fg);
+  white-space: nowrap; }
+.track { height: 6px; background: var(--muted); border-radius: 999px;
+  margin-top: 3px; overflow: hidden; }
+.track i { display: block; height: 100%; background: var(--primary);
+  border-radius: 999px; }
+.track i.warn { background: var(--accent); }
+
 #overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
   opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
 #overlay.show { opacity: 1; pointer-events: auto; }
@@ -2550,6 +2577,8 @@ td.cnum { font-family: "Fira Code", monospace; text-align: right;
    aria-controls="view-tenders">Tenders</button>
   <button class="tab" id="tab-contractors" role="tab" aria-selected="false"
    aria-controls="view-contractors">Contractors</button>
+  <button class="tab" id="tab-analytics" role="tab" aria-selected="false"
+   aria-controls="view-analytics">Analytics</button>
  </div>
  <section id="view-tenders" role="tabpanel" aria-labelledby="tab-tenders">
  <div class="tiles">
@@ -2626,6 +2655,28 @@ td.cnum { font-family: "Fira Code", monospace; text-align: right;
   <div class="empty" id="cempty" hidden></div>
  </div>
  </section>
+
+ <section id="view-analytics" role="tabpanel" aria-labelledby="tab-analytics" hidden>
+ <div class="tiles">
+  <div class="tile"><div class="v" id="a-tenders"></div><div class="l">Tenders in canonical store</div></div>
+  <div class="tile"><div class="v" id="a-floated"></div><div class="l">Floated value (estimated)</div></div>
+  <div class="tile"><div class="v" id="a-awards"></div><div class="l">Awards imported</div></div>
+  <div class="tile"><div class="v" id="a-awarded"></div><div class="l">Awarded value</div></div>
+ </div>
+ <div id="a-empty" class="empty" hidden></div>
+ <div class="agrid" id="a-grid">
+  <div class="card"><h3>Tenders by value band</h3><div id="a-bands"></div></div>
+  <div class="card"><h3>Top districts by floated value</h3><div id="a-districts"></div></div>
+  <div class="card"><h3>By funding scheme</h3><div id="a-schemes"></div></div>
+  <div class="card"><h3>Single-bidder rate by publisher</h3><div id="a-single"></div></div>
+  <div class="card"><h3>Top contractors (statewide, by awarded value)</h3><div id="a-top"></div></div>
+  <div class="card"><h3>Award coverage (org / year)</h3><div id="a-coverage"></div></div>
+ </div>
+ <p style="font-size:11px;color:var(--muted-fg);margin-top:12px">Analytics are
+  built by the pipeline (python -m pipeline ingest) from the imported award data
+  and refreshed on export. Single-bidder rate and coverage are competition
+  signals: a high single-bidder share or low award coverage is worth a look.</p>
+ </section>
 </main>
 
 <div id="overlay"></div>
@@ -2651,6 +2702,7 @@ td.cnum { font-family: "Fira Code", monospace; text-align: right;
 var DATA = __DATA_JSON__;
 var SECTIONS_SPEC = __SECTIONS_JSON__;
 var CONTRACTORS = __CONTRACTORS_JSON__;
+var ANALYTICS = __ANALYTICS_JSON__;
 var els = {
   rows: document.getElementById('rows'), q: document.getElementById('q'),
   src: document.getElementById('f-src'), st: document.getElementById('f-st'),
@@ -3083,23 +3135,87 @@ cels.rows.addEventListener('keydown', function (e) {
 });
 
 /* -------------------------------------------------------------- */
+/* Analytics view                                                 */
+/* -------------------------------------------------------------- */
+function fmtInr(n) {
+  n = +n || 0;
+  if (n >= 1e7) return (n / 1e7).toFixed(2).replace(/\.?0+$/, '') + ' Cr';
+  if (n >= 1e5) return (n / 1e5).toFixed(2).replace(/\.?0+$/, '') + ' L';
+  return n.toLocaleString('en-IN');
+}
+function bars(el, items, labelKey, valueKey, fmt, opts) {
+  opts = opts || {};
+  var max = items.reduce(function (m, x) {
+    return Math.max(m, +x[valueKey] || 0); }, 0) || 1;
+  el.innerHTML = items.length ? items.map(function (x) {
+    var v = +x[valueKey] || 0;
+    var pct = Math.max(2, Math.round(100 * v / max));
+    var cls = (opts.warnAt != null && v >= opts.warnAt) ? ' warn' : '';
+    return '<div class="bitem"><div class="btop"><span class="lab">' +
+      esc(x[labelKey]) + '</span><span class="val">' + esc(fmt(x)) +
+      '</span></div><div class="track"><i class="' + cls.trim() +
+      '" style="width:' + pct + '%"></i></div></div>';
+  }).join('') : '<div class="btop"><span class="lab">No data yet.</span></div>';
+}
+function renderAnalytics() {
+  var A = ANALYTICS || {};
+  var s = (A.summary || {}), c = (s.counts || {});
+  var has = (c.tenders || 0) > 0;
+  document.getElementById('a-grid').hidden = !has;
+  document.getElementById('a-empty').hidden = has;
+  if (!has) {
+    document.getElementById('a-empty').innerHTML =
+      'No analytics yet. Import awards, then run ' +
+      '<code>python -m pipeline ingest &amp;&amp; python -m pipeline export-analytics</code>.';
+    return;
+  }
+  document.getElementById('a-tenders').textContent = c.tenders || 0;
+  document.getElementById('a-floated').textContent =
+    fmtInr(s.total_floated_value_inr);
+  document.getElementById('a-awards').textContent = c.awards || 0;
+  document.getElementById('a-awarded').textContent =
+    fmtInr(s.total_awarded_value_inr);
+  bars(document.getElementById('a-bands'), A.value_bands || [], 'band', 'count',
+    function (x) { return x.count + ' tenders'; });
+  bars(document.getElementById('a-districts'), (A.by_district || []).slice(0, 12),
+    'district', 'floated_inr', function (x) { return fmtInr(x.floated_inr); });
+  bars(document.getElementById('a-schemes'), A.by_funding_scheme || [], 'scheme',
+    'tenders', function (x) { return x.tenders + ' | ' + fmtInr(x.floated_inr); });
+  bars(document.getElementById('a-single'),
+    (A.single_bidder || []).slice(0, 12), 'org', 'single_bidder_rate',
+    function (x) { return Math.round(100 * x.single_bidder_rate) + '% (' +
+      x.single_bidder + '/' + x.awarded + ')'; }, { warnAt: 0.999 });
+  bars(document.getElementById('a-top'), (A.top_contractors || []).slice(0, 12),
+    'contractor', 'total_value_inr', function (x) {
+      return fmtInr(x.total_value_inr) + ' | ' + x.contracts; });
+  bars(document.getElementById('a-coverage'),
+    (A.coverage || []).slice(0, 12), 'org', 'coverage', function (x) {
+      return Math.round(100 * x.coverage) + '% (' + x.awarded + '/' +
+        x.closed + ')'; });
+}
+renderAnalytics();
+
+/* -------------------------------------------------------------- */
 /* Tab switching                                                  */
 /* -------------------------------------------------------------- */
+var TABS = ['tenders', 'contractors', 'analytics'];
 function showTab(name) {
-  var t = name === 'contractors';
-  document.getElementById('view-tenders').hidden = t;
-  document.getElementById('view-contractors').hidden = !t;
-  document.getElementById('tab-tenders').classList.toggle('active', !t);
-  document.getElementById('tab-contractors').classList.toggle('active', t);
-  document.getElementById('tab-tenders').setAttribute('aria-selected', String(!t));
-  document.getElementById('tab-contractors').setAttribute('aria-selected', String(t));
-  try { history.replaceState(null, '', t ? '#contractors' : '#'); } catch (err) {}
+  if (TABS.indexOf(name) < 0) name = 'tenders';
+  TABS.forEach(function (n) {
+    document.getElementById('view-' + n).hidden = n !== name;
+    var tb = document.getElementById('tab-' + n);
+    tb.classList.toggle('active', n === name);
+    tb.setAttribute('aria-selected', String(n === name));
+  });
+  try {
+    history.replaceState(null, '', name === 'tenders' ? '#' : '#' + name);
+  } catch (err) {}
 }
-document.getElementById('tab-tenders').addEventListener('click',
-  function () { showTab('tenders'); });
-document.getElementById('tab-contractors').addEventListener('click',
-  function () { showTab('contractors'); });
-if (location.hash === '#contractors') showTab('contractors');
+TABS.forEach(function (n) {
+  document.getElementById('tab-' + n).addEventListener('click',
+    function () { showTab(n); });
+});
+if (location.hash) showTab(location.hash.slice(1));
 
 setTimeout(function () { location.reload(); }, DATA.refreshSeconds * 1000);
 </script>
@@ -3112,7 +3228,8 @@ def build_dashboard_page():
     return DASHBOARD_PAGE.replace(
         "__DATA_JSON__", js(dashboard_data())).replace(
         "__SECTIONS_JSON__", js(sections_spec())).replace(
-        "__CONTRACTORS_JSON__", js(contractors_data()))
+        "__CONTRACTORS_JSON__", js(contractors_data())).replace(
+        "__ANALYTICS_JSON__", js(load_analytics()))
 
 
 def dashboard_pdf(tid, lang):

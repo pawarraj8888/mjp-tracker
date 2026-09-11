@@ -37,6 +37,9 @@ def main(argv=None) -> int:
     p_bf = sub.add_parser("backfill")
     p_bf.add_argument("--portal", default="mahatenders")
     p_bf.add_argument("--from-year", type=int, default=None)
+    p_ex = sub.add_parser("export-analytics")
+    p_ex.add_argument("--out", default="analytics.json")
+    sub.add_parser("review")
     args = ap.parse_args(argv)
 
     if args.cmd == "init-db":
@@ -75,6 +78,24 @@ def main(argv=None) -> int:
         return 0
     if args.cmd == "backfill":
         _print(backfill.run(args.portal, args.from_year))
+        return 0
+    if args.cmd == "export-analytics":
+        store = Store()
+        bundle = analytics.export_bundle(store)
+        import time
+        bundle["generated"] = time.strftime("%d-%b-%Y %I:%M %p")
+        with open(args.out, "w", encoding="utf-8") as fh:
+            json.dump(bundle, fh, ensure_ascii=False, indent=1, sort_keys=True)
+            fh.write("\n")
+        _print({"wrote": args.out,
+                "top_contractors": len(bundle["top_contractors"]),
+                "districts": len(bundle["by_district"])})
+        return 0
+    if args.cmd == "review":
+        store = Store()
+        _print(store.query(
+            "SELECT name_raw, candidate_name, score FROM contractors_review"
+            " WHERE resolved=0 ORDER BY score DESC"))
         return 0
     return 1
 

@@ -1,0 +1,1076 @@
+{
+ "award_ratio": [
+  {
+   "awarded": 2575768,
+   "contractor": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon",
+   "estimated": 2535194,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.01600429789594
+  },
+  {
+   "awarded": 209295873,
+   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
+   "estimated": 206744809,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.012339192516316
+  },
+  {
+   "awarded": 208346212,
+   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
+   "estimated": 206744809,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.0077457954458242
+  },
+  {
+   "awarded": 208167414,
+   "contractor": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT",
+   "estimated": 206744809,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.0068809708300825
+  },
+  {
+   "awarded": 2539440,
+   "contractor": "Navjivan MSS Ltd Valwadi",
+   "estimated": 2535194,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.0016748225185135
+  },
+  {
+   "awarded": 225602687,
+   "contractor": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT",
+   "estimated": 225266617,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.0014918766236898
+  },
+  {
+   "awarded": 7008333,
+   "contractor": "Omkareshwor Enterprises",
+   "estimated": 7005000,
+   "org": "Beed -Mining Dept",
+   "ratio": 1.0004758029978587
+  },
+  {
+   "awarded": 1185983,
+   "contractor": "YADAV MAHESH YASHWANTRAO",
+   "estimated": 1185546,
+   "org": "BEED-MINOR IRRI.",
+   "ratio": 1.0003686065323487
+  },
+  {
+   "awarded": 1490098,
+   "contractor": "Rohit Nandu Chavan",
+   "estimated": 1489828,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.000181228974083
+  },
+  {
+   "awarded": 755688,
+   "contractor": "ROHAN SUDHAKAR MEDHE",
+   "estimated": 755688,
+   "org": "JALGAON-MINOR IRRI.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 629654148,
+   "contractor": "M. S. JAIN",
+   "estimated": 629654148,
+   "org": "Public Works Division Amalner",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 27692000,
+   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES",
+   "estimated": 27692000,
+   "org": "District and Sessions Court Jalgaon",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 262419,
+   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES",
+   "estimated": 262419,
+   "org": "District and Sessions Court Jalgaon",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 189290,
+   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES",
+   "estimated": 189290,
+   "org": "District and Sessions Court Jalgaon",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 125571093,
+   "contractor": "FIDA ENGINEERING ELECTRIC AND CIVIL CONTRACTOR PARBHNAI",
+   "estimated": 125571093,
+   "org": "EE Chief Gate Erection Unit No.4 Aurangabad",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 699650,
+   "contractor": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR",
+   "estimated": 699650,
+   "org": "LIMBEJALGAON",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1875117,
+   "contractor": "Khod Vishwnath Ramchandra",
+   "estimated": 1875117,
+   "org": "BEED-E.O.(S)",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1187694,
+   "contractor": "Khod Vishwnath Ramchandra",
+   "estimated": 1187694,
+   "org": "BEED-MINOR IRRI.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1185546,
+   "contractor": "YADAV MAHESH YASHWANTRAO",
+   "estimated": 1185546,
+   "org": "BEED-MINOR IRRI.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1185351,
+   "contractor": "YADAV MAHESH YASHWANTRAO",
+   "estimated": 1185351,
+   "org": "BEED-MINOR IRRI.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1353400,
+   "contractor": "JADHAV BALAJI RAMBHAU",
+   "estimated": 1353400,
+   "org": "BEED-MINOR IRRI.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 2316597,
+   "contractor": "FAMOUS CONSTRUCTION",
+   "estimated": 2316597,
+   "org": "BEED-WORKS DIV.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1184398,
+   "contractor": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED",
+   "estimated": 1184398,
+   "org": "BEED-MINOR IRRI.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 200665525,
+   "contractor": "FAMOUS CONSTRUCTION",
+   "estimated": 200665525,
+   "org": "BEED-WORKS DIV.",
+   "ratio": 1.0
+  },
+  {
+   "awarded": 1035492,
+   "contractor": "Dhanraj Majur Sahkari sanstha",
+   "estimated": 1035492,
+   "org": "BEED-WORKS DIV.",
+   "ratio": 1.0
+  }
+ ],
+ "by_district": [
+  {
+   "district": "Aurangabad",
+   "floated_inr": 5544139561,
+   "tenders": 26
+  },
+  {
+   "district": "Beed",
+   "floated_inr": 3183037737,
+   "tenders": 32
+  },
+  {
+   "district": "Jalgaon City",
+   "floated_inr": 2314193151,
+   "tenders": 97
+  },
+  {
+   "district": "Mumbai",
+   "floated_inr": 1197671115,
+   "tenders": 2
+  },
+  {
+   "district": "Jalgaon",
+   "floated_inr": 1155439238,
+   "tenders": 71
+  },
+  {
+   "district": "Nandurbar",
+   "floated_inr": 761918057,
+   "tenders": 5
+  },
+  {
+   "district": "Nanded",
+   "floated_inr": 687839723,
+   "tenders": 1
+  },
+  {
+   "district": "Ahmednagar",
+   "floated_inr": 107231325,
+   "tenders": 3
+  },
+  {
+   "district": "Pune",
+   "floated_inr": 82329555,
+   "tenders": 2
+  },
+  {
+   "district": "Dhule",
+   "floated_inr": 71189771,
+   "tenders": 6
+  },
+  {
+   "district": "Thane",
+   "floated_inr": 61836474,
+   "tenders": 6
+  },
+  {
+   "district": "Wardha",
+   "floated_inr": 44609903,
+   "tenders": 1
+  },
+  {
+   "district": "Amravati",
+   "floated_inr": 18520512,
+   "tenders": 5
+  },
+  {
+   "district": "Chhatrapati Sambhajinagar",
+   "floated_inr": 18065851,
+   "tenders": 3
+  },
+  {
+   "district": "Nashik",
+   "floated_inr": 17286786,
+   "tenders": 4
+  },
+  {
+   "district": "Kalyan Dombivli Municipal Corp",
+   "floated_inr": 5507865,
+   "tenders": 2
+  },
+  {
+   "district": "Nagpur",
+   "floated_inr": 5463178,
+   "tenders": 8
+  },
+  {
+   "district": "Satara",
+   "floated_inr": 4845472,
+   "tenders": 3
+  },
+  {
+   "district": "Kolhapur",
+   "floated_inr": 4208644,
+   "tenders": 2
+  },
+  {
+   "district": "Washim",
+   "floated_inr": 2327035,
+   "tenders": 2
+  },
+  {
+   "district": "Buldhana",
+   "floated_inr": 1650000,
+   "tenders": 2
+  },
+  {
+   "district": "Raigad",
+   "floated_inr": 1528548,
+   "tenders": 1
+  },
+  {
+   "district": "Latur",
+   "floated_inr": 1497399,
+   "tenders": 1
+  },
+  {
+   "district": "Bhiwandi Nizampur City Municip",
+   "floated_inr": 1199194,
+   "tenders": 1
+  },
+  {
+   "district": "Osmanabad",
+   "floated_inr": 586141,
+   "tenders": 1
+  }
+ ],
+ "by_funding_scheme": [
+  {
+   "floated_inr": 15207715237,
+   "scheme": "(unclassified)",
+   "tenders": 250
+  },
+  {
+   "floated_inr": 12359657,
+   "scheme": "Amdar Nidhi / MLA fund",
+   "tenders": 15
+  },
+  {
+   "floated_inr": 34891437,
+   "scheme": "Jal Jeevan Mission",
+   "tenders": 8
+  },
+  {
+   "floated_inr": 29630346,
+   "scheme": "Dalit Vasti",
+   "tenders": 5
+  },
+  {
+   "floated_inr": 9025591,
+   "scheme": "DPDC / District Planning",
+   "tenders": 4
+  },
+  {
+   "floated_inr": 499967,
+   "scheme": "15th Finance Commission",
+   "tenders": 4
+  },
+  {
+   "floated_inr": 0,
+   "scheme": "Khasdar / MP fund",
+   "tenders": 1
+  }
+ ],
+ "coverage": [
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "EE (MJP) W.M. Division Amravati",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "CHINCHGAVAN",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 5,
+   "coverage": 0.0,
+   "org": "Municipal Council Bhusaval",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "BHINGARA",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Government Medical College and Hospital Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "CHUNCHALE",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "HEDAVE",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 4,
+   "coverage": 0.0,
+   "org": "EE Jalgaon Medium Project Division No.2 Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 10,
+   "coverage": 0.0,
+   "org": "JALGAON-WORKS DIV.",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "BEED-WORKS DIV.",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "JALGAON-DRDA",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "KHADKI",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "GODHANI(G)",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE (MJP) Division Wardha",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council Amalner",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "DABHA",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "Municipal Council Raver",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "Municipal Council Chalisgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "BHOD BK.",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "BHILALI",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE Jalgaon Irrigation Division Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council Yawal",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Maharashtra State Infrastructure Development Corporation",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 4,
+   "coverage": 0.0,
+   "org": "LASUR",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "ADGAON",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE (MJP) Division Aurangabad",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "E and M Division Aurangabad",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "MOHIDE",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE(JAlgaon),SE(Nasik),WSSD,Maharashtra",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "EE Dhule Irrigation Division Dhule",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "PAL",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "VISHNAPUR",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "JALGAON-RWS",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "KARAJGAON",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Agriculture Product Market Committee Majalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "North Maharashtra University Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE (MJP) W.M. Division Nagpur",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "JINSI",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "KHEDIKARYAT",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council, Majalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE Nandurbar Medium Project Division Nandurbar",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "VASANTWADI",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "DIU Jalgaon- World Bank Tenders",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "Public Works Division No.2 Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "SHELWAD",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "EE(Thane),SE(Thane),WSSD,Maharashtra",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "VITNER",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Asst. Commissionerate of Fisheries- Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "WAGHORA",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "AMODE BK",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "Division Dhule",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Agriculture Product Market Committee Dharangaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE (MJP) Division Amravati",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council Erandol",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE Girna Irrigation Division Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 1,
+   "closed": 1,
+   "coverage": 1.0,
+   "org": "LIMBEJALGAON",
+   "year": 2026
+  }
+ ],
+ "generated": "12-Sep-2026 12:37 AM",
+ "single_bidder": [
+  {
+   "awarded": 1,
+   "org": "AHMEDNAGAR-WORKS DIV.",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Agriculture Product Market Committee Majalgaon",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "BEED-E.O.(S)",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 7,
+   "org": "BEED-MINOR IRRI.",
+   "single_bidder": 7,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 10,
+   "org": "BEED-WORKS DIV.",
+   "single_bidder": 10,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 8,
+   "org": "Beed -Mining Dept",
+   "single_bidder": 8,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 2,
+   "org": "Civil Division Aurangabad",
+   "single_bidder": 2,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 2,
+   "org": "Deputy Director Social Forestry Jalgaon",
+   "single_bidder": 2,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 3,
+   "org": "District and Sessions Court Jalgaon",
+   "single_bidder": 3,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "E and M Division Aurangabad",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 2,
+   "org": "E.G.S. Division Ahmednagar",
+   "single_bidder": 2,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 2,
+   "org": "EE Chief Gate Erection Unit No.4 Aurangabad",
+   "single_bidder": 2,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "EE Godavari Hydro Elec. and Lift Irri. Div. Abad",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "EE Majalgaon Canal Division No.7 Gangakhed",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "EE Majalgaon Irrigation Division Parli (V)",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 35,
+   "org": "JALGAON-MINOR IRRI.",
+   "single_bidder": 35,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 3,
+   "org": "JALGAON-WORKS DIV.",
+   "single_bidder": 3,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 8,
+   "org": "LIMBEJALGAON",
+   "single_bidder": 8,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Municipal Council Jamner",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Municipal Council Parola",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Public Works Division Amalner",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 3,
+   "org": "Public Works Division Ambejogai",
+   "single_bidder": 3,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Public Works Division Beed",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Public Works Division Jalgaon",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "Public Works(East) Division-Pune",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "SARWARPIMPALGAON",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  },
+  {
+   "awarded": 1,
+   "org": "SHIRSALE BK",
+   "single_bidder": 1,
+   "single_bidder_rate": 1.0
+  }
+ ],
+ "summary": {
+  "counts": {
+   "awards": 100,
+   "bids": 100,
+   "contractors": 67,
+   "contractors_review": 0,
+   "crawl_runs": 1,
+   "documents": 0,
+   "tender_events": 0,
+   "tenders": 287
+  },
+  "total_awarded_value_inr": 14346493008,
+  "total_floated_value_inr": 15294122235
+ },
+ "time_to_award": [
+  {
+   "avg_days": 2.0,
+   "n": 2,
+   "org": "LIMBEJALGAON"
+  }
+ ],
+ "top_contractors": [
+  {
+   "contractor": "BHOSLE ASHISH GOVINDRAO",
+   "contracts": 1,
+   "total_value_inr": 4291550826
+  },
+  {
+   "contractor": "MATHURAI VENTURES",
+   "contracts": 1,
+   "total_value_inr": 1749779908
+  },
+  {
+   "contractor": "SHINDE BHARAT RATAANRAO",
+   "contracts": 1,
+   "total_value_inr": 1195275628
+  },
+  {
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
+   "contracts": 6,
+   "total_value_inr": 721759542
+  },
+  {
+   "contractor": "M. S. JAIN",
+   "contracts": 1,
+   "total_value_inr": 629654148
+  },
+  {
+   "contractor": "A B DONGRE CO",
+   "contracts": 1,
+   "total_value_inr": 576020509
+  },
+  {
+   "contractor": "M/s. Indraprastha Ventures",
+   "contracts": 2,
+   "total_value_inr": 466023805
+  },
+  {
+   "contractor": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT",
+   "contracts": 2,
+   "total_value_inr": 450869304
+  },
+  {
+   "contractor": "BHAUSAHEB ARJUN KUMAWAT",
+   "contracts": 1,
+   "total_value_inr": 449981605
+  },
+  {
+   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
+   "contracts": 4,
+   "total_value_inr": 433301912
+  },
+  {
+   "contractor": "SHAURYA CONSTRUCTION",
+   "contracts": 1,
+   "total_value_inr": 385550418
+  },
+  {
+   "contractor": "Shivrashtra Majur Co.Soc, Ltd, Chandsar",
+   "contracts": 1,
+   "total_value_inr": 333261226
+  },
+  {
+   "contractor": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora",
+   "contracts": 2,
+   "total_value_inr": 261144813
+  },
+  {
+   "contractor": "Shri. Datta Majur Sah. Sanstha Maryadit Pachora Tal. Pachora",
+   "contracts": 1,
+   "total_value_inr": 229826876
+  },
+  {
+   "contractor": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT",
+   "contracts": 2,
+   "total_value_inr": 228749743
+  },
+  {
+   "contractor": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon",
+   "contracts": 2,
+   "total_value_inr": 227489736
+  },
+  {
+   "contractor": "Navjivan MSS Ltd Valwadi",
+   "contracts": 2,
+   "total_value_inr": 219022068
+  },
+  {
+   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
+   "contracts": 3,
+   "total_value_inr": 213358372
+  },
+  {
+   "contractor": "Mahatma Fule Majur Sahakari Sanstha Maryadit Kajgaon Tal.Bhadgaon",
+   "contracts": 1,
+   "total_value_inr": 206744809
+  },
+  {
+   "contractor": "FAMOUS CONSTRUCTION",
+   "contracts": 2,
+   "total_value_inr": 202982122
+  },
+  {
+   "contractor": "Rohini Majoor Sahakari SosayatyLtd Raver",
+   "contracts": 1,
+   "total_value_inr": 149094348
+  },
+  {
+   "contractor": "FIDA ENGINEERING ELECTRIC AND CIVIL CONTRACTOR PARBHNAI",
+   "contracts": 1,
+   "total_value_inr": 125571093
+  },
+  {
+   "contractor": "JITESH G THAKARE",
+   "contracts": 1,
+   "total_value_inr": 109644337
+  },
+  {
+   "contractor": "N. M. PATHAN",
+   "contracts": 1,
+   "total_value_inr": 88142051
+  },
+  {
+   "contractor": "AJINKYA DATTATRAYA KONDE",
+   "contracts": 1,
+   "total_value_inr": 82329555
+  }
+ ],
+ "value_bands": [
+  {
+   "band": "100 Cr +",
+   "count": 3
+  },
+  {
+   "band": "10-100 Cr",
+   "count": 24
+  },
+  {
+   "band": "1-10 Cr",
+   "count": 28
+  },
+  {
+   "band": "10 L - 1 Cr",
+   "count": 121
+  },
+  {
+   "band": "< 10 L",
+   "count": 47
+  },
+  {
+   "band": "(no value)",
+   "count": 64
+  }
+ ]
+}
