@@ -59,6 +59,7 @@ from pathlib import Path
 
 import money
 import requests
+import timez
 from bs4 import BeautifulSoup
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -1463,7 +1464,13 @@ def dashboard_data():
             cls, label = "awarded", "Awarded"
         else:
             cls, label = tender_status(closing, r is not None, now)
-        value = parse_inr(d.get("Tender Value in ₹", ""))
+        # Estimated (pre-bid) value only. Unknown stays unknown (None).
+        est = money.parse_amount(d.get("Tender Value in ₹", ""))
+        award_obj = awards.get(tid, {}).get("award") if awarded else None
+        award_val = money.str_to_dec(award_obj.get("awarded_value")) \
+            if award_obj else None
+        contractor = display_contractor(award_obj.get("contractor", "")) \
+            if award_obj else ""
         org_chain = (r or e).get("org_chain", "")
         city = derive_city(d.get("Location"), org_chain,
                            (r or e).get("title", ""))
@@ -1480,10 +1487,16 @@ def dashboard_data():
             "org": publisher((r or e).get("org_chain", "")) or
                    awards.get(tid, {}).get("org", ""),
             "awarded": awarded,
+            "contractor": contractor,
             "city": city,
             "cityGroup": city_group(city),
-            "value": value,
-            "valueFmt": format_inr(value),
+            # Estimated value (exact string | null) + sortable numeric.
+            "value": money.dec_to_str(est),
+            "valueFmt": format_inr(est) or "",
+            "valueNum": float(est) if est is not None else -1,
+            # Awarded value kept strictly separate from the estimate.
+            "awardValue": money.dec_to_str(award_val),
+            "awardValueFmt": format_inr(award_val) or "",
             "published": published,
             "publishedTs": portal_ts(published),
             "closing": closing,
@@ -1508,15 +1521,16 @@ def dashboard_data():
     tenders = live_part + gone_part
 
     soon = sum(1 for t in live_part if t["st"] in ("soon", "urgent"))
-    kw_count = sum(1 for t in tenders if "Amdar Nidhi / DPDC" in t["sources"])
+    awarded_ct = sum(1 for t in tenders if t["awarded"])
     sources = sorted({s for t in tenders for s in t["sources"]})
     cities = sorted({t["cityGroup"] for t in tenders if t["cityGroup"]},
                     key=str.casefold)
     return {
         "generated": now.strftime("%d-%b-%Y %I:%M %p"),
+        "generatedIso": timez.iso_ist(),
         "refreshSeconds": DASHBOARD_CACHE_SECONDS,
         "stats": {"live": len(live_part), "soon": soon,
-                  "keyword": kw_count, "total": len(seen)},
+                  "awarded": awarded_ct, "total": len(tenders)},
         "sources": sources,
         "cities": cities,
         "tenders": tenders,
@@ -1720,9 +1734,25 @@ ANALYTICS_FILE = ROOT / "analytics.json"
 
 def load_analytics():
     """Pipeline analytics bundle (analytics.json), produced by
-    `python -m pipeline export-analytics`. Read like the other state files so
-    the hosted dashboard shows it without a redeploy."""
+    `python -m pipeline export`. Read like the other state files so the hosted
+    dashboard shows it without a redeploy."""
     return _load_state(ANALYTICS_FILE, {})
+
+
+NOTIFICATIONS_FILE = ROOT / "notifications.json"
+DATA_STATUS_FILE = ROOT / "data_status.json"
+CORRECTIONS_FILE = ROOT / "corrections.json"
+
+
+def load_notifications():
+    """Server-generated notification stream (notifications.json)."""
+    return _load_state(NOTIFICATIONS_FILE, {"notifications": [], "count": 0,
+                                            "by_kind": {}})
+
+
+def load_data_status():
+    """Data-freshness / source-health snapshot (data_status.json)."""
+    return _load_state(DATA_STATUS_FILE, {"overall_status": "unknown"})
 
 
 def _award_of(entry):
@@ -2372,883 +2402,23 @@ tender's popup).</p>
 </main></body></html>"""
 
 
-DASHBOARD_PAGE = r"""<!DOCTYPE html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tender Watch</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@450;600&family=Fira+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root {
-  --primary: #1E40AF; --primary-dark: #17346C; --on-primary: #FFFFFF;
-  --accent: #D97706; --bg: #F8FAFC; --card: #FFFFFF; --border: #DBEAFE;
-  --line: #E5EAF3; --fg: #0F172A; --heading: #1E3A8A;
-  --muted: #E9EEF6; --muted-fg: #475569; --ring: #1E40AF;
-  --ok: #15803D; --ok-bg: #DCFCE7; --warn: #92400E; --warn-bg: #FEF3C7;
-  --bad: #B91C1C; --bad-bg: #FEE2E2; --off: #475569; --off-bg: #E2E8F0;
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg);
-  font: 400 14px/1.5 "Fira Sans", -apple-system, "Segoe UI", sans-serif; }
-.mono { font-family: "Fira Code", ui-monospace, Menlo, monospace;
-  font-variant-numeric: tabular-nums; }
-button, select, input { font: inherit; }
-:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-
-header { background: var(--primary); color: var(--on-primary);
-  padding: 14px 22px; display: flex; flex-wrap: wrap; gap: 12px;
-  align-items: center; justify-content: space-between; }
-header h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: .2px; }
-header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
-#refresh { display: inline-flex; align-items: center; gap: 7px;
-  background: rgba(255,255,255,.12); color: #fff; border: 1px solid
-  rgba(255,255,255,.45); border-radius: 8px; padding: 9px 14px;
-  min-height: 40px; cursor: pointer; transition: background .2s; }
-#refresh:hover { background: rgba(255,255,255,.24); }
-#refresh svg { width: 15px; height: 15px; }
-
-main { max-width: 1280px; margin: 0 auto; padding: 18px 22px 80px; }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr));
-  gap: 10px; margin-bottom: 14px; }
-.tile { background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 12px 14px; }
-.tile .v { font-family: "Fira Code", monospace; font-size: 24px;
-  font-weight: 600; color: var(--heading); }
-.tile .l { font-size: 12px; color: var(--muted-fg); margin-top: 2px; }
-
-.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
-  margin-bottom: 10px; }
-.search { position: relative; flex: 1 1 260px; max-width: 420px; }
-.search svg { position: absolute; left: 10px; top: 50%;
-  transform: translateY(-50%); width: 15px; height: 15px; color: var(--muted-fg); }
-.search input { width: 100%; padding: 9px 12px 9px 32px; min-height: 40px;
-  border: 1px solid var(--border); border-radius: 8px; background: var(--card); }
-.bar select { padding: 9px 10px; min-height: 40px; border: 1px solid
-  var(--border); border-radius: 8px; background: var(--card);
-  color: var(--fg); cursor: pointer; }
-.bar .count { font-size: 12px; color: var(--muted-fg); margin-left: auto; }
-
-.tablewrap { background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; overflow: auto; max-height: calc(100vh - 320px); }
-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1260px; }
-thead th { position: sticky; top: 0; z-index: 1; background: #EFF4FB;
-  text-align: left; font-weight: 600; color: var(--heading);
-  padding: 9px 12px; border-bottom: 1px solid var(--border);
-  white-space: nowrap; }
-th.sortable { cursor: pointer; user-select: none; }
-th.sortable:hover { background: #E3EBF7; }
-th.sortable::after { content: "\2195"; opacity: .35; margin-left: 5px;
-  font-size: 11px; }
-th.sortable.asc::after { content: "\2191"; opacity: 1; }
-th.sortable.desc::after { content: "\2193"; opacity: 1; }
-tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line);
-  vertical-align: top; }
-tbody tr { cursor: pointer; transition: background .15s; }
-tbody tr:hover { background: #F1F5FF; }
-tbody tr.gone-row td { color: var(--muted-fg); }
-td.tid { font-family: "Fira Code", monospace; font-size: 12px;
-  white-space: nowrap; }
-td.nowrap, th.nowrap { white-space: nowrap; }
-.badge { display: inline-block; padding: 2px 9px; border-radius: 999px;
-  font-size: 11px; font-weight: 500; white-space: nowrap; }
-.badge.open { background: var(--ok-bg); color: var(--ok); }
-.badge.soon { background: var(--warn-bg); color: var(--warn); }
-.badge.urgent, .badge.closed { background: var(--bad-bg); color: var(--bad); }
-.badge.gone { background: var(--off-bg); color: var(--off); }
-.badge.awarded { background: #DBEAFE; color: #1E40AF; }
-.src { font-size: 11px; color: var(--muted-fg); white-space: nowrap; }
-.pub { font-size: 11px; color: var(--muted-fg); min-width: 140px; }
-.more { display: inline-block; background: var(--muted); color: var(--muted-fg);
-  border-radius: 6px; padding: 0 5px; font-size: 10px; cursor: help; }
-td.val { font-family: "Fira Code", monospace; font-size: 12px;
-  text-align: right; white-space: nowrap; }
-td.city { font-size: 12px; white-space: nowrap; }
-.empty { padding: 26px; text-align: center; color: var(--muted-fg); }
-
-.tabs { display: flex; gap: 4px; margin: 0 0 14px; border-bottom: 1px solid
-  var(--border); }
-.tab { background: none; border: none; border-bottom: 2px solid transparent;
-  padding: 10px 18px; font-size: 14px; font-weight: 500; color: var(--muted-fg);
-  cursor: pointer; margin-bottom: -1px; min-height: 40px; }
-.tab:hover { color: var(--heading); }
-.tab.active { color: var(--heading); border-bottom-color: var(--primary); }
-.chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.chip { display: inline-block; border-radius: 999px; padding: 2px 9px;
-  font-size: 11px; background: var(--muted); color: var(--muted-fg);
-  white-space: nowrap; }
-.chip.dept { background: #EEF2FF; color: #3730A3; }
-.chip.city { background: #ECFDF5; color: #047857; }
-.chip.sector { background: #FEF3F2; color: #B42318; }
-td.cname { font-weight: 500; color: var(--heading); }
-td.cnum { font-family: "Fira Code", monospace; text-align: right;
-  white-space: nowrap; }
-.badge.enriched { background: #DCFCE7; color: var(--ok); }
-.prof-head { display: flex; flex-wrap: wrap; gap: 14px 26px; margin: 2px 0 6px; }
-.prof-stat .v { font-family: "Fira Code", monospace; font-size: 20px;
-  font-weight: 600; color: var(--heading); }
-.prof-stat .l { font-size: 11px; color: var(--muted-fg); }
-.links { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
-.links a { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
-  min-height: 36px; border: 1px solid var(--border); border-radius: 8px;
-  text-decoration: none; font-size: 12px; color: var(--primary);
-  background: var(--card); transition: background .15s; }
-.links a:hover { background: #F1F5FF; }
-.enrich { background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-  padding: 12px 14px; font-size: 13px; line-height: 1.55; }
-.enrich .missing { color: var(--muted-fg); }
-.ctable { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 2px; }
-.ctable th { text-align: left; color: var(--muted-fg); font-weight: 500;
-  padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-.ctable td { padding: 6px 8px; border-bottom: 1px solid var(--line);
-  vertical-align: top; overflow-wrap: anywhere; }
-.ctable td.v { font-family: "Fira Code", monospace; text-align: right;
-  white-space: nowrap; }
-.ctable tr:last-child td { border-bottom: none; }
-
-.agrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px,1fr));
-  gap: 12px; }
-.card { background: var(--card); border: 1px solid var(--border);
-  border-radius: 10px; padding: 14px 16px; }
-.card h3 { margin: 0 0 10px; font-size: 13px; color: var(--heading);
-  text-transform: none; letter-spacing: 0; }
-.bitem { margin: 8px 0; }
-.btop { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
-.btop .lab { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.btop .val { font-family: "Fira Code", monospace; color: var(--muted-fg);
-  white-space: nowrap; }
-.track { height: 6px; background: var(--muted); border-radius: 999px;
-  margin-top: 3px; overflow: hidden; }
-.track i { display: block; height: 100%; background: var(--primary);
-  border-radius: 999px; }
-.track i.warn { background: var(--accent); }
-
-#overlay { position: fixed; inset: 0; background: rgba(15,23,42,.45);
-  opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
-#overlay.show { opacity: 1; pointer-events: auto; }
-#panel { position: fixed; top: 0; right: 0; bottom: 0;
-  width: min(680px, 94vw); background: var(--card); z-index: 50;
-  transform: translateX(102%); transition: transform .22s ease;
-  display: flex; flex-direction: column;
-  box-shadow: -12px 0 32px rgba(15,23,42,.18); }
-#panel.show { transform: translateX(0); }
-#panel .phead { padding: 16px 20px 12px; border-bottom: 1px solid var(--line);
-  display: flex; gap: 12px; align-items: flex-start; }
-#panel .phead h2 { margin: 0 0 4px; font-size: 15px; line-height: 1.4;
-  color: var(--heading); }
-#panel .phead .pid { font-family: "Fira Code", monospace; font-size: 12px;
-  color: var(--muted-fg); }
-#pclose { margin-left: auto; flex: none; width: 40px; height: 40px;
-  display: grid; place-items: center; background: none; border: 1px solid
-  var(--border); border-radius: 8px; cursor: pointer; color: var(--muted-fg);
-  transition: background .15s; }
-#pclose:hover { background: var(--muted); }
-#pbody { overflow-y: auto; overflow-x: hidden; padding: 6px 20px 20px; flex: 1; }
-#pbody h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .7px;
-  color: var(--muted-fg); margin: 20px 0 6px; }
-.kv { width: 100%; border-collapse: collapse; font-size: 13px; }
-.kv td { padding: 6px 8px; border-bottom: 1px solid var(--line);
-  vertical-align: top; overflow-wrap: anywhere; }
-.kv td:first-child { width: 38%; color: var(--muted-fg); }
-.kv tr:last-child td { border-bottom: none; }
-.pfoot { padding: 12px 20px; border-top: 1px solid var(--line);
-  display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.pfoot a { display: inline-flex; align-items: center; gap: 7px;
-  padding: 9px 14px; min-height: 40px; border-radius: 8px;
-  text-decoration: none; font-weight: 500; font-size: 13px;
-  transition: background .15s; }
-.pfoot a.en { background: var(--primary); color: var(--on-primary); }
-.pfoot a.en:hover { background: var(--primary-dark); }
-.pfoot a.mr { border: 1px solid var(--accent); color: var(--accent); }
-.pfoot a.mr:hover { background: #FEF7EC; }
-.pfoot .note { font-size: 11px; color: var(--muted-fg); }
-.spin { margin: 40px auto; width: 26px; height: 26px; border-radius: 50%;
-  border: 3px solid var(--muted); border-top-color: var(--primary);
-  animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.perr { margin: 30px 10px; color: var(--muted-fg); text-align: center; }
-@media (prefers-reduced-motion: reduce) {
-  #panel, #overlay, tbody tr, #refresh { transition: none; }
-  .spin { animation-duration: 1.6s; }
-}
-</style></head>
-<body>
-<header>
- <div>
-  <h1>Tender Watch</h1>
-  <div class="sub">MJP statewide · ZP Jalgaon DPDC · Collector Jalgaon · Amdar Nidhi / DPDC scan · all Jalgaon tenders statewide
-   &nbsp;|&nbsp; updated <span id="stamp"></span> · auto refresh every 15 min</div>
- </div>
- <div style="display:flex;gap:8px;align-items:center">
- <a id="unlock-link" href="/unlock" style="color:#fff;font-size:12px;
-  border:1px solid rgba(255,255,255,.45);border-radius:8px;
-  padding:9px 14px;text-decoration:none">Import results</a>
- <button id="refresh" aria-label="Refresh data now">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
-  Refresh
- </button>
- </div>
-</header>
-<main>
- <div class="tabs" role="tablist">
-  <button class="tab active" id="tab-tenders" role="tab" aria-selected="true"
-   aria-controls="view-tenders">Tenders</button>
-  <button class="tab" id="tab-contractors" role="tab" aria-selected="false"
-   aria-controls="view-contractors">Contractors</button>
-  <button class="tab" id="tab-analytics" role="tab" aria-selected="false"
-   aria-controls="view-analytics">Analytics</button>
- </div>
- <section id="view-tenders" role="tabpanel" aria-labelledby="tab-tenders">
- <div class="tiles">
-  <div class="tile"><div class="v" id="s-live"></div><div class="l">Live tenders</div></div>
-  <div class="tile"><div class="v" id="s-soon"></div><div class="l">Closing within 3 days</div></div>
-  <div class="tile"><div class="v" id="s-kw"></div><div class="l">Amdar Nidhi / DPDC matches</div></div>
-  <div class="tile"><div class="v" id="s-total"></div><div class="l">Tracked all time</div></div>
- </div>
- <div class="bar">
-  <div class="search">
-   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-   <input id="q" type="search" placeholder="Search title, id, ref no..." aria-label="Search tenders">
-  </div>
-  <select id="f-src" aria-label="Filter by watch"><option value="">All watches</option></select>
-  <select id="f-city" aria-label="Filter by city"><option value="">All cities</option></select>
-  <select id="f-st" aria-label="Filter by status">
-   <option value="">All statuses</option>
-   <option value="live">Live</option>
-   <option value="soonish">Closing within 3 days</option>
-   <option value="past">Closed / delisted</option>
-  </select>
-  <span class="count" id="count"></span>
- </div>
- <div class="tablewrap">
-  <table aria-label="Tenders">
-   <thead><tr>
-    <th class="nowrap sortable" data-key="id">Tender ID</th>
-    <th class="sortable" data-key="title">Title</th>
-    <th class="sortable" data-key="source">Watch</th>
-    <th class="sortable" data-key="org">Publisher</th>
-    <th class="sortable" data-key="city">City</th>
-    <th class="nowrap sortable num" data-key="value">Value</th>
-    <th class="nowrap sortable num" data-key="publishedTs">Published</th>
-    <th class="nowrap sortable num" data-key="closingTs">Closing</th>
-    <th class="nowrap sortable num" data-key="openingTs">Opening</th>
-    <th class="nowrap sortable" data-key="stLabel">Status</th>
-   </tr></thead>
-   <tbody id="rows"></tbody>
-  </table>
-  <div class="empty" id="empty" hidden>No tenders match the current filters.</div>
- </div>
- </section>
-
- <section id="view-contractors" role="tabpanel" aria-labelledby="tab-contractors" hidden>
- <div class="tiles">
-  <div class="tile"><div class="v" id="c-count"></div><div class="l">Contractors</div></div>
-  <div class="tile"><div class="v" id="c-contracts"></div><div class="l">Contracts awarded</div></div>
-  <div class="tile"><div class="v" id="c-value"></div><div class="l">Total awarded value</div></div>
-  <div class="tile"><div class="v" id="c-enriched"></div><div class="l">With public records</div></div>
- </div>
- <div class="bar">
-  <div class="search">
-   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-   <input id="cq" type="search" placeholder="Search contractor, department, city..." aria-label="Search contractors">
-  </div>
-  <select id="c-dept" aria-label="Filter by department"><option value="">All departments</option></select>
-  <select id="c-city" aria-label="Filter by city"><option value="">All cities</option></select>
-  <select id="c-sector" aria-label="Filter by sector"><option value="">All sectors</option></select>
-  <span class="count" id="ccount"></span>
- </div>
- <div class="tablewrap">
-  <table aria-label="Contractors">
-   <thead><tr>
-    <th class="sortable" data-ckey="name">Contractor</th>
-    <th class="nowrap sortable num" data-ckey="count">Contracts</th>
-    <th class="nowrap sortable num" data-ckey="value">Total value</th>
-    <th class="nowrap num" data-ckey="avg">Avg</th>
-    <th data-ckey="departments">Departments</th>
-    <th data-ckey="cities">Cities</th>
-    <th class="nowrap sortable num" data-ckey="lastTs">Last award</th>
-   </tr></thead>
-   <tbody id="crows"></tbody>
-  </table>
-  <div class="empty" id="cempty" hidden></div>
- </div>
- </section>
-
- <section id="view-analytics" role="tabpanel" aria-labelledby="tab-analytics" hidden>
- <div class="tiles">
-  <div class="tile"><div class="v" id="a-tenders"></div><div class="l">Tenders in canonical store</div></div>
-  <div class="tile"><div class="v" id="a-floated"></div><div class="l">Floated value (estimated)</div></div>
-  <div class="tile"><div class="v" id="a-awards"></div><div class="l">Awards imported</div></div>
-  <div class="tile"><div class="v" id="a-awarded"></div><div class="l">Awarded value</div></div>
- </div>
- <div id="a-empty" class="empty" hidden></div>
- <div class="agrid" id="a-grid">
-  <div class="card"><h3>Tenders by value band</h3><div id="a-bands"></div></div>
-  <div class="card"><h3>Top districts by floated value</h3><div id="a-districts"></div></div>
-  <div class="card"><h3>By funding scheme</h3><div id="a-schemes"></div></div>
-  <div class="card"><h3>Single-bidder rate by publisher</h3><div id="a-single"></div></div>
-  <div class="card"><h3>Top contractors (statewide, by awarded value)</h3><div id="a-top"></div></div>
-  <div class="card"><h3>Award coverage (org / year)</h3><div id="a-coverage"></div></div>
- </div>
- <p style="font-size:11px;color:var(--muted-fg);margin-top:12px">Analytics are
-  built by the pipeline (python -m pipeline ingest) from the imported award data
-  and refreshed on export. Single-bidder rate and coverage are competition
-  signals: a high single-bidder share or low award coverage is worth a look.</p>
- </section>
-</main>
-
-<div id="overlay"></div>
-<aside id="panel" role="dialog" aria-modal="true" aria-labelledby="ptitle">
- <div class="phead">
-  <div>
-   <h2 id="ptitle"></h2>
-   <div class="pid mono" id="ppid"></div>
-  </div>
-  <button id="pclose" aria-label="Close details">
-   <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-  </button>
- </div>
- <div id="pbody"></div>
- <div class="pfoot" id="pfoot">
-  <a class="en" id="pdf-en" target="_blank" rel="noopener">English PDF</a>
-  <a class="mr" id="pdf-mr" target="_blank" rel="noopener">Marathi PDF</a>
-  <span class="note">Marathi PDF is generated on demand and can take up to a minute.</span>
- </div>
-</aside>
-
-<script>
-var DATA = __DATA_JSON__;
-var SECTIONS_SPEC = __SECTIONS_JSON__;
-var CONTRACTORS = __CONTRACTORS_JSON__;
-var ANALYTICS = __ANALYTICS_JSON__;
-var els = {
-  rows: document.getElementById('rows'), q: document.getElementById('q'),
-  src: document.getElementById('f-src'), st: document.getElementById('f-st'),
-  city: document.getElementById('f-city'),
-  count: document.getElementById('count'), empty: document.getElementById('empty'),
-  overlay: document.getElementById('overlay'), panel: document.getElementById('panel'),
-  pbody: document.getElementById('pbody')
-};
-var sortState = { key: null, dir: 1 };
-document.getElementById('stamp').textContent = DATA.generated;
-document.getElementById('s-live').textContent = DATA.stats.live;
-document.getElementById('s-soon').textContent = DATA.stats.soon;
-document.getElementById('s-kw').textContent = DATA.stats.keyword;
-document.getElementById('s-total').textContent = DATA.stats.total;
-DATA.sources.forEach(function (s) {
-  var o = document.createElement('option'); o.value = s; o.textContent = s;
-  els.src.appendChild(o);
-});
-DATA.cities.forEach(function (c) {
-  var o = document.createElement('option'); o.value = c; o.textContent = c;
-  els.city.appendChild(o);
-});
-function esc(t) {
-  return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
-  });
-}
-function matches(t) {
-  var q = els.q.value.trim().toLowerCase();
-  if (q && (t.id + ' ' + t.title + ' ' + t.ref + ' ' + t.source + ' ' +
-      t.org + ' ' + t.city).toLowerCase().indexOf(q) < 0) return false;
-  if (els.src.value && (t.sources || []).indexOf(els.src.value) < 0) return false;
-  if (els.city.value && t.cityGroup !== els.city.value) return false;
-  var st = els.st.value;
-  if (st === 'live' && !t.live) return false;
-  if (st === 'soonish' && ['soon', 'urgent'].indexOf(t.st) < 0) return false;
-  if (st === 'past' && t.live && t.st !== 'closed') return false;
-  return true;
-}
-var NUM_KEYS = { value: 1, publishedTs: 1, closingTs: 1, openingTs: 1 };
-function sorted() {
-  var list = DATA.tenders.map(function (t, i) { t._i = i; return t; });
-  var k = sortState.key;
-  if (!k) return list;
-  return list.slice().sort(function (a, b) {
-    var r;
-    if (NUM_KEYS[k]) {
-      r = (a[k] || 0) - (b[k] || 0);
-    } else {
-      r = String(a[k] || '').toLowerCase()
-        .localeCompare(String(b[k] || '').toLowerCase());
-    }
-    return r * sortState.dir;
-  });
-}
-document.querySelectorAll('th.sortable').forEach(function (th) {
-  th.setAttribute('tabindex', '0');
-  function toggle() {
-    var k = th.dataset.key;
-    if (sortState.key === k) {
-      sortState.dir = -sortState.dir;
-    } else {
-      sortState.key = k;
-      sortState.dir = NUM_KEYS[k] && k !== 'closingTs' ? -1 : 1;
-    }
-    document.querySelectorAll('th.sortable').forEach(function (h) {
-      h.classList.remove('asc', 'desc');
-      h.removeAttribute('aria-sort');
-    });
-    th.classList.add(sortState.dir === 1 ? 'asc' : 'desc');
-    th.setAttribute('aria-sort', sortState.dir === 1 ? 'ascending' : 'descending');
-    render();
-  }
-  th.addEventListener('click', toggle);
-  th.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
-  });
-});
-function render() {
-  var shown = 0, html = '';
-  sorted().forEach(function (t) {
-    var i = t._i;
-    if (!matches(t)) return;
-    shown++;
-    html += '<tr data-i="' + i + '" tabindex="0"' +
-      (t.live ? '' : ' class="gone-row"') + '>' +
-      '<td class="tid">' + esc(t.id) + '</td>' +
-      '<td>' + esc(t.title) + '</td>' +
-      '<td class="src">' + esc(t.source) +
-        ((t.sources && t.sources.length > 1)
-          ? ' <span class="more" title="' + esc(t.sources.join(", ")) + '">+' +
-            (t.sources.length - 1) + '</span>' : '') + '</td>' +
-      '<td class="pub">' + esc(t.org) + '</td>' +
-      '<td class="city">' + esc(t.city) + '</td>' +
-      '<td class="val">' + esc(t.valueFmt) + '</td>' +
-      '<td class="nowrap">' + esc((t.published || '').split(' ')[0]) + '</td>' +
-      '<td class="nowrap">' + esc(t.closing) + '</td>' +
-      '<td class="nowrap">' + esc((t.opening || '').split(' ')[0]) + '</td>' +
-      '<td><span class="badge ' + t.st + '">' + esc(t.stLabel) + '</span>' +
-      (t.awarded && t.st !== 'awarded'
-        ? ' <span class="badge awarded">Awarded</span>' : '') + '</td></tr>';
-  });
-  els.rows.innerHTML = html;
-  els.empty.hidden = shown > 0;
-  if (shown === 0) {
-    var active = [];
-    if (els.src.value) active.push('watch "' + els.src.value + '"');
-    if (els.city.value) active.push('city "' + els.city.value + '"');
-    if (els.st.value) active.push('status');
-    if (els.q.value.trim()) active.push('search "' + els.q.value.trim() + '"');
-    var msg = 'No tenders match ' +
-      (active.length ? active.join(' and ') : 'the current filters') + '.';
-    if (els.src.value && els.city.value) {
-      var inCity = DATA.tenders.filter(function (t) {
-        return t.cityGroup === els.city.value;
-      }).reduce(function (set, t) {
-        (t.sources || []).forEach(function (s) { set[s] = 1; }); return set;
-      }, {});
-      var names = Object.keys(inCity);
-      if (names.length) msg += ' In ' + els.city.value +
-        ' the available watches are: ' + names.join(', ') + '.';
-    }
-    els.empty.innerHTML = esc(msg) +
-      ' <button id="clearf" style="margin-left:8px;padding:6px 12px;' +
-      'border:1px solid var(--border);border-radius:8px;background:#fff;' +
-      'cursor:pointer">Clear filters</button>';
-    var cb = document.getElementById('clearf');
-    if (cb) cb.addEventListener('click', function () {
-      els.q.value = ''; els.src.value = ''; els.city.value = '';
-      els.st.value = ''; render();
-    });
-  }
-  els.count.textContent = shown + ' of ' + DATA.tenders.length + ' tenders';
-}
-['input', 'change'].forEach(function (ev) {
-  [els.q, els.src, els.st, els.city].forEach(function (el) {
-    el.addEventListener(ev, render);
-  });
-});
-render();
-
-function openPanel(t) {
-  document.getElementById('pfoot').style.display = 'flex';
-  document.getElementById('ptitle').textContent = t.title;
-  document.getElementById('ppid').textContent = t.id + (t.ref ? '  ·  ' + t.ref : '');
-  document.getElementById('pdf-en').href = '/pdf/' + t.id + '/en';
-  document.getElementById('pdf-mr').href = '/pdf/' + t.id + '/mr';
-  els.pbody.innerHTML = '<div class="spin" role="status" aria-label="Loading"></div>';
-  els.overlay.classList.add('show');
-  els.panel.classList.add('show');
-  fetch('/api/detail?id=' + encodeURIComponent(t.id))
-    .then(function (r) { return r.json(); })
-    .then(function (d) {
-      if (!d.ok) {
-        els.pbody.innerHTML = '<p class="perr">' + esc(d.error ||
-          'Full details are not available for this tender.') + '</p>';
-        return;
-      }
-      var html = '';
-      SECTIONS_SPEC.forEach(function (sec) {
-        var rows = '';
-        sec.fields.forEach(function (f) {
-          var v = d.details[f[0]];
-          if (v) rows += '<tr><td>' + esc(f[1]) + '</td><td>' + esc(v) + '</td></tr>';
-        });
-        if (rows) html += '<h3>' + esc(sec.name) + '</h3><table class="kv">' + rows + '</table>';
-      });
-      if (d.award && d.award.fields) {
-        var arows = '';
-        Object.keys(d.award.fields).forEach(function (k) {
-          if (d.details[k]) return;
-          arows += '<tr><td>' + esc(k) + '</td><td>' +
-            esc(d.award.fields[k]) + '</td></tr>';
-        });
-        if (arows) html += '<h3>Result / Award</h3><table class="kv">' +
-          arows + '</table>';
-      }
-      els.pbody.innerHTML = html || '<p class="perr">No fields parsed.</p>';
-    })
-    .catch(function () {
-      els.pbody.innerHTML = '<p class="perr">Could not load details. ' +
-        'The portal may be slow; try again.</p>';
-    });
-  document.getElementById('pclose').focus();
-}
-function closePanel() {
-  els.overlay.classList.remove('show');
-  els.panel.classList.remove('show');
-}
-els.rows.addEventListener('click', function (e) {
-  var tr = e.target.closest('tr[data-i]');
-  if (tr) openPanel(DATA.tenders[+tr.dataset.i]);
-});
-els.rows.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') {
-    var tr = e.target.closest('tr[data-i]');
-    if (tr) openPanel(DATA.tenders[+tr.dataset.i]);
-  }
-});
-document.getElementById('pclose').addEventListener('click', closePanel);
-els.overlay.addEventListener('click', closePanel);
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closePanel();
-});
-document.getElementById('refresh').addEventListener('click', function () {
-  location.href = '/?refresh=1';
-});
-
-/* -------------------------------------------------------------- */
-/* Contractors view                                               */
-/* -------------------------------------------------------------- */
-var cels = {
-  rows: document.getElementById('crows'), q: document.getElementById('cq'),
-  dept: document.getElementById('c-dept'), city: document.getElementById('c-city'),
-  sector: document.getElementById('c-sector'),
-  count: document.getElementById('ccount'), empty: document.getElementById('cempty')
-};
-var csort = { key: 'value', dir: -1 };
-function addOpt(sel, v) {
-  var o = document.createElement('option'); o.value = v; o.textContent = v;
-  sel.appendChild(o);
-}
-document.getElementById('c-count').textContent = CONTRACTORS.stats.contractors;
-document.getElementById('c-contracts').textContent = CONTRACTORS.stats.contracts;
-document.getElementById('c-value').textContent = CONTRACTORS.stats.valueFmt || '0';
-document.getElementById('c-enriched').textContent = CONTRACTORS.stats.enriched;
-CONTRACTORS.departments.forEach(function (d) { addOpt(cels.dept, d); });
-CONTRACTORS.cities.forEach(function (c) { addOpt(cels.city, c); });
-CONTRACTORS.sectors.forEach(function (s) { addOpt(cels.sector, s); });
-
-function cmatches(c) {
-  var q = cels.q.value.trim().toLowerCase();
-  if (q) {
-    var hay = (c.name + ' ' + c.departments.join(' ') + ' ' +
-      c.cities.join(' ') + ' ' + c.sectors.join(' ')).toLowerCase();
-    if (hay.indexOf(q) < 0) return false;
-  }
-  if (cels.dept.value && c.departments.indexOf(cels.dept.value) < 0) return false;
-  if (cels.city.value && c.cities.indexOf(cels.city.value) < 0) return false;
-  if (cels.sector.value && c.sectors.indexOf(cels.sector.value) < 0) return false;
-  return true;
-}
-var CNUM = { count: 1, value: 1, lastTs: 1 };
-function csorted() {
-  var list = CONTRACTORS.contractors.map(function (c, i) { c._i = i; return c; });
-  var k = csort.key;
-  return list.slice().sort(function (a, b) {
-    var r;
-    if (CNUM[k]) r = (a[k] || 0) - (b[k] || 0);
-    else r = String(a[k] || '').toLowerCase()
-      .localeCompare(String(b[k] || '').toLowerCase());
-    return r * csort.dir;
-  });
-}
-function chipHtml(items, cls, max) {
-  max = max || 3;
-  var out = items.slice(0, max).map(function (x) {
-    return '<span class="chip ' + cls + '">' + esc(x) + '</span>';
-  }).join(' ');
-  if (items.length > max) out += ' <span class="chip">+' + (items.length - max) + '</span>';
-  return '<div class="chips">' + out + '</div>';
-}
-function crender() {
-  var shown = 0, html = '';
-  csorted().forEach(function (c) {
-    if (!cmatches(c)) return;
-    shown++;
-    html += '<tr data-ci="' + c._i + '" tabindex="0">' +
-      '<td class="cname">' + esc(c.name) +
-        (c.enrichment && c.enrichment.verified
-          ? ' <span class="badge enriched">records</span>' : '') + '</td>' +
-      '<td class="cnum">' + c.count + '</td>' +
-      '<td class="cnum">' + esc(c.valueFmt || '-') + '</td>' +
-      '<td class="cnum">' + esc(c.avgFmt || '-') + '</td>' +
-      '<td>' + chipHtml(c.departments, 'dept') + '</td>' +
-      '<td>' + chipHtml(c.cities, 'city') + '</td>' +
-      '<td class="nowrap">' + esc((c.lastDate || '').split(' ')[0]) + '</td></tr>';
-  });
-  cels.rows.innerHTML = html;
-  var none = shown === 0;
-  cels.empty.hidden = !none;
-  if (none) {
-    if (!CONTRACTORS.contractors.length) {
-      cels.empty.innerHTML = 'No award data imported yet. Contractor names live ' +
-        'in the portal\'s captcha-protected results section. Use ' +
-        '<a href="/unlock">Import results</a> to unlock and pull them in.';
-    } else {
-      cels.empty.textContent = 'No contractors match the current filters.';
-    }
-  }
-  cels.count.textContent = shown + ' of ' +
-    CONTRACTORS.contractors.length + ' contractors';
-}
-document.querySelectorAll('th[data-ckey].sortable').forEach(function (th) {
-  th.setAttribute('tabindex', '0');
-  function toggle() {
-    var k = th.dataset.ckey;
-    if (csort.key === k) csort.dir = -csort.dir;
-    else { csort.key = k; csort.dir = CNUM[k] ? -1 : 1; }
-    document.querySelectorAll('th[data-ckey]').forEach(function (h) {
-      h.classList.remove('asc', 'desc'); h.removeAttribute('aria-sort');
-    });
-    th.classList.add(csort.dir === 1 ? 'asc' : 'desc');
-    th.setAttribute('aria-sort', csort.dir === 1 ? 'ascending' : 'descending');
-    crender();
-  }
-  th.addEventListener('click', toggle);
-  th.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
-  });
-});
-['input', 'change'].forEach(function (ev) {
-  [cels.q, cels.dept, cels.city, cels.sector].forEach(function (el) {
-    el.addEventListener(ev, crender);
-  });
-});
-crender();
-
-function statBox(v, l) {
-  return '<div class="prof-stat"><div class="v">' + esc(v) +
-    '</div><div class="l">' + esc(l) + '</div></div>';
-}
-function extArrow() {
-  return '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" ' +
-    'stroke="currentColor" stroke-width="2" stroke-linecap="round">' +
-    '<path d="M7 17 17 7M8 7h9v9"/></svg>';
-}
-function deepLinks(name) {
-  var q = encodeURIComponent(name);
-  return [
-    ['Google', 'https://www.google.com/search?q=' +
-      encodeURIComponent(name + ' Maharashtra contractor')],
-    ['News', 'https://news.google.com/search?q=' + q],
-    ['Zauba Corp', 'https://www.zaubacorp.com/companysearchresults/' + q],
-    ['Tofler', 'https://www.tofler.in/search?query=' + q],
-    ['MCA filings', 'https://www.google.com/search?q=' +
-      encodeURIComponent(name + ' site:mca.gov.in')],
-    ['GST search', 'https://www.knowyourgst.com/gst-number-search/?q=' + q],
-    ['IndiaMART', 'https://dir.indiamart.com/search.mp?ss=' + q],
-    ['LinkedIn', 'https://www.linkedin.com/search/results/companies/?keywords=' + q]
-  ];
-}
-function openContractor(c) {
-  document.getElementById('pfoot').style.display = 'none';
-  document.getElementById('ptitle').textContent = c.name;
-  document.getElementById('ppid').textContent =
-    c.count + ' contract' + (c.count === 1 ? '' : 's') +
-    (c.valueFmt ? '  ·  ' + c.valueFmt + ' total' : '');
-  var h = '<div class="prof-head">' +
-    statBox(c.valueFmt || '-', 'Total awarded') +
-    statBox(String(c.count), 'Contracts') +
-    statBox(c.avgFmt || '-', 'Average') +
-    statBox(String(c.departments.length), 'Departments') + '</div>';
-
-  h += '<h3>Public records</h3>';
-  var e = c.enrichment;
-  h += '<div class="enrich">';
-  if (e) {
-    if (e.summary) h += '<p style="margin:0 0 8px">' + esc(e.summary) + '</p>';
-    var fields = [['Type', e.type], ['Location', e.location],
-      ['Incorporated', e.incorporated], ['CIN', e.cin], ['GSTIN', e.gstin],
-      ['Directors', (e.directors || []).join(', ')], ['Status', e.status]];
-    var fr = fields.filter(function (f) { return f[1]; }).map(function (f) {
-      return '<tr><td>' + esc(f[0]) + '</td><td>' + esc(f[1]) + '</td></tr>';
-    }).join('');
-    if (fr) h += '<table class="kv">' + fr + '</table>';
-    if (e.notes) h += '<p style="margin:8px 0 0;color:var(--muted-fg)">' +
-      esc(e.notes) + '</p>';
-    if (e.sources && e.sources.length) {
-      h += '<div class="links" style="margin-top:8px">';
-      e.sources.forEach(function (s) {
-        h += '<a href="' + esc(s.url) + '" target="_blank" rel="noopener">' +
-          esc(s.label || 'Source') + ' ' + extArrow() + '</a>';
-      });
-      h += '</div>';
-    }
-  } else {
-    h += '<span class="missing">No external records compiled for this ' +
-      'contractor yet. Search the public sources below.</span>';
-  }
-  h += '</div>';
-
-  h += '<div class="links">';
-  deepLinks(c.name).forEach(function (l) {
-    h += '<a href="' + esc(l[1]) + '" target="_blank" rel="noopener">' +
-      esc(l[0]) + ' ' + extArrow() + '</a>';
-  });
-  h += '</div>';
-
-  if (c.sectors.length)
-    h += '<h3>Sectors</h3>' + chipHtml(c.sectors, 'sector', 14);
-  if (c.cities.length)
-    h += '<h3>Where they work</h3>' + chipHtml(c.cities, 'city', 14);
-
-  h += '<h3>Contracts won (' + c.contracts.length + ')</h3>' +
-    '<table class="ctable"><thead><tr><th>Tender</th><th>Department</th>' +
-    '<th>City</th><th class="v">Value</th><th>Date</th></tr></thead><tbody>';
-  c.contracts.forEach(function (ct) {
-    h += '<tr><td>' + esc(ct.title || ct.id) +
-      '<div class="mono" style="font-size:11px;color:var(--muted-fg)">' +
-      esc(ct.id) + '</div></td>' +
-      '<td>' + esc(ct.org) + '</td><td>' + esc(ct.city) + '</td>' +
-      '<td class="v">' + esc(ct.valueFmt || '-') + '</td>' +
-      '<td class="nowrap">' + esc((ct.date || '').split(' ')[0]) + '</td></tr>';
-  });
-  h += '</tbody></table>';
-
-  if (c.competitors && c.competitors.length) {
-    h += '<h3>Also bid against (' + c.competitors.length + ')</h3><div class="chips">';
-    c.competitors.slice(0, 24).forEach(function (comp) {
-      h += '<span class="chip">' + esc(comp.name) + ' · ' + comp.count + '</span>';
-    });
-    h += '</div>';
-  }
-
-  els.pbody.innerHTML = h;
-  els.overlay.classList.add('show');
-  els.panel.classList.add('show');
-  document.getElementById('pclose').focus();
-}
-cels.rows.addEventListener('click', function (e) {
-  var tr = e.target.closest('tr[data-ci]');
-  if (tr) openContractor(CONTRACTORS.contractors[+tr.dataset.ci]);
-});
-cels.rows.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') {
-    var tr = e.target.closest('tr[data-ci]');
-    if (tr) openContractor(CONTRACTORS.contractors[+tr.dataset.ci]);
-  }
-});
-
-/* -------------------------------------------------------------- */
-/* Analytics view                                                 */
-/* -------------------------------------------------------------- */
-function fmtInr(n) {
-  n = +n || 0;
-  if (n >= 1e7) return (n / 1e7).toFixed(2).replace(/\.?0+$/, '') + ' Cr';
-  if (n >= 1e5) return (n / 1e5).toFixed(2).replace(/\.?0+$/, '') + ' L';
-  return n.toLocaleString('en-IN');
-}
-function bars(el, items, labelKey, valueKey, fmt, opts) {
-  opts = opts || {};
-  var max = items.reduce(function (m, x) {
-    return Math.max(m, +x[valueKey] || 0); }, 0) || 1;
-  el.innerHTML = items.length ? items.map(function (x) {
-    var v = +x[valueKey] || 0;
-    var pct = Math.max(2, Math.round(100 * v / max));
-    var cls = (opts.warnAt != null && v >= opts.warnAt) ? ' warn' : '';
-    return '<div class="bitem"><div class="btop"><span class="lab">' +
-      esc(x[labelKey]) + '</span><span class="val">' + esc(fmt(x)) +
-      '</span></div><div class="track"><i class="' + cls.trim() +
-      '" style="width:' + pct + '%"></i></div></div>';
-  }).join('') : '<div class="btop"><span class="lab">No data yet.</span></div>';
-}
-function renderAnalytics() {
-  var A = ANALYTICS || {};
-  var s = (A.summary || {}), c = (s.counts || {});
-  var has = (c.tenders || 0) > 0;
-  document.getElementById('a-grid').hidden = !has;
-  document.getElementById('a-empty').hidden = has;
-  if (!has) {
-    document.getElementById('a-empty').innerHTML =
-      'No analytics yet. Import awards, then run ' +
-      '<code>python -m pipeline ingest &amp;&amp; python -m pipeline export-analytics</code>.';
-    return;
-  }
-  document.getElementById('a-tenders').textContent = c.tenders || 0;
-  document.getElementById('a-floated').textContent =
-    fmtInr(s.total_floated_value_inr);
-  document.getElementById('a-awards').textContent = c.awards || 0;
-  document.getElementById('a-awarded').textContent =
-    fmtInr(s.total_awarded_value_inr);
-  bars(document.getElementById('a-bands'), A.value_bands || [], 'band', 'count',
-    function (x) { return x.count + ' tenders'; });
-  bars(document.getElementById('a-districts'), (A.by_district || []).slice(0, 12),
-    'district', 'floated_inr', function (x) { return fmtInr(x.floated_inr); });
-  bars(document.getElementById('a-schemes'), A.by_funding_scheme || [], 'scheme',
-    'tenders', function (x) { return x.tenders + ' | ' + fmtInr(x.floated_inr); });
-  bars(document.getElementById('a-single'),
-    (A.single_bidder || []).slice(0, 12), 'org', 'single_bidder_rate',
-    function (x) { return Math.round(100 * x.single_bidder_rate) + '% (' +
-      x.single_bidder + '/' + x.awarded + ')'; }, { warnAt: 0.999 });
-  bars(document.getElementById('a-top'), (A.top_contractors || []).slice(0, 12),
-    'contractor', 'total_value_inr', function (x) {
-      return fmtInr(x.total_value_inr) + ' | ' + x.contracts; });
-  bars(document.getElementById('a-coverage'),
-    (A.coverage || []).slice(0, 12), 'org', 'coverage', function (x) {
-      return Math.round(100 * x.coverage) + '% (' + x.awarded + '/' +
-        x.closed + ')'; });
-}
-renderAnalytics();
-
-/* -------------------------------------------------------------- */
-/* Tab switching                                                  */
-/* -------------------------------------------------------------- */
-var TABS = ['tenders', 'contractors', 'analytics'];
-function showTab(name) {
-  if (TABS.indexOf(name) < 0) name = 'tenders';
-  TABS.forEach(function (n) {
-    document.getElementById('view-' + n).hidden = n !== name;
-    var tb = document.getElementById('tab-' + n);
-    tb.classList.toggle('active', n === name);
-    tb.setAttribute('aria-selected', String(n === name));
-  });
-  try {
-    history.replaceState(null, '', name === 'tenders' ? '#' : '#' + name);
-  } catch (err) {}
-}
-TABS.forEach(function (n) {
-  document.getElementById('tab-' + n).addEventListener('click',
-    function () { showTab(n); });
-});
-if (location.hash) showTab(location.hash.slice(1));
-
-setTimeout(function () { location.reload(); }, DATA.refreshSeconds * 1000);
-</script>
-</body></html>"""
+from dashboard_page import DASHBOARD_PAGE  # noqa: E402  (large HTML template)
 
 
 def build_dashboard_page():
     def js(obj):
-        return json.dumps(obj, ensure_ascii=False).replace("</", "<\\/")
-    return DASHBOARD_PAGE.replace(
-        "__DATA_JSON__", js(dashboard_data())).replace(
-        "__SECTIONS_JSON__", js(sections_spec())).replace(
-        "__CONTRACTORS_JSON__", js(contractors_data())).replace(
-        "__ANALYTICS_JSON__", js(load_analytics()))
+        return json.dumps(obj, ensure_ascii=False, default=str).replace(
+            "</", "<\\/")
+    dash = dashboard_data()
+    return (DASHBOARD_PAGE
+            .replace("__DATA_JSON__", js(dash))
+            .replace("__SECTIONS_JSON__", js(sections_spec()))
+            .replace("__CONTRACTORS_JSON__", js(contractors_data()))
+            .replace("__ANALYTICS_JSON__", js(load_analytics()))
+            .replace("__NOTIFS_JSON__", js(load_notifications()))
+            .replace("__STATUS_JSON__", js(load_data_status()))
+            .replace("__AWARDS_JSON__", js(awards_feed()))
+            .replace("__OVERVIEW_JSON__", js(overview_data(dash))))
 
 
 def dashboard_pdf(tid, lang):
@@ -3376,6 +2546,115 @@ def serve_dashboard(port):
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
 
 
+def awards_feed():
+    """One row per imported award for the Awards view: winner, corrected
+    awarded value, contract date, department, city, and estimate (kept
+    separate). Newest first by contract date."""
+    awards = load_awards()
+    details_all = load_details_cache()
+    rows = []
+    for tid, entry in awards.items():
+        ai = _award_of(entry)
+        contractor = display_contractor(ai.get("contractor", ""))
+        if not contractor:
+            continue
+        pairs = entry.get("fields", {})
+        detail = details_all.get(tid, {})
+        org_chain = detail.get("Organisation Chain") or \
+            pairs.get("Organisation Chain") or entry.get("org", "")
+        title = detail.get("Title") or pairs.get("Title", "")
+        cdate = ai.get("contract_date", "")
+        est = money.parse_amount(detail.get("Tender Value in ₹")
+                                 or pairs.get("Tender Value in ₹", ""))
+        aval = money.str_to_dec(ai.get("awarded_value"))
+        rows.append({
+            "id": tid,
+            "title": title,
+            "contractor": contractor,
+            "contractorKey": contractor_key(contractor),
+            "org": publisher(org_chain) or entry.get("org", ""),
+            "city": derive_city(detail.get("Location") or pairs.get("Location"),
+                                org_chain, title),
+            "awardValue": money.dec_to_str(aval),
+            "awardValueFmt": format_inr(aval) or "Unknown",
+            "awardValueNum": float(aval) if aval is not None else -1,
+            "estimate": money.dec_to_str(est),
+            "estimateFmt": format_inr(est) or "Unknown",
+            "contractDate": cdate,
+            "contractDateTs": portal_ts(cdate),
+            "bidders": len(ai.get("bidders") or []),
+        })
+    rows.sort(key=lambda r: r["contractDateTs"], reverse=True)
+    return rows
+
+
+def overview_data(dash=None):
+    """KPI tiles for the Overview homepage. Each metric carries an explicit
+    definition and period so it can be trusted and drilled into."""
+    dash = dash or dashboard_data()
+    tenders = dash["tenders"]
+    live = [t for t in tenders if t["live"]]
+    now_ts = int(datetime.now().timestamp())
+    week = 7 * 86400
+    closing_soon = [t for t in live
+                    if t["closingTs"] and 0 <= t["closingTs"] - now_ts <= week]
+    feed = awards_feed()
+    recent_awards = feed[:8]
+    awarded_known = money.add(r["awardValue"] for r in feed)
+    return {
+        "tiles": [
+            {"key": "live", "label": "Active opportunities",
+             "value": len(live),
+             "definition": "Tenders currently open for bidding on the portal "
+                           "(live listing, bid submission not yet closed).",
+             "period": "current state"},
+            {"key": "closing", "label": "Closing within 7 days",
+             "value": len(closing_soon),
+             "definition": "Live tenders whose bid submission deadline is "
+                           "within the next 7 days.",
+             "period": "next 7 days"},
+            {"key": "awards", "label": "Awards on record",
+             "value": len(feed),
+             "definition": "Tenders for which an Award of Contract has been "
+                           "imported (winner known).",
+             "period": "all tracked"},
+            {"key": "awarded_value", "label": "Known awarded value",
+             "value": format_inr(awarded_known),
+             "definition": "Sum of awarded contract values across awards with a "
+                           "known amount. Not comparable to floated estimate.",
+             "period": "all tracked"},
+        ],
+        "closing_soon": sorted(closing_soon, key=lambda t: t["closingTs"])[:8],
+        "recent_awards": recent_awards,
+    }
+
+
+def _tender_events_for(tid):
+    """Lifecycle events for one tender from the pipeline DB, if present. The
+    hosted app has no DB (and a read-only filesystem), so this returns [] there;
+    the award object itself still carries the award facts for the timeline."""
+    if os.environ.get("VERCEL"):
+        return []
+    try:
+        from pipeline.store import Store, uid
+    except Exception:
+        return []
+    try:
+        store = Store()
+    except Exception:
+        return []
+    try:
+        rid = uid("tender", "mahatenders", tid)
+        rows = store.query(
+            "SELECT event_type, detail, event_at, source FROM tender_events"
+            " WHERE tender_id=? ORDER BY event_at", (rid,))
+        return rows
+    except Exception:
+        return []
+    finally:
+        store.close()
+
+
 def detail_payload(tid):
     if not TENDER_ID_RE.match(tid):
         return {"ok": False, "error": "bad tender id"}
@@ -3385,7 +2664,8 @@ def detail_payload(tid):
         return {"ok": False, "error":
                 "This tender is no longer on the portal and no cached "
                 "details exist for it."}
-    return {"ok": True, "details": details or {}, "award": award}
+    return {"ok": True, "details": details or {}, "award": award,
+            "events": _tender_events_for(tid)}
 
 def main():
     parser = argparse.ArgumentParser(description="MJP tender tracker")
