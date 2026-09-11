@@ -12,6 +12,8 @@ import hashlib
 import math
 from datetime import datetime
 
+import money
+
 from .store import Store
 from .text import normalize_name, normalize_org, token_set_ratio
 
@@ -36,7 +38,7 @@ def dedupe_hash(rec: dict) -> str:
     org = normalize_org(rec.get("publishing_org"))
     title = " ".join(sorted(normalize_name(rec.get("title")).split()))
     day = _day(rec.get("bid_submission_end"))
-    value = rec.get("estimated_value_inr") or 0
+    value = float(money.str_to_dec(rec.get("estimated_value_inr")) or 0)
     # Log-scale bucket so values within VALUE_TOLERANCE land together while
     # far-apart values separate (a flat int(value/(value*tol)) was constant).
     bucket = int(math.log(value) / math.log(1 + VALUE_TOLERANCE)) if value > 0 else 0
@@ -45,11 +47,14 @@ def dedupe_hash(rec: dict) -> str:
 
 
 def _values_close(a, b) -> bool:
-    a, b = a or 0, b or 0
-    if a == 0 and b == 0:
+    da = money.str_to_dec(a)
+    db = money.str_to_dec(b)
+    if da is None and db is None:
         return True
-    hi = max(a, b)
-    return hi > 0 and abs(a - b) / hi <= VALUE_TOLERANCE
+    if da is None or db is None:
+        return False
+    hi = max(da, db)
+    return hi > 0 and abs(da - db) / hi <= VALUE_TOLERANCE
 
 
 def _days_close(a, b) -> bool:

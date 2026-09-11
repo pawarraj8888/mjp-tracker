@@ -1,7 +1,7 @@
 {
  "2021_JALGA_706597_19": {
   "award": {
-   "awarded_value": "755688",
+   "awarded_value": 755688,
    "bidders": [
     {
      "name": "ROHAN SUDHAKAR MEDHE",
@@ -10,8 +10,7 @@
     }
    ],
    "contract_date": "08-Sep-2026",
-   "contractor": "ROHAN SUDHAKAR MEDHE",
-   "awarded_value_raw": "INR 755,688"
+   "contractor": "ROHAN SUDHAKAR MEDHE"
   },
   "fields": {
    "AOC document :": "2021_JALGA_706597_19.pdf ( 1161.06 KB )",
@@ -27,7 +26,7 @@
  },
  "2023_PWR_903876_11": {
   "award": {
-   "awarded_value": "6296541.48",
+   "awarded_value": 629654148,
    "bidders": [
     {
      "name": "M. S. JAIN",
@@ -36,8 +35,7 @@
     }
    ],
    "contract_date": "21-Aug-2026",
-   "contractor": "M. S. JAIN",
-   "awarded_value_raw": "INR 6,296,541.48"
+   "contractor": "M. S. JAIN"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -54,7 +52,7 @@
  },
  "2024_BHCMU_1084798_1": {
   "award": {
-   "awarded_value": "27692000",
+   "awarded_value": 27692000,
    "bidders": [
     {
      "name": "SAI INVESTIGATION AND SECURITY SERVICES",
@@ -63,8 +61,7 @@
     }
    ],
    "contract_date": "21-Jan-2026",
-   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES",
-   "awarded_value_raw": "INR 27,692,000"
+   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES"
   },
   "fields": {
    "AOC document :": "aochousekeeping.pdf ( 121.77 KB )",
@@ -80,7 +77,7 @@
  },
  "2024_BHCMU_1127865_1": {
   "award": {
-   "awarded_value": "262419",
+   "awarded_value": 262419,
    "bidders": [
     {
      "name": "SAI INVESTIGATION AND SECURITY SERVICES",
@@ -89,8 +86,7 @@
     }
    ],
    "contract_date": "21-Jan-2026",
-   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES",
-   "awarded_value_raw": "INR 262,419"
+   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES"
   },
   "fields": {
    "AOC Description :": "Per Person Per Month Rate",
@@ -107,7 +103,7 @@
  },
  "2024_BHCMU_1127890_1": {
   "award": {
-   "awarded_value": "189290",
+   "awarded_value": 189290,
    "bidders": [
     {
      "name": "SAI INVESTIGATION AND SECURITY SERVICES",
@@ -116,8 +112,7 @@
     }
    ],
    "contract_date": "21-Jan-2026",
-   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES",
-   "awarded_value_raw": "INR 189,290"
+   "contractor": "SAI INVESTIGATION AND SECURITY SERVICES"
   },
   "fields": {
    "AOC Description :": "Per Month Per Person Rate",
@@ -134,7 +129,7 @@
  },
  "2024_WRDMN_1049354_1": {
   "award": {
-   "awarded_value": "1255710.93",
+   "awarded_value": 125571093,
    "bidders": [
     {
      "name": "FIDA ENGINEERING ELECTRIC AND CIVIL CONTRACTOR PARBHNAI",
@@ -143,8 +138,7 @@
     }
    ],
    "contract_date": "02-Feb-2026",
-   "contractor": "FIDA ENGINEERING ELECTRIC AND CIVIL CONTRACTOR PARBHNAI",
-   "awarded_value_raw": "INR 1,255,710.93"
+   "contractor": "FIDA ENGINEERING ELECTRIC AND CIVIL CONTRACTOR PARBHNAI"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -161,7 +155,7 @@
  },
  "2025_AURAN_1262288_1": {
   "award": {
-   "awarded_value": "699650",
+   "awarded_value": 699650,
    "bidders": [
     {
      "name": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR",
@@ -170,8 +164,7 @@
     }
    ],
    "contract_date": "29-Dec-2025",
-   "contractor": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR",
-   "awarded_value_raw": "INR 699,650"
+   "contractor": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -188,7 +181,7 @@
  },
  "2025_BEED_1228684_1": {
   "award": {
-   "awarded_value": "1875117",
+   "awarded_value": 1875117,
    "bidders": [
     {
      "name": "Khod Vishwnath Ramchandra",
@@ -197,8 +190,7 @@
     }
    ],
    "contract_date": "27-Jan-2026",
-   "contractor": "Khod Vishwnath Ramchandra",
-   "awarded_value_raw": "INR 1,875,117"
+   "contractor": "Khod Vishwnath Ramchandra"
   },
   "fields": {
    "AOC Description :": "Bid Rank L1",
@@ -215,7 +207,7 @@
  },
  "2025_BEED_1240546_1": {
   "award": {
-   "awarded_value": "1187694",
+   "awarded_value": 1187694,
    "bidders": [
     {
      "name": "Khod Vishwnath Ramchandra",
@@ -224,8 +216,7 @@
     }
    ],
    "contract_date": "12-Jan-2026",
-   "contractor": "Khod Vishwnath Ramchandra",
-   "awarded_value_raw": "INR 1,187,694"
+   "contractor": "Khod Vishwnath Ramchandra"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -242,7 +233,7 @@
  },
  "2025_BEED_1240644_1": {
   "award": {
-   "awarded_value": "1185546",
+   "awarded_value": 1185546,
    "bidders": [
     {
      "name": "YADAV MAHESH YASHWANTRAO",
@@ -251,8 +242,7 @@
     }
    ],
    "contract_date": "12-Jan-2026",
-   "contractor": "YADAV MAHESH YASHWANTRAO",
-   "awarded_value_raw": "INR 1,185,546"
+   "contractor": "YADAV MAHESH YASHWANTRAO"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -269,7 +259,7 @@
  },
  "2025_BEED_1240646_1": {
   "award": {
-   "awarded_value": "1185351",
+   "awarded_value": 1185351,
    "bidders": [
     {
      "name": "YADAV MAHESH YASHWANTRAO",
@@ -278,8 +268,7 @@
     }
    ],
    "contract_date": "12-Jan-2026",
-   "contractor": "YADAV MAHESH YASHWANTRAO",
-   "awarded_value_raw": "INR 1,185,351"
+   "contractor": "YADAV MAHESH YASHWANTRAO"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -296,7 +285,7 @@
  },
  "2025_BEED_1240651_1": {
   "award": {
-   "awarded_value": "1185983",
+   "awarded_value": 1185983,
    "bidders": [
     {
      "name": "YADAV MAHESH YASHWANTRAO",
@@ -305,8 +294,7 @@
     }
    ],
    "contract_date": "20-Jan-2026",
-   "contractor": "YADAV MAHESH YASHWANTRAO",
-   "awarded_value_raw": "INR 1,185,983"
+   "contractor": "YADAV MAHESH YASHWANTRAO"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -323,7 +311,7 @@
  },
  "2025_BEED_1240841_1": {
   "award": {
-   "awarded_value": "1353400",
+   "awarded_value": 1353400,
    "bidders": [
     {
      "name": "JADHAV  BALAJI RAMBHAU",
@@ -332,8 +320,7 @@
     }
    ],
    "contract_date": "10-Jun-2026",
-   "contractor": "JADHAV  BALAJI RAMBHAU",
-   "awarded_value_raw": "INR 1,353,400"
+   "contractor": "JADHAV  BALAJI RAMBHAU"
   },
   "fields": {
    "AOC Description :": "Aoc",
@@ -350,7 +337,7 @@
  },
  "2025_BEED_1241946_1": {
   "award": {
-   "awarded_value": "2316597",
+   "awarded_value": 2316597,
    "bidders": [
     {
      "name": "FAMOUS CONSTRUCTION",
@@ -359,8 +346,7 @@
     }
    ],
    "contract_date": "13-Jul-2026",
-   "contractor": "FAMOUS CONSTRUCTION",
-   "awarded_value_raw": "INR 2,316,597"
+   "contractor": "FAMOUS CONSTRUCTION"
   },
   "fields": {
    "AOC document :": "anadgaon.pdf ( 112.31 KB )",
@@ -376,7 +362,7 @@
  },
  "2025_BEED_1242323_1": {
   "award": {
-   "awarded_value": "1183281",
+   "awarded_value": 1183281,
    "bidders": [
     {
      "name": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED",
@@ -385,8 +371,7 @@
     }
    ],
    "contract_date": "10-Jun-2026",
-   "contractor": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED",
-   "awarded_value_raw": "INR 1,183,281"
+   "contractor": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -403,7 +388,7 @@
  },
  "2025_BEED_1242324_1": {
   "award": {
-   "awarded_value": "1184398",
+   "awarded_value": 1184398,
    "bidders": [
     {
      "name": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED",
@@ -412,8 +397,7 @@
     }
    ],
    "contract_date": "21-Mar-2026",
-   "contractor": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED",
-   "awarded_value_raw": "INR 1,184,398"
+   "contractor": "JYOTIBA MAJOOR SAHAKARI SANSTHA LIMITED"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -430,7 +414,7 @@
  },
  "2025_BEED_1244137_1": {
   "award": {
-   "awarded_value": "2006655.25",
+   "awarded_value": 200665525,
    "bidders": [
     {
      "name": "FAMOUS CONSTRUCTION",
@@ -439,8 +423,7 @@
     }
    ],
    "contract_date": "13-Jul-2026",
-   "contractor": "FAMOUS CONSTRUCTION",
-   "awarded_value_raw": "INR 2,006,655.25"
+   "contractor": "FAMOUS CONSTRUCTION"
   },
   "fields": {
    "AOC document :": "govindpur.pdf ( 100.70 KB )",
@@ -456,7 +439,7 @@
  },
  "2025_BEED_1244151_1": {
   "award": {
-   "awarded_value": "1035492",
+   "awarded_value": 1035492,
    "bidders": [
     {
      "name": "Dhanraj Majur Sahkari sanstha",
@@ -465,8 +448,7 @@
     }
    ],
    "contract_date": "22-Dec-2025",
-   "contractor": "Dhanraj Majur Sahkari sanstha",
-   "awarded_value_raw": "INR 1,035,492"
+   "contractor": "Dhanraj Majur Sahkari sanstha"
   },
   "fields": {
    "AOC document :": "Umari.pdf ( 480.19 KB )",
@@ -482,7 +464,7 @@
  },
  "2025_CCCA_1262416_1": {
   "award": {
-   "awarded_value": "7439126",
+   "awarded_value": 7439126,
    "bidders": [
     {
      "name": "ALANDKAR AJAJ FARUQ",
@@ -491,8 +473,7 @@
     }
    ],
    "contract_date": "16-Feb-2026",
-   "contractor": "ALANDKAR AJAJ FARUQ",
-   "awarded_value_raw": "INR 7,439,126"
+   "contractor": "ALANDKAR AJAJ FARUQ"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -509,7 +490,7 @@
  },
  "2025_CMTDM_1260815_1": {
   "award": {
-   "awarded_value": "11952756.28",
+   "awarded_value": 1195275628,
    "bidders": [
     {
      "name": "SHINDE BHARAT RATAANRAO",
@@ -518,8 +499,7 @@
     }
    ],
    "contract_date": "24-Jan-2026",
-   "contractor": "SHINDE BHARAT RATAANRAO",
-   "awarded_value_raw": "INR 11,952,756.28"
+   "contractor": "SHINDE BHARAT RATAANRAO"
   },
   "fields": {
    "AOC Description :": "aoc",
@@ -536,7 +516,7 @@
  },
  "2025_COBEE_1238807_11": {
   "award": {
-   "awarded_value": "9051111",
+   "awarded_value": 9051111,
    "bidders": [
     {
      "name": "Omkareshwor Enterprises",
@@ -545,8 +525,7 @@
     }
    ],
    "contract_date": "10-Feb-2026",
-   "contractor": "Omkareshwor Enterprises",
-   "awarded_value_raw": "INR 9,051,111"
+   "contractor": "Omkareshwor Enterprises"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -563,7 +542,7 @@
  },
  "2025_COBEE_1238807_14": {
   "award": {
-   "awarded_value": "7008333",
+   "awarded_value": 7008333,
    "bidders": [
     {
      "name": "Omkareshwor Enterprises",
@@ -572,8 +551,7 @@
     }
    ],
    "contract_date": "29-Jan-2026",
-   "contractor": "Omkareshwor Enterprises",
-   "awarded_value_raw": "INR 7,008,333"
+   "contractor": "Omkareshwor Enterprises"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -590,7 +568,7 @@
  },
  "2025_COBEE_1238807_15": {
   "award": {
-   "awarded_value": "6541111",
+   "awarded_value": 6541111,
    "bidders": [
     {
      "name": "SHREE GANESH BUILDING MATERIAL SUPPLIER",
@@ -599,8 +577,7 @@
     }
    ],
    "contract_date": "29-Jan-2026",
-   "contractor": "SHREE GANESH BUILDING MATERIAL SUPPLIER",
-   "awarded_value_raw": "INR 6,541,111"
+   "contractor": "SHREE GANESH BUILDING MATERIAL SUPPLIER"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -617,7 +594,7 @@
  },
  "2025_COBEE_1238807_3": {
   "award": {
-   "awarded_value": "4125000",
+   "awarded_value": 4125000,
    "bidders": [
     {
      "name": "CHHATRAPATI CONSTRUCTION",
@@ -626,8 +603,7 @@
     }
    ],
    "contract_date": "17-Feb-2026",
-   "contractor": "CHHATRAPATI CONSTRUCTION",
-   "awarded_value_raw": "INR 4,125,000"
+   "contractor": "CHHATRAPATI CONSTRUCTION"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -644,7 +620,7 @@
  },
  "2025_COBEE_1238807_8": {
   "award": {
-   "awarded_value": "8720000",
+   "awarded_value": 8720000,
    "bidders": [
     {
      "name": "NAJMODDIN SHAIKHAJMODDIN SHAIKH",
@@ -653,8 +629,7 @@
     }
    ],
    "contract_date": "10-Feb-2026",
-   "contractor": "NAJMODDIN SHAIKHAJMODDIN SHAIKH",
-   "awarded_value_raw": "INR 8,720,000"
+   "contractor": "NAJMODDIN SHAIKHAJMODDIN SHAIKH"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -671,7 +646,7 @@
  },
  "2025_COBEE_1260823_3": {
   "award": {
-   "awarded_value": "8459820",
+   "awarded_value": 8459820,
    "bidders": [
     {
      "name": "New Raviraj Kirana",
@@ -680,8 +655,7 @@
     }
    ],
    "contract_date": "11-Mar-2026",
-   "contractor": "New Raviraj Kirana",
-   "awarded_value_raw": "INR 8,459,820"
+   "contractor": "New Raviraj Kirana"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -698,7 +672,7 @@
  },
  "2025_COBEE_1260823_4": {
   "award": {
-   "awarded_value": "7005000",
+   "awarded_value": 7005000,
    "bidders": [
     {
      "name": "MAULI TIN MERCHANT",
@@ -707,8 +681,7 @@
     }
    ],
    "contract_date": "11-Mar-2026",
-   "contractor": "MAULI TIN MERCHANT",
-   "awarded_value_raw": "INR 7,005,000"
+   "contractor": "MAULI TIN MERCHANT"
   },
   "fields": {
    "AOC document :": "Work_Order_2025_COBEE_1260823_4.pdf ( 1902.79 KB )",
@@ -724,7 +697,7 @@
  },
  "2025_COBEE_1260823_6": {
   "award": {
-   "awarded_value": "14591411",
+   "awarded_value": 14591411,
    "bidders": [
     {
      "name": "SABIR CONSTRUCTION",
@@ -733,8 +706,7 @@
     }
    ],
    "contract_date": "16-Mar-2026",
-   "contractor": "SABIR CONSTRUCTION",
-   "awarded_value_raw": "INR 14,591,411"
+   "contractor": "SABIR CONSTRUCTION"
   },
   "fields": {
    "AOC Description :": "Work Order",
@@ -751,7 +723,7 @@
  },
  "2025_DMA_1149340_2": {
   "award": {
-   "awarded_value": "10964433.7",
+   "awarded_value": 109644337,
    "bidders": [
     {
      "name": "JITESH G THAKARE",
@@ -760,8 +732,7 @@
     }
    ],
    "contract_date": "21-Jan-2026",
-   "contractor": "JITESH G THAKARE",
-   "awarded_value_raw": "INR 10,964,433.7"
+   "contractor": "JITESH G THAKARE"
   },
   "fields": {
    "AOC Description :": "Quated Lowest Rate",
@@ -778,7 +749,7 @@
  },
  "2025_JALGA_1236132_19": {
   "award": {
-   "awarded_value": "1499626",
+   "awarded_value": 1499626,
    "bidders": [
     {
      "name": "Yogeshwar Majur Sahakari Sanstha Maryadit Amalner Tal.Amalner Dist.Jalgaon",
@@ -787,8 +758,7 @@
     }
    ],
    "contract_date": "06-Feb-2026",
-   "contractor": "Yogeshwar Majur Sahakari Sanstha Maryadit Amalner Tal.Amalner Dist.Jalgaon",
-   "awarded_value_raw": "INR 1,499,626"
+   "contractor": "Yogeshwar Majur Sahakari Sanstha Maryadit Amalner Tal.Amalner Dist.Jalgaon"
   },
   "fields": {
    "AOC document :": "dheku.pdf ( 1008.55 KB )",
@@ -804,7 +774,7 @@
  },
  "2025_JALGA_1236132_21": {
   "award": {
-   "awarded_value": "1498941",
+   "awarded_value": 1498941,
    "bidders": [
     {
      "name": "Vishvkarma MSS Ltd, Chorvad",
@@ -813,8 +783,7 @@
     }
    ],
    "contract_date": "04-Mar-2026",
-   "contractor": "Vishvkarma MSS Ltd, Chorvad",
-   "awarded_value_raw": "INR 1,498,941"
+   "contractor": "Vishvkarma MSS Ltd, Chorvad"
   },
   "fields": {
    "AOC document :": "DALVELTALPAROLA.pdf ( 358.33 KB )",
@@ -830,7 +799,7 @@
  },
  "2025_JALGA_1236132_22": {
   "award": {
-   "awarded_value": "1499043",
+   "awarded_value": 1499043,
    "bidders": [
     {
      "name": "Bhatai Mata Majur Co.Soc, Ltd, Dodhvad Tal. Amalner",
@@ -839,8 +808,7 @@
     }
    ],
    "contract_date": "06-Feb-2026",
-   "contractor": "Bhatai Mata Majur Co.Soc, Ltd, Dodhvad Tal. Amalner",
-   "awarded_value_raw": "INR 1,499,043"
+   "contractor": "Bhatai Mata Majur Co.Soc, Ltd, Dodhvad Tal. Amalner"
   },
   "fields": {
    "AOC document :": "Hirapur2.pdf ( 975.37 KB )",
@@ -856,7 +824,7 @@
  },
  "2025_JALGA_1236132_5": {
   "award": {
-   "awarded_value": "2499908",
+   "awarded_value": 2499908,
    "bidders": [
     {
      "name": "Divakar Majur Co.Soc, Ltd, Varangaon",
@@ -865,8 +833,7 @@
     }
    ],
    "contract_date": "18-Dec-2025",
-   "contractor": "Divakar Majur Co.Soc, Ltd, Varangaon",
-   "awarded_value_raw": "INR 2,499,908"
+   "contractor": "Divakar Majur Co.Soc, Ltd, Varangaon"
   },
   "fields": {
    "AOC document :": "sakari.pdf ( 1063.81 KB )",
@@ -882,7 +849,7 @@
  },
  "2025_JALGA_1264035_1": {
   "award": {
-   "awarded_value": "1983949",
+   "awarded_value": 1983949,
    "bidders": [
     {
      "name": "shrisai m.s.s.ltd",
@@ -891,8 +858,7 @@
     }
    ],
    "contract_date": "07-Apr-2026",
-   "contractor": "shrisai m.s.s.ltd",
-   "awarded_value_raw": "INR 1,983,949"
+   "contractor": "shrisai m.s.s.ltd"
   },
   "fields": {
    "AOC document :": "asoda.pdf ( 725.98 KB )",
@@ -908,7 +874,7 @@
  },
  "2025_JALGA_1264035_2": {
   "award": {
-   "awarded_value": "1983774",
+   "awarded_value": 1983774,
    "bidders": [
     {
      "name": "Sarvoday Majur Co.Soc, Ltd, Bhusawal",
@@ -917,8 +883,7 @@
     }
    ],
    "contract_date": "07-Apr-2026",
-   "contractor": "Sarvoday Majur Co.Soc, Ltd, Bhusawal",
-   "awarded_value_raw": "INR 1,983,774"
+   "contractor": "Sarvoday Majur Co.Soc, Ltd, Bhusawal"
   },
   "fields": {
    "AOC document :": "shelgaon.pdf ( 753.89 KB )",
@@ -934,7 +899,7 @@
  },
  "2025_JALGA_1264035_4": {
   "award": {
-   "awarded_value": "1379241",
+   "awarded_value": 1379241,
    "bidders": [
     {
      "name": "Mr. Rakesh Ramesh Patil",
@@ -943,8 +908,7 @@
     }
    ],
    "contract_date": "16-Feb-2026",
-   "contractor": "Mr. Rakesh Ramesh Patil",
-   "awarded_value_raw": "INR 1,379,241"
+   "contractor": "Mr. Rakesh Ramesh Patil"
   },
   "fields": {
    "AOC document :": "NandraSavarla.pdf ( 969.33 KB )",
@@ -960,7 +924,7 @@
  },
  "2025_MIDC_1242577_1": {
   "award": {
-   "awarded_value": "3320040",
+   "awarded_value": 3320040,
    "bidders": [
     {
      "name": "ABHISHEK CONSTRUCTION",
@@ -969,8 +933,7 @@
     }
    ],
    "contract_date": "26-Dec-2025",
-   "contractor": "ABHISHEK CONSTRUCTION",
-   "awarded_value_raw": "INR 3,320,040"
+   "contractor": "ABHISHEK CONSTRUCTION"
   },
   "fields": {
    "AOC Description :": "AOC.. providing services for operation of pumps at Jack well and WTP in Majalgaon Indutrial Area, Providing Watch and ward to MIDC property at Beed, Majalgaon, Sirsala, Dharur, Ashti AND Patoda",
@@ -987,7 +950,7 @@
  },
  "2025_MIDC_1243575_1": {
   "award": {
-   "awarded_value": "2920153",
+   "awarded_value": 2920153,
    "bidders": [
     {
      "name": "sadhana power services",
@@ -996,8 +959,7 @@
     }
    ],
    "contract_date": "26-Dec-2025",
-   "contractor": "sadhana power services",
-   "awarded_value_raw": "INR 2,920,153"
+   "contractor": "sadhana power services"
   },
   "fields": {
    "AOC Description :": "Workorder",
@@ -1014,7 +976,7 @@
  },
  "2025_MIDC_1248000_1": {
   "award": {
-   "awarded_value": "1494850",
+   "awarded_value": 1494850,
    "bidders": [
     {
      "name": "Nilesh Shivajirao Munde",
@@ -1023,8 +985,7 @@
     }
    ],
    "contract_date": "16-Mar-2026",
-   "contractor": "Nilesh Shivajirao Munde",
-   "awarded_value_raw": "INR 1,494,850"
+   "contractor": "Nilesh Shivajirao Munde"
   },
   "fields": {
    "AOC Description :": "AOC... Annual maintenance of distribution pipeline and misc. civil repairs in Beed and Majalgaon Indl. Area and Housekeeping of Roads and premansoon works in Beed Industrial area.",
@@ -1041,7 +1002,7 @@
  },
  "2025_PWDRP_1237998_15": {
   "award": {
-   "awarded_value": "823295.55",
+   "awarded_value": 82329555,
    "bidders": [
     {
      "name": "AJINKYA DATTATRAYA KONDE",
@@ -1050,8 +1011,7 @@
     }
    ],
    "contract_date": "22-Dec-2025",
-   "contractor": "AJINKYA DATTATRAYA KONDE",
-   "awarded_value_raw": "INR 823,295.55"
+   "contractor": "AJINKYA DATTATRAYA KONDE"
   },
   "fields": {
    "AOC Description :": "WORK ORDER",
@@ -1068,7 +1028,7 @@
  },
  "2025_PWR_1227674_10": {
   "award": {
-   "awarded_value": "9994351",
+   "awarded_value": 9994351,
    "bidders": [
     {
      "name": "B.J.Murdare",
@@ -1077,8 +1037,7 @@
     }
    ],
    "contract_date": "23-Feb-2026",
-   "contractor": "B.J.Murdare",
-   "awarded_value_raw": "INR 9,994,351"
+   "contractor": "B.J.Murdare"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -1095,7 +1054,7 @@
  },
  "2025_PWR_1227674_14": {
   "award": {
-   "awarded_value": "9094923",
+   "awarded_value": 9094923,
    "bidders": [
     {
      "name": "B.J.Murdare",
@@ -1104,8 +1063,7 @@
     }
    ],
    "contract_date": "23-Feb-2026",
-   "contractor": "B.J.Murdare",
-   "awarded_value_raw": "INR 9,094,923"
+   "contractor": "B.J.Murdare"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -1122,7 +1080,7 @@
  },
  "2025_PWR_1244785_3": {
   "award": {
-   "awarded_value": "3332612.26",
+   "awarded_value": 333261226,
    "bidders": [
     {
      "name": "Shivrashtra Majur Co.Soc, Ltd, Chandsar",
@@ -1131,8 +1089,7 @@
     }
    ],
    "contract_date": "19-Feb-2026",
-   "contractor": "Shivrashtra Majur Co.Soc, Ltd, Chandsar",
-   "awarded_value_raw": "INR 3,332,612.26"
+   "contractor": "Shivrashtra Majur Co.Soc, Ltd, Chandsar"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -1149,7 +1106,7 @@
  },
  "2025_PWR_1253394_8": {
   "award": {
-   "awarded_value": "3855504.18",
+   "awarded_value": 385550418,
    "bidders": [
     {
      "name": "SHAURYA CONSTRUCTION",
@@ -1158,8 +1115,7 @@
     }
    ],
    "contract_date": "22-Jul-2026",
-   "contractor": "SHAURYA CONSTRUCTION",
-   "awarded_value_raw": "INR 3,855,504.18"
+   "contractor": "SHAURYA CONSTRUCTION"
   },
   "fields": {
    "AOC document :": "WorkOrderAMC8.pdf ( 427.31 KB )",
@@ -1175,7 +1131,7 @@
  },
  "2025_SFMSP_1217336_6": {
   "award": {
-   "awarded_value": "2627054",
+   "awarded_value": 2627054,
    "bidders": [
     {
      "name": "UTKARSHA ANIL ZURKALE",
@@ -1184,8 +1140,7 @@
     }
    ],
    "contract_date": "13-Mar-2026",
-   "contractor": "UTKARSHA ANIL ZURKALE",
-   "awarded_value_raw": "INR 2,627,054"
+   "contractor": "UTKARSHA ANIL ZURKALE"
   },
   "fields": {
    "AOC document :": "Development_of_pathway_Yawal.pdf ( 1277.62 KB )",
@@ -1201,7 +1156,7 @@
  },
  "2025_SFMSP_1217336_7": {
   "award": {
-   "awarded_value": "3658554",
+   "awarded_value": 3658554,
    "bidders": [
     {
      "name": "UTKARSHA ANIL ZURKALE",
@@ -1210,8 +1165,7 @@
     }
    ],
    "contract_date": "13-Mar-2026",
-   "contractor": "UTKARSHA ANIL ZURKALE",
-   "awarded_value_raw": "INR 3,658,554"
+   "contractor": "UTKARSHA ANIL ZURKALE"
   },
   "fields": {
    "AOC document :": "Chenlik_Fencing_Meharun.pdf ( 1125.03 KB )",
@@ -1227,7 +1181,7 @@
  },
  "2026_AHMED_1268538_1": {
   "award": {
-   "awarded_value": "881420.51",
+   "awarded_value": 88142051,
    "bidders": [
     {
      "name": "N. M. PATHAN",
@@ -1236,8 +1190,7 @@
     }
    ],
    "contract_date": "17-Mar-2026",
-   "contractor": "N. M. PATHAN",
-   "awarded_value_raw": "INR 881,420.51"
+   "contractor": "N. M. PATHAN"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -1254,7 +1207,7 @@
  },
  "2026_AURAN_1267714_1": {
   "award": {
-   "awarded_value": "999900",
+   "awarded_value": 999900,
    "bidders": [
     {
      "name": "MAYUR RAMAKANT BANSOD",
@@ -1263,8 +1216,7 @@
     }
    ],
    "contract_date": "11-Feb-2026",
-   "contractor": "MAYUR RAMAKANT BANSOD",
-   "awarded_value_raw": "INR 999,900"
+   "contractor": "MAYUR RAMAKANT BANSOD"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -1281,7 +1233,7 @@
  },
  "2026_AURAN_1267715_1": {
   "award": {
-   "awarded_value": "999900",
+   "awarded_value": 999900,
    "bidders": [
     {
      "name": "MAYUR RAMAKANT BANSOD",
@@ -1290,8 +1242,7 @@
     }
    ],
    "contract_date": "11-Feb-2026",
-   "contractor": "MAYUR RAMAKANT BANSOD",
-   "awarded_value_raw": "INR 999,900"
+   "contractor": "MAYUR RAMAKANT BANSOD"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -1308,7 +1259,7 @@
  },
  "2026_AURAN_1303949_1": {
   "award": {
-   "awarded_value": "499850",
+   "awarded_value": 499850,
    "bidders": [
     {
      "name": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR",
@@ -1317,8 +1268,7 @@
     }
    ],
    "contract_date": "26-May-2026",
-   "contractor": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR",
-   "awarded_value_raw": "INR 499,850"
+   "contractor": "KURHEKAR SUSHANT PURUSHOTTAM GOVT. CONTRACTOR"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -1335,7 +1285,7 @@
  },
  "2026_AURAN_1309737_1": {
   "award": {
-   "awarded_value": "499850",
+   "awarded_value": 499850,
    "bidders": [
     {
      "name": "SIDDIQUI KASHIF ZAHEER AHMED",
@@ -1344,8 +1294,7 @@
     }
    ],
    "contract_date": "04-Jul-2026",
-   "contractor": "SIDDIQUI KASHIF ZAHEER AHMED",
-   "awarded_value_raw": "INR 499,850"
+   "contractor": "SIDDIQUI KASHIF ZAHEER AHMED"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -1362,7 +1311,7 @@
  },
  "2026_AURAN_1310444_1": {
   "award": {
-   "awarded_value": "390",
+   "awarded_value": 390,
    "bidders": [
     {
      "name": "BHAVANI TRADERS",
@@ -1371,8 +1320,7 @@
     }
    ],
    "contract_date": "04-Jul-2026",
-   "contractor": "BHAVANI TRADERS",
-   "awarded_value_raw": "INR 390"
+   "contractor": "BHAVANI TRADERS"
   },
   "fields": {
    "AOC Description :": "390 PER BAG CEMENT AWARD OF CONTRACT",
@@ -1389,7 +1337,7 @@
  },
  "2026_AURAN_1328751_2": {
   "award": {
-   "awarded_value": "90272.59",
+   "awarded_value": 9027259,
    "bidders": [
     {
      "name": "BHAVANI TRADERS",
@@ -1398,8 +1346,7 @@
     }
    ],
    "contract_date": "07-Sep-2026",
-   "contractor": "BHAVANI TRADERS",
-   "awarded_value_raw": "INR 90,272.59"
+   "contractor": "BHAVANI TRADERS"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -1416,7 +1363,7 @@
  },
  "2026_AURAN_1328752_2": {
   "award": {
-   "awarded_value": "90272.59",
+   "awarded_value": 9027259,
    "bidders": [
     {
      "name": "BHAVANI TRADERS",
@@ -1425,8 +1372,7 @@
     }
    ],
    "contract_date": "07-Sep-2026",
-   "contractor": "BHAVANI TRADERS",
-   "awarded_value_raw": "INR 90,272.59"
+   "contractor": "BHAVANI TRADERS"
   },
   "fields": {
    "AOC Description :": "AWARD OF CONTRACT",
@@ -1443,7 +1389,7 @@
  },
  "2026_BEED_1266310_1": {
   "award": {
-   "awarded_value": "1221355.9",
+   "awarded_value": 12213559,
    "bidders": [
     {
      "name": "UMAKANT BHAGWANRAO GAIKWAD",
@@ -1452,8 +1398,7 @@
     }
    ],
    "contract_date": "17-Apr-2026",
-   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
-   "awarded_value_raw": "INR 1,221,355.9"
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD"
   },
   "fields": {
    "AOC document :": "manjrath.pdf ( 548.56 KB )",
@@ -1469,7 +1414,7 @@
  },
  "2026_BEED_1266357_1": {
   "award": {
-   "awarded_value": "767078.72",
+   "awarded_value": 76707872,
    "bidders": [
     {
      "name": "UMAKANT BHAGWANRAO GAIKWAD",
@@ -1478,8 +1423,7 @@
     }
    ],
    "contract_date": "18-Mar-2026",
-   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
-   "awarded_value_raw": "INR 767,078.72"
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD"
   },
   "fields": {
    "AOC document :": "sadola.pdf ( 366.28 KB )",
@@ -1495,7 +1439,7 @@
  },
  "2026_BEED_1267333_1": {
   "award": {
-   "awarded_value": "1595938.66",
+   "awarded_value": 159593866,
    "bidders": [
     {
      "name": "UMAKANT BHAGWANRAO GAIKWAD",
@@ -1504,8 +1448,7 @@
     }
    ],
    "contract_date": "17-Apr-2026",
-   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
-   "awarded_value_raw": "INR 1,595,938.66"
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD"
   },
   "fields": {
    "AOC document :": "lahamwadi.pdf ( 597.40 KB )",
@@ -1521,7 +1464,7 @@
  },
  "2026_BEED_1267349_1": {
   "award": {
-   "awarded_value": "1901558.93",
+   "awarded_value": 190155893,
    "bidders": [
     {
      "name": "UMAKANT BHAGWANRAO GAIKWAD",
@@ -1530,8 +1473,7 @@
     }
    ],
    "contract_date": "17-Apr-2026",
-   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
-   "awarded_value_raw": "INR 1,901,558.93"
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD"
   },
   "fields": {
    "AOC document :": "umbri.pdf ( 537.08 KB )",
@@ -1547,7 +1489,7 @@
  },
  "2026_BEED_1268857_1": {
   "award": {
-   "awarded_value": "17497799.08",
+   "awarded_value": 1749779908,
    "bidders": [
     {
      "name": "MATHURAI VENTURES",
@@ -1556,8 +1498,7 @@
     }
    ],
    "contract_date": "04-Jun-2026",
-   "contractor": "MATHURAI VENTURES",
-   "awarded_value_raw": "INR 17,497,799.08"
+   "contractor": "MATHURAI VENTURES"
   },
   "fields": {
    "AOC document :": "03.pdf ( 547.24 KB )",
@@ -1573,7 +1514,7 @@
  },
  "2026_BEED_1290546_1": {
   "award": {
-   "awarded_value": "1677719.46",
+   "awarded_value": 167771946,
    "bidders": [
     {
      "name": "UMAKANT BHAGWANRAO GAIKWAD",
@@ -1582,8 +1523,7 @@
     }
    ],
    "contract_date": "13-Jul-2026",
-   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
-   "awarded_value_raw": "INR 1,677,719.46"
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD"
   },
   "fields": {
    "AOC document :": "51.pdf ( 390.54 KB )",
@@ -1599,7 +1539,7 @@
  },
  "2026_BEED_1294770_1": {
   "award": {
-   "awarded_value": "1153164.06",
+   "awarded_value": 115316406,
    "bidders": [
     {
      "name": "UMAKANT BHAGWANRAO GAIKWAD",
@@ -1608,8 +1548,7 @@
     }
    ],
    "contract_date": "13-Jul-2026",
-   "contractor": "UMAKANT BHAGWANRAO GAIKWAD",
-   "awarded_value_raw": "INR 1,153,164.06"
+   "contractor": "UMAKANT BHAGWANRAO GAIKWAD"
   },
   "fields": {
    "AOC document :": "55.pdf ( 606.74 KB )",
@@ -1625,7 +1564,7 @@
  },
  "2026_BEED_1328473_1": {
   "award": {
-   "awarded_value": "1102025",
+   "awarded_value": 1102025,
    "bidders": [
     {
      "name": "WASIM HAMID SHAIKH",
@@ -1634,8 +1573,7 @@
     }
    ],
    "contract_date": "27-Aug-2026",
-   "contractor": "WASIM HAMID SHAIKH",
-   "awarded_value_raw": "INR 1,102,025"
+   "contractor": "WASIM HAMID SHAIKH"
   },
   "fields": {
    "AOC Description :": "AOC",
@@ -1652,7 +1590,7 @@
  },
  "2026_CCCA_1284937_1": {
   "award": {
-   "awarded_value": "4291550.826",
+   "awarded_value": 4291550826,
    "bidders": [
     {
      "name": "BHOSLE ASHISH GOVINDRAO",
@@ -1661,8 +1599,7 @@
     }
    ],
    "contract_date": "27-Mar-2026",
-   "contractor": "BHOSLE ASHISH GOVINDRAO",
-   "awarded_value_raw": "INR 4,291,550.826"
+   "contractor": "BHOSLE ASHISH GOVINDRAO"
   },
   "fields": {
    "AOC Description :": "as per attached",
@@ -1679,7 +1616,7 @@
  },
  "2026_DMA_1286410_1": {
   "award": {
-   "awarded_value": "8399658",
+   "awarded_value": 8399658,
    "bidders": [
     {
      "name": "shambhu fiber art",
@@ -1688,8 +1625,7 @@
     }
    ],
    "contract_date": "08-Apr-2026",
-   "contractor": "shambhu fiber art",
-   "awarded_value_raw": "INR 8,399,658"
+   "contractor": "shambhu fiber art"
   },
   "fields": {
    "AOC Description :": "OK",
@@ -1706,7 +1642,7 @@
  },
  "2026_JALGA_1268509_10": {
   "award": {
-   "awarded_value": "2202219",
+   "awarded_value": 2202219,
    "bidders": [
     {
      "name": "Vishvdeep Majur Co.Soc, Ltd, Jalgaon",
@@ -1715,8 +1651,7 @@
     }
    ],
    "contract_date": "09-Mar-2026",
-   "contractor": "Vishvdeep Majur Co.Soc, Ltd, Jalgaon",
-   "awarded_value_raw": "INR 2,202,219"
+   "contractor": "Vishvdeep Majur Co.Soc, Ltd, Jalgaon"
   },
   "fields": {
    "AOC document :": "Wade_2.pdf ( 388.10 KB )",
@@ -1732,7 +1667,7 @@
  },
  "2026_JALGA_1268509_11": {
   "award": {
-   "awarded_value": "2575768",
+   "awarded_value": 2575768,
    "bidders": [
     {
      "name": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon",
@@ -1741,8 +1676,7 @@
     }
    ],
    "contract_date": "09-Mar-2026",
-   "contractor": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon",
-   "awarded_value_raw": "INR 2,575,768"
+   "contractor": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon"
   },
   "fields": {
    "AOC document :": "Wade_3.pdf ( 371.77 KB )",
@@ -1758,7 +1692,7 @@
  },
  "2026_JALGA_1268509_12": {
   "award": {
-   "awarded_value": "2993253",
+   "awarded_value": 2993253,
    "bidders": [
     {
      "name": "Shivmurti MSS LTD Muktainagar Tal.Muktainagar",
@@ -1767,8 +1701,7 @@
     }
    ],
    "contract_date": "09-Mar-2026",
-   "contractor": "Shivmurti MSS LTD Muktainagar Tal.Muktainagar",
-   "awarded_value_raw": "INR 2,993,253"
+   "contractor": "Shivmurti MSS LTD Muktainagar Tal.Muktainagar"
   },
   "fields": {
    "AOC document :": "Wade_4.pdf ( 335.50 KB )",
@@ -1784,7 +1717,7 @@
  },
  "2026_JALGA_1268509_3": {
   "award": {
-   "awarded_value": "2497950",
+   "awarded_value": 2497950,
    "bidders": [
     {
      "name": "Saptshrungi Majur Co.Op.So.Ltd.",
@@ -1793,8 +1726,7 @@
     }
    ],
    "contract_date": "22-May-2026",
-   "contractor": "Saptshrungi Majur Co.Op.So.Ltd.",
-   "awarded_value_raw": "INR 2,497,950"
+   "contractor": "Saptshrungi Majur Co.Op.So.Ltd."
   },
   "fields": {
    "AOC document :": "Bambarud.pdf ( 1334.90 KB )",
@@ -1810,7 +1742,7 @@
  },
  "2026_JALGA_1268509_4": {
   "award": {
-   "awarded_value": "4499816.05",
+   "awarded_value": 449981605,
    "bidders": [
     {
      "name": "BHAUSAHEB ARJUN KUMAWAT",
@@ -1819,8 +1751,7 @@
     }
    ],
    "contract_date": "04-Aug-2026",
-   "contractor": "BHAUSAHEB ARJUN KUMAWAT",
-   "awarded_value_raw": "INR 4,499,816.05"
+   "contractor": "BHAUSAHEB ARJUN KUMAWAT"
   },
   "fields": {
    "AOC document :": "BambarudKh.pdf ( 865.27 KB )",
@@ -1836,7 +1767,7 @@
  },
  "2026_JALGA_1268509_5": {
   "award": {
-   "awarded_value": "2535194",
+   "awarded_value": 2535194,
    "bidders": [
     {
      "name": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
@@ -1845,8 +1776,7 @@
     }
    ],
    "contract_date": "17-Mar-2026",
-   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
-   "awarded_value_raw": "INR 2,535,194"
+   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon"
   },
   "fields": {
    "AOC document :": "TadavanTanda2.pdf ( 1306.81 KB )",
@@ -1862,7 +1792,7 @@
  },
  "2026_JALGA_1268509_6": {
   "award": {
-   "awarded_value": "2672644",
+   "awarded_value": 2672644,
    "bidders": [
     {
      "name": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
@@ -1871,8 +1801,7 @@
     }
    ],
    "contract_date": "11-Mar-2026",
-   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
-   "awarded_value_raw": "INR 2,672,644"
+   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon"
   },
   "fields": {
    "AOC document :": "TadavnTanda.pdf ( 1418.14 KB )",
@@ -1888,7 +1817,7 @@
  },
  "2026_JALGA_1268509_7": {
   "award": {
-   "awarded_value": "2539440",
+   "awarded_value": 2539440,
    "bidders": [
     {
      "name": "Navjivan MSS Ltd Valwadi",
@@ -1897,8 +1826,7 @@
     }
    ],
    "contract_date": "17-Mar-2026",
-   "contractor": "Navjivan MSS Ltd Valwadi",
-   "awarded_value_raw": "INR 2,539,440"
+   "contractor": "Navjivan MSS Ltd Valwadi"
   },
   "fields": {
    "AOC document :": "TadavTanda4.pdf ( 1329.02 KB )",
@@ -1914,7 +1842,7 @@
  },
  "2026_JALGA_1268509_8": {
   "award": {
-   "awarded_value": "1385584",
+   "awarded_value": 1385584,
    "bidders": [
     {
      "name": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
@@ -1923,8 +1851,7 @@
     }
    ],
    "contract_date": "11-Mar-2026",
-   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
-   "awarded_value_raw": "INR 1,385,584"
+   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon"
   },
   "fields": {
    "AOC document :": "Aamadade5.pdf ( 1369.21 KB )",
@@ -1940,7 +1867,7 @@
  },
  "2026_JALGA_1268509_9": {
   "award": {
-   "awarded_value": "1389855",
+   "awarded_value": 1389855,
    "bidders": [
     {
      "name": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
@@ -1949,8 +1876,7 @@
     }
    ],
    "contract_date": "11-Mar-2026",
-   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
-   "awarded_value_raw": "INR 1,389,855"
+   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon"
   },
   "fields": {
    "AOC document :": "Aamadade6.pdf ( 1388.75 KB )",
@@ -1966,7 +1892,7 @@
  },
  "2026_JALGA_1268692_3": {
   "award": {
-   "awarded_value": "1999820",
+   "awarded_value": 1999820,
    "bidders": [
     {
      "name": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora",
@@ -1975,8 +1901,7 @@
     }
    ],
    "contract_date": "13-May-2026",
-   "contractor": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora",
-   "awarded_value_raw": "INR 1,999,820"
+   "contractor": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora"
   },
   "fields": {
    "AOC document :": "nepane.pdf ( 1200.30 KB )",
@@ -1992,7 +1917,7 @@
  },
  "2026_JALGA_1271187_1": {
   "award": {
-   "awarded_value": "644184.38",
+   "awarded_value": 64418438,
    "bidders": [
     {
      "name": "Yogendra Vijay Baviskar",
@@ -2001,8 +1926,7 @@
     }
    ],
    "contract_date": "24-Feb-2026",
-   "contractor": "Yogendra Vijay Baviskar",
-   "awarded_value_raw": "INR 644,184.38"
+   "contractor": "Yogendra Vijay Baviskar"
   },
   "fields": {
    "AOC Description :": "Aoc",
@@ -2019,7 +1943,7 @@
  },
  "2026_JALGA_1294526_10": {
   "award": {
-   "awarded_value": "2433326",
+   "awarded_value": 2433326,
    "bidders": [
     {
      "name": "Saptshrungi Majur Co.Op.So.Ltd.",
@@ -2028,8 +1952,7 @@
     }
    ],
    "contract_date": "10-Jun-2026",
-   "contractor": "Saptshrungi Majur Co.Op.So.Ltd.",
-   "awarded_value_raw": "INR 2,433,326"
+   "contractor": "Saptshrungi Majur Co.Op.So.Ltd."
   },
   "fields": {
    "AOC document :": "bambarud_10.pdf ( 4687.44 KB )",
@@ -2045,7 +1968,7 @@
  },
  "2026_JALGA_1294526_11": {
   "award": {
-   "awarded_value": "2594230",
+   "awarded_value": 2594230,
    "bidders": [
     {
      "name": "Saptshrungi Majur Co.Op.So.Ltd.",
@@ -2054,8 +1977,7 @@
     }
    ],
    "contract_date": "10-Jun-2026",
-   "contractor": "Saptshrungi Majur Co.Op.So.Ltd.",
-   "awarded_value_raw": "INR 2,594,230"
+   "contractor": "Saptshrungi Majur Co.Op.So.Ltd."
   },
   "fields": {
    "AOC document :": "bambarud_11.pdf ( 3624.70 KB )",
@@ -2071,7 +1993,7 @@
  },
  "2026_JALGA_1294526_12": {
   "award": {
-   "awarded_value": "2298268.76",
+   "awarded_value": 229826876,
    "bidders": [
     {
      "name": "Shri. Datta Majur Sah. Sanstha Maryadit Pachora Tal. Pachora",
@@ -2080,8 +2002,7 @@
     }
    ],
    "contract_date": "10-Jun-2026",
-   "contractor": "Shri. Datta Majur Sah. Sanstha Maryadit Pachora Tal. Pachora",
-   "awarded_value_raw": "INR 2,298,268.76"
+   "contractor": "Shri. Datta Majur Sah. Sanstha Maryadit Pachora Tal. Pachora"
   },
   "fields": {
    "AOC document :": "Bambarud_12.pdf ( 4757.90 KB )",
@@ -2097,7 +2018,7 @@
  },
  "2026_JALGA_1294526_13": {
   "award": {
-   "awarded_value": "2591449.93",
+   "awarded_value": 259144993,
    "bidders": [
     {
      "name": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora",
@@ -2106,8 +2027,7 @@
     }
    ],
    "contract_date": "30-Jun-2026",
-   "contractor": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora",
-   "awarded_value_raw": "INR 2,591,449.93"
+   "contractor": "Utkarsh Majur Sahakari Society LTD Samner, Tal.Pachora"
   },
   "fields": {
    "AOC document :": "SAMNER.pdf ( 3741.56 KB )",
@@ -2123,7 +2043,7 @@
  },
  "2026_JALGA_1294526_14": {
   "award": {
-   "awarded_value": "2590475",
+   "awarded_value": 2590475,
    "bidders": [
     {
      "name": "Rojgar Hami Sahakari Majoor Samstha Maryadit",
@@ -2132,8 +2052,7 @@
     }
    ],
    "contract_date": "10-Jun-2026",
-   "contractor": "Rojgar Hami Sahakari Majoor Samstha Maryadit",
-   "awarded_value_raw": "INR 2,590,475"
+   "contractor": "Rojgar Hami Sahakari Majoor Samstha Maryadit"
   },
   "fields": {
    "AOC document :": "asankheda_3.pdf ( 3016.88 KB )",
@@ -2149,7 +2068,7 @@
  },
  "2026_JALGA_1294526_15": {
   "award": {
-   "awarded_value": "2249139.68",
+   "awarded_value": 224913968,
    "bidders": [
     {
      "name": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon",
@@ -2158,8 +2077,7 @@
     }
    ],
    "contract_date": "08-Jul-2026",
-   "contractor": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon",
-   "awarded_value_raw": "INR 2,249,139.68"
+   "contractor": "Siddheshwar Majur Sahakari Sanstha Ltd Jalgaon"
   },
   "fields": {
    "AOC document :": "Vade.pdf ( 1474.16 KB )",
@@ -2175,7 +2093,7 @@
  },
  "2026_JALGA_1294526_16": {
   "award": {
-   "awarded_value": "2252666.17",
+   "awarded_value": 225266617,
    "bidders": [
     {
      "name": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT",
@@ -2184,8 +2102,7 @@
     }
    ],
    "contract_date": "09-Jul-2026",
-   "contractor": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT",
-   "awarded_value_raw": "INR 2,252,666.17"
+   "contractor": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT"
   },
   "fields": {
    "AOC document :": "WADE_6.pdf ( 2888.22 KB )",
@@ -2201,7 +2118,7 @@
  },
  "2026_JALGA_1294526_17": {
   "award": {
-   "awarded_value": "2256026.87",
+   "awarded_value": 225602687,
    "bidders": [
     {
      "name": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT",
@@ -2210,8 +2127,7 @@
     }
    ],
    "contract_date": "09-Jul-2026",
-   "contractor": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT",
-   "awarded_value_raw": "INR 2,256,026.87"
+   "contractor": "MUKTAI SAHAKARI MAJOOR SANSTHA MARYADIT"
   },
   "fields": {
    "AOC document :": "WADE_7.pdf ( 2743.20 KB )",
@@ -2227,7 +2143,7 @@
  },
  "2026_JALGA_1294526_22": {
   "award": {
-   "awarded_value": "2164826.28",
+   "awarded_value": 216482628,
    "bidders": [
     {
      "name": "Navjivan MSS Ltd Valwadi",
@@ -2236,8 +2152,7 @@
     }
    ],
    "contract_date": "18-Jun-2026",
-   "contractor": "Navjivan MSS Ltd Valwadi",
-   "awarded_value_raw": "INR 2,164,826.28"
+   "contractor": "Navjivan MSS Ltd Valwadi"
   },
   "fields": {
    "AOC document :": "2026_JALGA_1294526_22.pdf ( 1011.97 KB )",
@@ -2253,7 +2168,7 @@
  },
  "2026_JALGA_1294526_23": {
   "award": {
-   "awarded_value": "2067448.09",
+   "awarded_value": 206744809,
    "bidders": [
     {
      "name": "Mahatma Fule Majur Sahakari Sanstha Maryadit Kajgaon Tal.Bhadgaon",
@@ -2262,8 +2177,7 @@
     }
    ],
    "contract_date": "16-Jul-2026",
-   "contractor": "Mahatma Fule Majur Sahakari Sanstha Maryadit Kajgaon Tal.Bhadgaon",
-   "awarded_value_raw": "INR 2,067,448.09"
+   "contractor": "Mahatma Fule Majur Sahakari Sanstha Maryadit Kajgaon Tal.Bhadgaon"
   },
   "fields": {
    "AOC document :": "talbandtanda.pdf ( 1398.82 KB )",
@@ -2279,7 +2193,7 @@
  },
  "2026_JALGA_1294526_24": {
   "award": {
-   "awarded_value": "2081674.14",
+   "awarded_value": 208167414,
    "bidders": [
     {
      "name": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT",
@@ -2288,8 +2202,7 @@
     }
    ],
    "contract_date": "18-Jun-2026",
-   "contractor": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT",
-   "awarded_value_raw": "INR 2,081,674.14"
+   "contractor": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT"
   },
   "fields": {
    "AOC document :": "2026_JALGA_1294526_24.pdf ( 1123.90 KB )",
@@ -2305,7 +2218,7 @@
  },
  "2026_JALGA_1294526_25": {
   "award": {
-   "awarded_value": "2058232.9",
+   "awarded_value": 20582329,
    "bidders": [
     {
      "name": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT",
@@ -2314,8 +2227,7 @@
     }
    ],
    "contract_date": "18-Jun-2026",
-   "contractor": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT",
-   "awarded_value_raw": "INR 2,058,232.9"
+   "contractor": "GIRAD SAHAKARI MAJOOR SANSTHA MARYADIT"
   },
   "fields": {
    "AOC document :": "2026_JALGA_1294526_25.pdf ( 1052.93 KB )",
@@ -2331,7 +2243,7 @@
  },
  "2026_JALGA_1294526_26": {
   "award": {
-   "awarded_value": "2092958.73",
+   "awarded_value": 209295873,
    "bidders": [
     {
      "name": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
@@ -2340,8 +2252,7 @@
     }
    ],
    "contract_date": "18-Jun-2026",
-   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon",
-   "awarded_value_raw": "INR 2,092,958.73"
+   "contractor": "Shri. Sant Gajanan Baba Majur Sah. Sanstha LTD. Kolgaon"
   },
   "fields": {
    "AOC document :": "2026_JALGA_1294526_26.pdf ( 1055.06 KB )",
@@ -2357,7 +2268,7 @@
  },
  "2026_JALGA_1294526_27": {
   "award": {
-   "awarded_value": "2210349.22",
+   "awarded_value": 221034922,
    "bidders": [
     {
      "name": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
@@ -2366,8 +2277,7 @@
     }
    ],
    "contract_date": "18-Jun-2026",
-   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
-   "awarded_value_raw": "INR 2,210,349.22"
+   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon"
   },
   "fields": {
    "AOC document :": "2026_JALGA_1294526_27.pdf ( 1018.67 KB )",
@@ -2383,7 +2293,7 @@
  },
  "2026_JALGA_1294526_28": {
   "award": {
-   "awarded_value": "2083462.12",
+   "awarded_value": 208346212,
    "bidders": [
     {
      "name": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
@@ -2392,8 +2302,7 @@
     }
    ],
    "contract_date": "18-Jun-2026",
-   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon",
-   "awarded_value_raw": "INR 2,083,462.12"
+   "contractor": "Amarshakti Majur Sahakari Sanstha Maryadit Anjanvihire, Tal.Bhadgaon, Dist.Jalgaon"
   },
   "fields": {
    "AOC document :": "2026_JALGA_1294526_28.pdf ( 1071.81 KB )",
@@ -2409,7 +2318,7 @@
  },
  "2026_JALGA_1294526_5": {
   "award": {
-   "awarded_value": "1490943.48",
+   "awarded_value": 149094348,
    "bidders": [
     {
      "name": "Rohini Majoor Sahakari SosayatyLtd Raver",
@@ -2418,8 +2327,7 @@
     }
    ],
    "contract_date": "15-Jul-2026",
-   "contractor": "Rohini Majoor Sahakari SosayatyLtd Raver",
-   "awarded_value_raw": "INR 1,490,943.48"
+   "contractor": "Rohini Majoor Sahakari SosayatyLtd Raver"
   },
   "fields": {
    "AOC document :": "Jinsi_1.pdf ( 1093.55 KB )",
@@ -2435,7 +2343,7 @@
  },
  "2026_JALGA_1294526_6": {
   "award": {
-   "awarded_value": "1855425.3",
+   "awarded_value": 18554253,
    "bidders": [
     {
      "name": "Priyadarshani MSS LTD Rozoda Tal.Raver",
@@ -2444,8 +2352,7 @@
     }
    ],
    "contract_date": "06-Jul-2026",
-   "contractor": "Priyadarshani MSS LTD Rozoda Tal.Raver",
-   "awarded_value_raw": "INR 1,855,425.3"
+   "contractor": "Priyadarshani MSS LTD Rozoda Tal.Raver"
   },
   "fields": {
    "AOC document :": "Tidya.pdf ( 789.07 KB )",
@@ -2461,7 +2368,7 @@
  },
  "2026_JALGA_1312060_1": {
   "award": {
-   "awarded_value": "1490098",
+   "awarded_value": 1490098,
    "bidders": [
     {
      "name": "Rohit Nandu Chavan",
@@ -2470,8 +2377,7 @@
     }
    ],
    "contract_date": "03-Sep-2026",
-   "contractor": "Rohit Nandu Chavan",
-   "awarded_value_raw": "INR 1,490,098"
+   "contractor": "Rohit Nandu Chavan"
   },
   "fields": {
    "AOC document :": "Bodwad1.pdf ( 1465.30 KB )",
@@ -2487,7 +2393,7 @@
  },
  "2026_JALGA_1312060_2": {
   "award": {
-   "awarded_value": "1489828",
+   "awarded_value": 1489828,
    "bidders": [
     {
      "name": "Rohit Nandu Chavan",
@@ -2496,8 +2402,7 @@
     }
    ],
    "contract_date": "03-Sep-2026",
-   "contractor": "Rohit Nandu Chavan",
-   "awarded_value_raw": "INR 1,489,828"
+   "contractor": "Rohit Nandu Chavan"
   },
   "fields": {
    "AOC document :": "Bodwad2.pdf ( 1464.75 KB )",
@@ -2513,7 +2418,7 @@
  },
  "2026_MHEPM_1287074_1": {
   "award": {
-   "awarded_value": "901495",
+   "awarded_value": 901495,
    "bidders": [
     {
      "name": "CHATRAPATI SHAHUMAHARAJ SUSHIKSHIT BEKARACHI SHAKARI SANSTHA",
@@ -2522,8 +2427,7 @@
     }
    ],
    "contract_date": "15-Apr-2026",
-   "contractor": "CHATRAPATI SHAHUMAHARAJ SUSHIKSHIT BEKARACHI SHAKARI SANSTHA",
-   "awarded_value_raw": "INR 901,495"
+   "contractor": "CHATRAPATI SHAHUMAHARAJ SUSHIKSHIT BEKARACHI SHAKARI SANSTHA"
   },
   "fields": {
    "AOC Description :": "Lowest Bid",
@@ -2540,7 +2444,7 @@
  },
  "2026_PWR_1269534_7": {
   "award": {
-   "awarded_value": "3102516.89",
+   "awarded_value": 310251689,
    "bidders": [
     {
      "name": "M/s. Indraprastha Ventures",
@@ -2549,8 +2453,7 @@
     }
    ],
    "contract_date": "01-Jun-2026",
-   "contractor": "M/s. Indraprastha Ventures",
-   "awarded_value_raw": "INR 3,102,516.89"
+   "contractor": "M/s. Indraprastha Ventures"
   },
   "fields": {
    "AOC document :": "workorder.pdf ( 487.20 KB )",
@@ -2566,7 +2469,7 @@
  },
  "2026_PWR_1271717_1": {
   "award": {
-   "awarded_value": "1557721.16",
+   "awarded_value": 155772116,
    "bidders": [
     {
      "name": "M/s. Indraprastha Ventures",
@@ -2575,8 +2478,7 @@
     }
    ],
    "contract_date": "30-Jul-2026",
-   "contractor": "M/s. Indraprastha Ventures",
-   "awarded_value_raw": "INR 1,557,721.16"
+   "contractor": "M/s. Indraprastha Ventures"
   },
   "fields": {
    "AOC document :": "workorder.pdf ( 100.74 KB )",
@@ -2592,7 +2494,7 @@
  },
  "2026_PWR_1276153_1": {
   "award": {
-   "awarded_value": "5760205.09",
+   "awarded_value": 576020509,
    "bidders": [
     {
      "name": "A B DONGRE CO",
@@ -2601,8 +2503,7 @@
     }
    ],
    "contract_date": "01-Jun-2026",
-   "contractor": "A B DONGRE CO",
-   "awarded_value_raw": "INR 5,760,205.09"
+   "contractor": "A B DONGRE CO"
   },
   "fields": {
    "AOC document :": "workorder.pdf ( 462.25 KB )",
@@ -2618,7 +2519,7 @@
  },
  "2026_WRDMN_1280178_1": {
   "award": {
-   "awarded_value": "27271970",
+   "awarded_value": 27271970,
    "bidders": [
     {
      "name": "Gaus auto engineering works parbhani",
@@ -2627,8 +2528,7 @@
     }
    ],
    "contract_date": "25-Jun-2026",
-   "contractor": "Gaus auto engineering works parbhani",
-   "awarded_value_raw": "INR 27,271,970"
+   "contractor": "Gaus auto engineering works parbhani"
   },
   "fields": {
    "AOC Description :": "AOC",

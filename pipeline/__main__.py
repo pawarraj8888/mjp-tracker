@@ -14,12 +14,43 @@ from __future__ import annotations
 import argparse
 import json
 
-from . import analytics, backfill, ingest
+from . import analytics, backfill, ingest, notifications, status
 from .store import Store
 
 
 def _print(obj):
     print(json.dumps(obj, ensure_ascii=False, indent=1, default=str))
+
+
+def _write(path, obj):
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(obj, fh, ensure_ascii=False, indent=1, sort_keys=True)
+        fh.write("\n")
+
+
+def _load_corrections():
+    from pathlib import Path
+    p = Path("corrections.json")
+    if p.exists():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except ValueError:
+            return None
+    return None
+
+
+def _export_all(store):
+    import timez
+    bundle = analytics.export_bundle(store)
+    bundle["generated"] = timez.iso_ist()
+    _write("analytics.json", bundle)
+    notif = notifications.build(store, _load_corrections())
+    _write("notifications.json", notif)
+    stat = status.build(store)
+    _write("data_status.json", stat)
+    return {"analytics": "analytics.json",
+            "notifications": notif["count"],
+            "status": stat["overall_status"]}
 
 
 def main(argv=None) -> int:
@@ -39,6 +70,7 @@ def main(argv=None) -> int:
     p_bf.add_argument("--from-year", type=int, default=None)
     p_ex = sub.add_parser("export-analytics")
     p_ex.add_argument("--out", default="analytics.json")
+    sub.add_parser("export")  # analytics + notifications + data_status
     sub.add_parser("review")
     args = ap.parse_args(argv)
 
@@ -81,15 +113,17 @@ def main(argv=None) -> int:
         return 0
     if args.cmd == "export-analytics":
         store = Store()
+        import timez
         bundle = analytics.export_bundle(store)
-        import time
-        bundle["generated"] = time.strftime("%d-%b-%Y %I:%M %p")
-        with open(args.out, "w", encoding="utf-8") as fh:
-            json.dump(bundle, fh, ensure_ascii=False, indent=1, sort_keys=True)
-            fh.write("\n")
+        bundle["generated"] = timez.iso_ist()
+        _write(args.out, bundle)
         _print({"wrote": args.out,
                 "top_contractors": len(bundle["top_contractors"]),
                 "districts": len(bundle["by_district"])})
+        return 0
+    if args.cmd == "export":
+        store = Store()
+        _print(_export_all(store))
         return 0
     if args.cmd == "review":
         store = Store()

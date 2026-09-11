@@ -57,6 +57,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+import money
 import requests
 from bs4 import BeautifulSoup
 from reportlab.lib import colors
@@ -1417,21 +1418,22 @@ def derive_city(location, org_chain, title):
 
 
 def parse_inr(value_text):
-    digits = re.sub(r"[^\d]", "", value_text or "")
-    return int(digits) if digits else 0
+    """Exact amount parse. Returns a Decimal, or None when the text has no
+    parseable number (unknown -- never 0, which is a real value). See money.py
+    for the grouping/decimal rules and why the old digit-strip was a bug."""
+    return money.parse_amount(value_text)
+
+
+def parse_inr_str(value_text):
+    """As parse_inr but serialized to the canonical JSON form (exact decimal
+    string, or None)."""
+    return money.dec_to_str(money.parse_amount(value_text))
 
 
 def format_inr(n):
-    """1,51,00,067 -> '1.51 Cr'; 45,00,000 -> '45 L'; 59,000 -> '59,000'."""
-    if not n:
-        return ""
-    if n >= 10**7:
-        s = "%.2f" % (n / 10**7)
-        return s.rstrip("0").rstrip(".") + " Cr"
-    if n >= 10**5:
-        s = "%.2f" % (n / 10**5)
-        return s.rstrip("0").rstrip(".") + " L"
-    return "{:,}".format(n)
+    """1.51 Cr / 45 L / 59,000, from a Decimal, a decimal string, or None.
+    Rounds only for display; unknown -> ''."""
+    return money.format_inr(n)
 
 
 def portal_ts(text):
@@ -1651,10 +1653,12 @@ def parse_bidder_tables(soup):
 def extract_award_info(pairs, html):
     """Structured award facts from one imported result page: the winning
     contractor, the awarded value, the contract date and every bidder seen."""
-    info = {"contractor": "", "awarded_value": 0, "contract_date": "",
-            "bidders": []}
+    raw_value = _first_pair(pairs, AWARD_VALUE_KEYS)
+    info = {"contractor": "", "awarded_value": None, "awarded_value_raw": "",
+            "contract_date": "", "bidders": []}
     info["contractor"] = _first_pair(pairs, BIDDER_NAME_KEYS)
-    info["awarded_value"] = parse_inr(_first_pair(pairs, AWARD_VALUE_KEYS))
+    info["awarded_value"] = parse_inr_str(raw_value)
+    info["awarded_value_raw"] = raw_value
     info["contract_date"] = _first_pair(pairs, CONTRACT_DATE_KEYS)
     if html:
         try:
@@ -1666,10 +1670,12 @@ def extract_award_info(pairs, html):
         if not info["contractor"]:
             info["contractor"] = awarded or (
                 bidders[0]["name"] if len(bidders) == 1 else "")
-        if not info["awarded_value"]:
+        if not money.is_known(info["awarded_value"]):
             for b in bidders:
                 if b["name"] == info["contractor"] and b.get("value"):
-                    info["awarded_value"] = parse_inr(b["value"])
+                    info["awarded_value"] = parse_inr_str(b["value"])
+                    if not info["awarded_value_raw"]:
+                        info["awarded_value_raw"] = b["value"]
                     break
     return info
 
@@ -1741,8 +1747,9 @@ def contractors_data():
         if not name:
             continue
         key = contractor_key(name)
-        value = ai.get("awarded_value") or parse_inr(
-            detail.get("Tender Value in ₹") or pairs.get("Tender Value in ₹", ""))
+        # Awarded value only. We never substitute an estimate for a missing
+        # award amount; a missing award value stays unknown (None).
+        value = money.str_to_dec(ai.get("awarded_value"))
         org_chain = detail.get("Organisation Chain") or \
             pairs.get("Organisation Chain") or entry.get("org", "")
         dept = publisher(org_chain) or entry.get("org", "")
@@ -1755,11 +1762,13 @@ def contractors_data():
             or pairs.get("Published Date", "")
 
         g = groups.setdefault(key, {
-            "key": key, "names": {}, "contracts": [], "value": 0,
-            "departments": {}, "cities": {}, "sectors": {},
+            "key": key, "names": {}, "contracts": [], "value": money.add([]),
+            "known_count": 0, "departments": {}, "cities": {}, "sectors": {},
             "competitors": {}, "dates": []})
         g["names"][name] = g["names"].get(name, 0) + 1
-        g["value"] += value
+        if value is not None:
+            g["value"] += value
+            g["known_count"] += 1
         if dept:
             g["departments"][dept] = g["departments"].get(dept, 0) + 1
         if city:
@@ -1776,7 +1785,9 @@ def contractors_data():
                 comp["count"] += 1
         g["contracts"].append({
             "id": tid, "title": title, "org": dept, "city": city,
-            "sector": sector, "value": value, "valueFmt": format_inr(value),
+            "sector": sector, "value": money.dec_to_str(value),
+            "valueFmt": format_inr(value) or "Unknown",
+            "valueKnown": value is not None,
             "date": cdate, "dateTs": portal_ts(cdate),
         })
 
@@ -1787,13 +1798,16 @@ def contractors_data():
         date_ts = [portal_ts(d) for d in g["dates"] if portal_ts(d)]
         competitors = sorted(g["competitors"].values(),
                              key=lambda c: c["count"], reverse=True)
+        known = g["known_count"]
+        avg = (g["value"] / known) if known else None
         contractors.append({
             "key": key,
             "name": name,
             "count": len(contracts),
-            "value": g["value"],
+            "knownValueCount": known,
+            "value": money.dec_to_str(g["value"]),
             "valueFmt": format_inr(g["value"]),
-            "avgFmt": format_inr(g["value"] // len(contracts)) if contracts else "",
+            "avgFmt": format_inr(avg) if avg is not None else "",
             "departments": sorted(g["departments"], key=lambda d: -g["departments"][d]),
             "cities": sorted(g["cities"], key=lambda c: -g["cities"][c]),
             "sectors": sorted(g["sectors"], key=lambda s: -g["sectors"][s]),
@@ -1804,8 +1818,10 @@ def contractors_data():
             "enrichment": enrich.get(key),
         })
 
-    contractors.sort(key=lambda c: (c["value"], c["count"]), reverse=True)
-    total_value = sum(c["value"] for c in contractors)
+    contractors.sort(
+        key=lambda c: (money.str_to_dec(c["value"]) or money.add([]), c["count"]),
+        reverse=True)
+    total_value = money.add(c["value"] for c in contractors)
     depts = sorted({d for c in contractors for d in c["departments"]},
                    key=str.casefold)
     cities = sorted({ct for c in contractors for ct in c["cities"]},
@@ -1816,8 +1832,9 @@ def contractors_data():
         "stats": {
             "contractors": len(contractors),
             "contracts": sum(c["count"] for c in contractors),
-            "value": total_value,
+            "value": money.dec_to_str(total_value),
             "valueFmt": format_inr(total_value),
+            "knownValueContracts": sum(c["knownValueCount"] for c in contractors),
             "enriched": sum(1 for c in contractors
                             if c["enrichment"] and c["enrichment"].get("verified")),
         },
@@ -2039,17 +2056,19 @@ def _merge_award(old, new):
     """Combine award facts from two pages of the same tender, preferring a
     found contractor and value and unioning the bidder list."""
     out = dict(old or {})
-    for k in ("contractor", "contract_date"):
+    for k in ("contractor", "contract_date", "awarded_value_raw"):
         if new.get(k) and not out.get(k):
             out[k] = new[k]
-    if new.get("awarded_value") and not out.get("awarded_value"):
+    if money.is_known(new.get("awarded_value")) and \
+            not money.is_known(out.get("awarded_value")):
         out["awarded_value"] = new["awarded_value"]
     bidders = {b["name"]: b for b in (out.get("bidders") or [])}
     for b in new.get("bidders") or []:
         bidders.setdefault(b["name"], b)
     out["bidders"] = list(bidders.values())
     out.setdefault("contractor", "")
-    out.setdefault("awarded_value", 0)
+    out.setdefault("awarded_value", None)
+    out.setdefault("awarded_value_raw", "")
     out.setdefault("contract_date", "")
     return out
 

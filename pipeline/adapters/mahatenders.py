@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import re
 
+import money
+
 from .. import text
 from .base import empty_tender
 
@@ -80,10 +82,12 @@ def tender_records(live_rows, seen, details_all, awards=None) -> list[dict]:
             "category": _category(d),
             "title": text.clean(title),
             "description": text.clean(desc),
-            "estimated_value_inr": tr.parse_inr(
-                d.get("Tender Value in ₹") or d.get("Total Contract Value :") or ""),
-            "emd_inr": tr.parse_inr(d.get("EMD Amount in ₹") or ""),
-            "tender_fee_inr": tr.parse_inr(d.get("Tender Fee in ₹") or ""),
+            # Estimated (pre-bid) value only -- never the award amount. Exact
+            # decimal string; unknown stays None.
+            "estimated_value_inr": tr.parse_inr_str(
+                d.get("Tender Value in ₹") or ""),
+            "emd_inr": tr.parse_inr_str(d.get("EMD Amount in ₹") or ""),
+            "tender_fee_inr": tr.parse_inr_str(d.get("Tender Fee in ₹") or ""),
             "publish_date": (r.get("published") if r else e.get("published", ""))
             or d.get("Published Date", ""),
             "bid_submission_end": (r or e).get("closing")
@@ -115,18 +119,29 @@ def award_records(awards, details_all=None) -> list[dict]:
         if not name:
             continue
         d = details_all.get(tid) or entry.get("fields", {}) or {}
-        est = tr.parse_inr(d.get("Tender Value in ₹") or "")
-        val = ai.get("awarded_value") or 0
+        est = money.str_to_dec(tr.parse_inr_str(d.get("Tender Value in ₹") or ""))
+        val = money.str_to_dec(ai.get("awarded_value"))  # Decimal | None
         bidders = ai.get("bidders") or []
+        # The AOC "Awarded Bids List" names only the winner, so a count of 1 is
+        # not evidence of a single participant. Mark coverage so the analytics
+        # never reads competition into winner-only data.
+        has_loser = any(
+            b.get("status") and not tr._AWARDED_STATUS_RE.search(b["status"])
+            for b in bidders)
+        coverage = "full" if has_loser else "winner_only"
+        l1 = None
+        if est and val is not None and est > 0:
+            l1 = round(float(val / est) * 100.0, 2)
         out.append({
             "source_tender_id": tid,
             "contractor_name_raw": name,
-            "award_value_inr": val or None,
+            "award_value_inr": money.dec_to_str(val),  # exact string | None
             "award_date": ai.get("contract_date", ""),
             "completion_period_days": _to_int(
                 entry.get("fields", {}).get("Work Completion Period (in days) :")),
             "bidder_count": len(bidders) or None,
-            "l1_pct_vs_estimate": round(100.0 * val / est, 2) if est and val else None,
+            "bidder_coverage": coverage,
+            "l1_pct_vs_estimate": l1,
             "source_url": "",
             "bidders": bidders,
             "raw": ai,

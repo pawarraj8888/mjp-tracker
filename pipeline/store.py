@@ -168,6 +168,7 @@ class Store:
             "work_order_no": rec.get("work_order_no"),
             "completion_period_days": rec.get("completion_period_days"),
             "bidder_count": rec.get("bidder_count"),
+            "bidder_coverage": rec.get("bidder_coverage") or "winner_only",
             "l1_pct_vs_estimate": rec.get("l1_pct_vs_estimate"),
             "source_url": rec.get("source_url"),
             "raw": _json(rec.get("raw")),
@@ -190,6 +191,52 @@ class Store:
              rec.get("bidder_name"), rec.get("contractor_id"),
              rec.get("quoted_value_inr"), rec.get("rank"), rec.get("status")))
         self.conn.commit()
+
+    # -- lifecycle events --------------------------------------------------
+    TERMINAL_STATES = ("awarded", "cancelled", "retendered")
+
+    def set_tender_status(self, tender_id: str, status: str) -> str | None:
+        """Set a tender's supported status, returning the previous status.
+        Does not clobber an existing terminal status with a weaker one."""
+        row = self.conn.execute(
+            "SELECT status FROM tenders WHERE id=?", (tender_id,)).fetchone()
+        if row is None:
+            return None
+        prev = row["status"]
+        if prev == status:
+            return prev
+        self.conn.execute(
+            "UPDATE tenders SET status=? WHERE id=?", (status, tender_id))
+        self.conn.commit()
+        return prev
+
+    def add_event(self, tender_id: str, event_type: str, detail: str,
+                  event_at: str = "", source: str = "") -> bool:
+        """Record a lifecycle event, idempotently. Returns True if a new event
+        was inserted, False if an identical one already existed (so re-ingest
+        and worker retries never duplicate history)."""
+        existing = self.conn.execute(
+            "SELECT 1 FROM tender_events WHERE tender_id=? AND event_type=?"
+            " AND detail=?", (tender_id, event_type, detail)).fetchone()
+        if existing:
+            return False
+        self.conn.execute(
+            "INSERT INTO tender_events (tender_id, event_type, detail, event_at,"
+            " source) VALUES (?,?,?,?,?)",
+            (tender_id, event_type, detail, event_at, source))
+        self.conn.commit()
+        return True
+
+    def tender_has_history(self, tender_id: str) -> bool:
+        """True if we ever observed this tender live/closed (i.e. before any
+        award), so an award is a real transition rather than a first-time
+        discovery of an already-awarded tender."""
+        row = self.conn.execute(
+            "SELECT first_seen_at, status FROM tenders WHERE id=?",
+            (tender_id,)).fetchone()
+        if row is None:
+            return False
+        return bool(row["first_seen_at"])
 
     def add_document(self, rec: dict) -> None:
         self.conn.execute(

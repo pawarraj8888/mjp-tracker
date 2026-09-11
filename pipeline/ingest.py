@@ -7,6 +7,7 @@ portal exposes them; award-coverage metrics are recomputed.
 
 from __future__ import annotations
 
+import json
 import time
 
 from .adapters import mahatenders
@@ -70,6 +71,15 @@ def ingest_awards(store: Store, portal: str, recs: list[dict],
             # No parent tender (award for a tender we never listed); skip
             # rather than violate the foreign key.
             continue
+        # Award detected -> connect it to the tender lifecycle. An AOC is a
+        # confirmed contract award (not merely an L1 result), so the tender's
+        # supported status becomes 'awarded'. We distinguish a genuine
+        # transition (we watched it open) from discovering an already-awarded
+        # tender for the first time, and never fabricate a prior 'live' state.
+        row = store.query("SELECT status, first_seen_at FROM tenders WHERE id=?",
+                          (tender_id,))
+        prev_status = row[0]["status"] if row else "unknown"
+        had_history = bool(row and row[0]["first_seen_at"])
         cid = resolve_contractor(store, rec["contractor_name_raw"], seen=_now())
         store.upsert_award({
             "tender_id": tender_id,
@@ -81,6 +91,7 @@ def ingest_awards(store: Store, portal: str, recs: list[dict],
             "work_order_no": rec.get("work_order_no"),
             "completion_period_days": rec.get("completion_period_days"),
             "bidder_count": rec.get("bidder_count"),
+            "bidder_coverage": rec.get("bidder_coverage"),
             "l1_pct_vs_estimate": rec.get("l1_pct_vs_estimate"),
             "source_url": rec.get("source_url"),
             "raw": rec.get("raw"),
@@ -98,16 +109,34 @@ def ingest_awards(store: Store, portal: str, recs: list[dict],
                 "rank": "",  # portal AOC list does not expose a numeric rank
                 "status": b.get("status", ""),
             })
+        # Record the lifecycle event (idempotent) and set the supported status.
+        # had_history tells apart a genuine open->awarded transition from
+        # discovering an already-awarded tender for the first time; we never
+        # fabricate a prior 'live' state for the latter.
+        import money
+        val = rec.get("award_value_inr")
+        detail = json.dumps({
+            "contractor": rec["contractor_name_raw"],
+            "award_value_inr": val,
+            "award_value_fmt": money.format_inr(val) or "Unknown",
+            "award_date": rec.get("award_date", ""),
+            "previous_status": prev_status if had_history
+            else "not_previously_observed",
+        }, ensure_ascii=False, sort_keys=True)
+        event_type = "awarded" if had_history else "award_record_discovered"
+        store.add_event(tender_id, event_type, detail,
+                        event_at=rec.get("award_date") or _now(),
+                        source=portal)
+        if prev_status != "retendered":
+            store.set_tender_status(tender_id, "awarded")
         n += 1
     return n
 
 
-def _inr(v) -> int | None:
-    import re
-    if not v:
-        return None
-    digits = re.sub(r"[^\d]", "", str(v))
-    return int(digits) if digits else None
+def _inr(v):
+    """Exact amount as a canonical decimal string, or None (unknown)."""
+    import money
+    return money.dec_to_str(money.parse_amount(v))
 
 
 def recompute_coverage(store: Store) -> None:

@@ -14,9 +14,9 @@ CREATE TABLE IF NOT EXISTS tenders (
   category           TEXT,                      -- works|goods|services|consultancy
   title              TEXT,
   description        TEXT,
-  estimated_value_inr INTEGER,
-  emd_inr            INTEGER,
-  tender_fee_inr     INTEGER,
+  estimated_value_inr TEXT,                      -- exact decimal string, NULL=unknown
+  emd_inr            TEXT,
+  tender_fee_inr     TEXT,
   publish_date       TEXT,
   bid_submission_end TEXT,
   bid_opening_date   TEXT,
@@ -81,11 +81,12 @@ CREATE TABLE IF NOT EXISTS awards (
   source_tender_id      TEXT,
   contractor_id         TEXT REFERENCES contractors(id),
   contractor_name_raw   TEXT,
-  award_value_inr       INTEGER,
+  award_value_inr       TEXT,                     -- exact decimal string, NULL=unknown
   award_date            TEXT,
   work_order_no         TEXT,
   completion_period_days INTEGER,
-  bidder_count          INTEGER,
+  bidder_count          INTEGER,                  -- bidders WE observed (see bidder_coverage)
+  bidder_coverage       TEXT,                     -- winner_only|full: is bidder_count trustworthy?
   l1_pct_vs_estimate    REAL,
   source_url            TEXT,
   raw                   TEXT,
@@ -99,7 +100,7 @@ CREATE TABLE IF NOT EXISTS bids (
   source_tender_id TEXT,
   bidder_name   TEXT,
   contractor_id TEXT REFERENCES contractors(id),
-  quoted_value_inr INTEGER,
+  quoted_value_inr TEXT,                          -- exact decimal string, NULL=unknown
   rank          TEXT,
   status        TEXT,
   UNIQUE (source_tender_id, bidder_name)
@@ -175,6 +176,9 @@ CREATE VIEW IF NOT EXISTS v_top_contractors AS
   GROUP BY c.id
   ORDER BY total_value_inr DESC;
 
+-- Single-bidder rate is only meaningful where we actually observed the full
+-- bidder list. Winner-only imports (the AOC page lists only the winner) are
+-- EXCLUDED: one known winner is not evidence of one participant.
 CREATE VIEW IF NOT EXISTS v_single_bidder AS
   SELECT t.publishing_org AS org,
          COUNT(*) AS awarded,
@@ -182,5 +186,5 @@ CREATE VIEW IF NOT EXISTS v_single_bidder AS
          1.0 * SUM(CASE WHEN a.bidder_count = 1 THEN 1 ELSE 0 END) / COUNT(*)
            AS single_bidder_rate
   FROM awards a JOIN tenders t ON t.id = a.tender_id
-  WHERE a.bidder_count IS NOT NULL
+  WHERE a.bidder_coverage = 'full'
   GROUP BY org;
