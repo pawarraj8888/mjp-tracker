@@ -21,20 +21,33 @@ DASHBOARD_PAGE = r"""<!DOCTYPE html>
 <title>Tender Watch — Maharashtra Procurement Intelligence</title>
 <style>
 :root{
-  --navy:#1a3e6e; --navy-700:#15325a; --navy-50:#eef2f8;
-  --ink:#1e293b; --ink-2:#334155; --muted:#64748b; --faint:#94a3b8;
-  --bg:#f1f5f9; --card:#ffffff; --line:#e2e8f0; --line-2:#cbd5e1;
-  --ok:#15803d; --ok-bg:#dcfce7; --warn:#b45309; --warn-bg:#fef3c7;
-  --urgent:#b91c1c; --urgent-bg:#fee2e2; --info:#1d4ed8; --info-bg:#dbeafe;
-  --award:#6d28d9; --award-bg:#ede9fe; --stale:#9a3412; --stale-bg:#ffedd5;
-  --radius:10px; --shadow:0 1px 2px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.1);
-  --shadow-lg:0 10px 30px rgba(15,23,42,.18);
+  --navy:#1a3e6e; --navy-700:#15325a; --navy-50:rgba(255,255,255,.45);
+  --ink:#152238; --ink-2:#334155; --muted:#516074; --faint:#8395ab;
+  --bg:#eaf0f8;
+  /* Liquid glass surfaces */
+  --glass:rgba(255,255,255,.52); --glass-2:rgba(255,255,255,.72);
+  --glass-soft:rgba(255,255,255,.34);
+  --glass-brd:rgba(255,255,255,.7); --card:var(--glass);
+  --line:rgba(120,140,170,.28); --line-2:rgba(120,140,170,.45);
+  --blur:saturate(185%) blur(18px);
+  --ok:#0f7a3d; --ok-bg:rgba(220,252,231,.75); --warn:#a35a08; --warn-bg:rgba(254,243,199,.8);
+  --urgent:#b3211b; --urgent-bg:rgba(254,226,226,.8); --info:#1d4ed8; --info-bg:rgba(219,234,254,.8);
+  --award:#6d28d9; --award-bg:rgba(237,233,254,.85); --stale:#9a3412; --stale-bg:rgba(255,237,213,.85);
+  --radius:16px;
+  --shadow:0 1px 2px rgba(15,23,42,.05),0 2px 10px rgba(15,23,42,.06);
+  --shadow-lg:0 20px 50px rgba(15,23,42,.22);
+  --hair:inset 0 1px 0 rgba(255,255,255,.55);
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  background:var(--bg); color:var(--ink); font-size:14px; line-height:1.5;
-  -webkit-font-smoothing:antialiased;}
+  color:var(--ink); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(1100px 620px at 8% -8%, rgba(56,132,255,.22), transparent 60%),
+    radial-gradient(1000px 700px at 108% 4%, rgba(139,92,246,.18), transparent 55%),
+    radial-gradient(900px 640px at 52% 116%, rgba(20,184,166,.16), transparent 55%),
+    linear-gradient(160deg,#eef3fb 0%,#e9eef8 45%,#f1ecfb 100%);
+  background-attachment:fixed; min-height:100vh;}
 a{color:var(--navy); text-decoration:none}
 a:hover{text-decoration:underline}
 .num{font-variant-numeric:tabular-nums; font-feature-settings:"tnum"}
@@ -42,9 +55,12 @@ button{font-family:inherit; cursor:pointer}
 :focus-visible{outline:2px solid var(--navy); outline-offset:2px; border-radius:6px}
 
 /* ---- Top bar ---- */
-.topbar{position:sticky; top:0; z-index:40; background:var(--navy); color:#fff;
+.topbar{position:sticky; top:0; z-index:40; color:#fff;
+  background:linear-gradient(180deg, rgba(21,50,90,.82), rgba(21,50,90,.70));
+  -webkit-backdrop-filter:var(--blur); backdrop-filter:var(--blur);
   display:flex; align-items:center; gap:16px; padding:10px 18px;
-  box-shadow:0 1px 0 rgba(255,255,255,.08), var(--shadow);}
+  border-bottom:1px solid rgba(255,255,255,.14);
+  box-shadow:0 8px 30px rgba(15,23,42,.18);}
 .brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:.2px}
 .brand .mark{width:26px;height:26px;border-radius:7px;background:#fff;color:var(--navy);
   display:grid;place-items:center;font-weight:800;font-size:15px}
@@ -63,17 +79,20 @@ button{font-family:inherit; cursor:pointer}
 .badge-count{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;
   border-radius:999px;min-width:18px;height:18px;padding:0 5px;font-size:11px;font-weight:700;
   display:grid;place-items:center;border:2px solid var(--navy)}
-.btn{background:#fff;color:var(--navy);border:1px solid var(--line);border-radius:9px;
-  padding:8px 13px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px}
-.btn:hover{background:var(--navy-50)}
+.btn{background:var(--glass-2);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  color:var(--navy);border:1px solid var(--glass-brd);border-radius:11px;
+  padding:8px 13px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:7px;
+  box-shadow:var(--hair)}
+.btn:hover{background:rgba(255,255,255,.92)}
 .btn.ghost{background:rgba(255,255,255,.10);color:#fff;border-color:rgba(255,255,255,.18)}
 .btn.ghost:hover{background:rgba(255,255,255,.18)}
 .btn[disabled]{opacity:.6;cursor:default}
 
 /* ---- Data status panel ---- */
-.status-panel{position:absolute;top:56px;left:18px;right:18px;max-width:720px;
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  box-shadow:var(--shadow-lg);padding:16px 18px;z-index:60;display:none;color:var(--ink)}
+.status-panel{position:absolute;top:64px;left:18px;right:18px;max-width:720px;
+  background:var(--glass-2);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--glass-brd);border-radius:var(--radius);box-shadow:var(--shadow-lg),var(--hair);
+  padding:16px 18px;z-index:60;display:none;color:var(--ink)}
 .status-panel.open{display:block}
 .status-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:10px}
 .status-grid .cell{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
@@ -85,7 +104,9 @@ button{font-family:inherit; cursor:pointer}
 
 /* ---- Layout ---- */
 .shell{display:flex;min-height:calc(100vh - 58px)}
-.nav{width:210px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:14px 10px;
+.nav{width:210px;flex:none;background:var(--glass-soft);
+  -webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border-right:1px solid var(--line);padding:14px 10px;
   position:sticky;top:58px;height:calc(100vh - 58px);overflow:auto}
 .nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--ink-2);
   font-weight:600;font-size:13.5px;margin-bottom:2px}
@@ -104,8 +125,9 @@ h1{font-size:20px;margin:0 0 3px;font-weight:700;letter-spacing:-.01em}
 
 /* ---- Tiles ---- */
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:22px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;
-  box-shadow:var(--shadow);position:relative}
+.tile{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--glass-brd);border-radius:var(--radius);padding:15px 16px;
+  box-shadow:var(--shadow),var(--hair);position:relative}
 .tile .label{font-size:12.5px;color:var(--muted);font-weight:600;display:flex;align-items:center;gap:6px}
 .tile .val{font-size:26px;font-weight:750;margin-top:6px;letter-spacing:-.02em;color:var(--navy)}
 .tile .period{font-size:11px;color:var(--faint);margin-top:5px;text-transform:uppercase;letter-spacing:.04em}
@@ -114,7 +136,8 @@ h1{font-size:20px;margin:0 0 3px;font-weight:700;letter-spacing:-.01em}
 .tile.clickable{cursor:pointer}.tile.clickable:hover{border-color:var(--line-2);box-shadow:var(--shadow-lg)}
 
 /* ---- Cards / sections ---- */
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);
+.card{background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--glass-brd);border-radius:var(--radius);box-shadow:var(--shadow),var(--hair);
   margin-bottom:20px;overflow:hidden}
 .card > .head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
 .card > .head h2{font-size:14.5px;margin:0;font-weight:700}
@@ -130,7 +153,8 @@ table.data{width:100%;border-collapse:collapse;font-size:13px}
 table.data th,table.data td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);
   vertical-align:top}
 table.data th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;
-  letter-spacing:.03em;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--card)}
+  letter-spacing:.03em;white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;
+  background:var(--glass-2);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 table.data th.no-sort{cursor:default}
 table.data tbody tr{cursor:pointer}
 table.data tbody tr:hover{background:var(--navy-50)}
@@ -158,8 +182,9 @@ th.sorted .sortcaret{opacity:1}
 
 /* ---- Filters ---- */
 .filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;align-items:center}
-.filters input[type=search],.filters select{border:1px solid var(--line);border-radius:9px;padding:8px 11px;
-  font-size:13px;background:var(--card);color:var(--ink)}
+.filters input[type=search],.filters select{border:1px solid var(--glass-brd);border-radius:11px;padding:8px 12px;
+  font-size:13px;background:var(--glass-2);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  color:var(--ink)}
 .filters input[type=search]{min-width:250px}
 .filters .count{color:var(--muted);font-size:12.5px;margin-left:auto}
 
@@ -182,9 +207,12 @@ th.sorted .sortcaret{opacity:1}
 .callout b{color:#663f00}
 
 /* ---- Slide-over ---- */
-.overlay{position:fixed;inset:0;background:rgba(15,23,42,.42);z-index:70;display:none}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.30);
+  -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:70;display:none}
 .overlay.open{display:block}
-.slideover{position:fixed;top:0;right:0;height:100%;width:min(560px,94vw);background:var(--card);
+.slideover{position:fixed;top:0;right:0;height:100%;width:min(560px,94vw);
+  background:rgba(255,255,255,.82);-webkit-backdrop-filter:saturate(180%) blur(26px);
+  backdrop-filter:saturate(180%) blur(26px);border-left:1px solid var(--glass-brd);
   z-index:80;box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .22s ease;
   display:flex;flex-direction:column}
 .slideover.open{transform:translateX(0)}
@@ -206,7 +234,9 @@ th.sorted .sortcaret{opacity:1}
 .so-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 
 /* ---- Inbox drawer ---- */
-.drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,94vw);background:var(--card);
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,94vw);
+  background:rgba(255,255,255,.82);-webkit-backdrop-filter:saturate(180%) blur(26px);
+  backdrop-filter:saturate(180%) blur(26px);border-left:1px solid var(--glass-brd);
   z-index:80;box-shadow:var(--shadow-lg);transform:translateX(100%);transition:transform .2s ease;
   display:flex;flex-direction:column}
 .drawer.open{transform:translateX(0)}
@@ -419,7 +449,7 @@ $all('.nav a[data-page]').forEach(function(a){a.addEventListener('click',functio
 $('#navToggle').addEventListener('click',function(){$('#nav').classList.toggle('open');});
 
 function renderNavCounts(){
-  $('#navTenders').textContent=DATA.tenders.length;
+  $('#navTenders').textContent=DATA.tenders.filter(function(t){return t.live;}).length;
   $('#navAwards').textContent=AWARDS.length;
   $('#navContractors').textContent=(CONTRACTORS.contractors||[]).length;
   var w=Object.keys(watchT).length+Object.keys(watchC).length;
@@ -490,23 +520,24 @@ function renderOverview(){
   wireOpens(p); wireGoto(p);
 }
 
-/* ---------- TENDERS ---------- */
-var tState={q:'',source:'',city:'',status:'',sort:'closingTs',dir:1};
+/* ---------- TENDERS (open opportunities only) ---------- */
+var tState={q:'',source:'',city:'',status:'',sort:'publishedTs',dir:-1};
+function openTenders(){return DATA.tenders.filter(function(t){return t.live;});}
 function renderTenders(){
   var p=$('#page-tenders');
   if(!$('#tFilters',p)){
-    p.innerHTML='<h1>Tenders</h1><p class="sub">Every tracked tender. Estimated value is the '+
-      'pre-bid estimate (not the award). Click a row for full details and history.</p>'+
+    p.innerHTML='<h1>Open tenders</h1><p class="sub">Opportunities currently open for bidding on the '+
+      'portal. Estimated value is the pre-bid estimate (not the award). Awarded and closed tenders move '+
+      'to the Awards view. Click a row for full details and history.</p>'+
       '<div class="filters" id="tFilters">'+
       '<input type="search" id="tSearch" placeholder="Search title, id, department…">'+
       '<select id="tSource"><option value="">All sources</option>'+
         DATA.sources.map(function(s){return '<option>'+esc(s)+'</option>';}).join('')+'</select>'+
       '<select id="tCity"><option value="">All districts</option>'+
         DATA.cities.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>'+
-      '<select id="tStatus"><option value="">All statuses</option>'+
-        '<option value="live">Live</option><option value="soon">Closing soon</option>'+
-        '<option value="urgent">Urgent</option><option value="closed">Closed</option>'+
-        '<option value="awarded">Awarded</option></select>'+
+      '<select id="tStatus"><option value="">Any deadline</option>'+
+        '<option value="live">Open</option><option value="soon">Closing soon</option>'+
+        '<option value="urgent">Urgent (48h)</option></select>'+
       '<span class="count" id="tCount"></span></div>'+
       '<div class="card"><div class="tablewrap"><table class="data" id="tTable"></table></div></div>';
     $('#tSearch',p).addEventListener('input',function(){tState.q=this.value.toLowerCase();drawTenders();});
@@ -517,19 +548,20 @@ function renderTenders(){
   drawTenders();
 }
 function tendersFiltered(){
-  return DATA.tenders.filter(function(t){
+  return openTenders().filter(function(t){
     if(tState.source && t.sources.indexOf(tState.source)<0) return false;
     if(tState.city && t.cityGroup!==tState.city) return false;
     if(tState.status && t.st!==tState.status) return false;
     if(tState.q){
-      var hay=(t.title+' '+t.id+' '+t.org+' '+(t.contractor||'')).toLowerCase();
+      var hay=(t.title+' '+t.id+' '+t.org+' '+(t.ref||'')).toLowerCase();
       if(hay.indexOf(tState.q)<0) return false;
     }
     return true;
   });
 }
-var T_COLS=[['','',0],['Tender','title',0],['Status','st',0],['District','cityGroup',0],
-  ['Estimate','valueNum',1],['Closes','closingTs',1],['Published','publishedTs',1]];
+var T_COLS=[['','',0],['Tender','title',0],['Ref no','ref',0],['District','cityGroup',0],
+  ['Estimate','valueNum',1],['Published','publishedTs',1],['Closes','closingTs',1],
+  ['Opening','openingTs',1],['Status','st',0]];
 function drawTenders(){
   var rows=tendersFiltered();
   rows.sort(function(a,b){var k=tState.sort,va=a[k],vb=b[k];
@@ -543,16 +575,17 @@ function drawTenders(){
   var body=rows.map(function(t){
     return '<tr data-open="'+esc(t.id)+'"><td>'+starBtn('t',t.id,!!watchT[t.id])+'</td>'+
       '<td class="t-title">'+shortId(t)+
-        '<div class="t-sub">'+esc(t.org||'')+(t.awarded&&t.contractor?(' · won by '+esc(t.contractor)):'')+
-        ' · '+t.sources.map(esc).join(', ')+'</div></td>'+
-      '<td>'+stBadge(t)+'</td>'+
+        '<div class="t-sub">'+esc(t.org||'')+' · '+t.sources.map(esc).join(', ')+'</div></td>'+
+      '<td>'+esc(t.ref||'—')+'</td>'+
       '<td>'+esc(t.cityGroup||'')+'</td>'+
       '<td class="r">'+money(t.valueFmt)+'</td>'+
+      '<td class="r">'+esc(t.published||'—')+'</td>'+
       '<td class="r">'+esc(t.closing||'—')+'</td>'+
-      '<td class="r">'+esc(t.published||'—')+'</td></tr>';
-  }).join('')||'<tr><td colspan="7" class="empty">No tenders match these filters.</td></tr>';
+      '<td class="r">'+esc(t.opening||'—')+'</td>'+
+      '<td>'+stBadge(t)+'</td></tr>';
+  }).join('')||'<tr><td colspan="9" class="empty">No open tenders match these filters.</td></tr>';
   $('#tTable').innerHTML=head+'<tbody>'+body+'</tbody>';
-  $('#tCount').textContent=rows.length+' of '+DATA.tenders.length+' tenders';
+  $('#tCount').textContent=rows.length+' of '+openTenders().length+' open tenders';
   $all('#tTable th[data-col]').forEach(function(th){
     if(!th.dataset.col) return;
     th.addEventListener('click',function(){
@@ -564,7 +597,7 @@ function drawTenders(){
 }
 
 /* ---------- AWARDS ---------- */
-var aState={q:'',sort:'contractDateTs',dir:1};
+var aState={q:'',sort:'contractDateTs',dir:-1};
 function renderAwards(){
   var p=$('#page-awards');
   if(!$('#aFilters',p)){
