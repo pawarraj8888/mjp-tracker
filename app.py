@@ -48,7 +48,10 @@ def official():
         result = None
     if result is None:
         return Response("Document not available", status=404)
-    content, ctype, name = result
+    if result[0] == "gated":
+        return Response(tracker.official_gated_html(tid, result[1]),
+                        mimetype="text/html; charset=utf-8")
+    _, content, ctype, name = result
     return Response(content, mimetype=ctype, headers={
         "Content-Disposition": 'attachment; filename="%s"' % name})
 

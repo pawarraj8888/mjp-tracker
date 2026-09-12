@@ -506,6 +506,7 @@ def fetch_all_watch_rows(session, include_keyword_scan=True):
             log.error("Org %s scan failed: %s", org_name, exc)
             continue
         for row in rows:
+            row["org_key"] = org_name  # the index key this tender was listed under
             for w in org_watch_hits:
                 add(row, w["name"])
             for w in kw_applicable:
@@ -1336,22 +1337,38 @@ def parse_document_links(soup):
 def _fresh_detail_url(session, tid):
     """A detail-page URL for ``tid`` valid in ``session`` (GePNIC links are
     session-scoped, so a stored url from another session will not work). Found
-    by re-navigating the tender's own organisation listing."""
+    by re-navigating the organisation listing the tender was published under."""
     live = _dash.get("live") or []
     row = next((r for r in live if r["tender_id"] == tid), None)
-    org_chain = (row or {}).get("org_chain", "")
-    if not org_chain:
-        det = load_details_cache().get(tid, {})
-        org_chain = det.get("Organisation Chain", "")
-    org = publisher(org_chain)
+    if row is None:
+        for r in load_live_snapshot().get("rows", []):
+            if r["tender_id"] == tid:
+                row = r
+                break
+    org_chain = (row or {}).get("org_chain", "") or \
+        load_details_cache().get(tid, {}).get("Organisation Chain", "")
     index = fetch_org_index(session)
-    key = org if org in index else next(
-        (k for k in index if org and (k.endswith(org) or org.endswith(k))), "")
-    if not key:
-        return ""
-    for r in fetch_rows_for_org(session, key, index):
-        if r["tender_id"] == tid:
-            return r["url"]
+    # Prefer the exact index key the tender was listed under; else try each node
+    # of its organisation chain against the index.
+    candidates = []
+    if row and row.get("org_key"):
+        candidates.append(row["org_key"])
+    candidates += [p.strip() for p in org_chain.split("||") if p.strip()]
+    keys = []
+    for c in candidates:
+        if c in index and c not in keys:
+            keys.append(c)
+    for c in candidates:  # loose match fallback
+        for k in index:
+            if c and k not in keys and (k.endswith(c) or c.endswith(k)):
+                keys.append(k)
+    for key in keys:
+        try:
+            for r in fetch_rows_for_org(session, key, index):
+                if r["tender_id"] == tid:
+                    return r["url"]
+        except Exception:
+            continue
     return ""
 
 
@@ -1396,14 +1413,23 @@ def official_list_html(tid):
 
 
 def official_file(tid, index):
-    """(bytes, content_type, filename) for the index-th official document, or
-    None. Streamed live from the portal in the current session."""
+    """Fetch the index-th official document live. Returns:
+      ("file", bytes, content_type, filename) when the portal streams the file;
+      ("gated", doc_name) when the portal answers with HTML instead (GePNIC
+         serves most documents only through a signed in-session action that a
+         direct request cannot reproduce);
+      None when the index is invalid.
+    We never hand back an HTML page mislabelled as a PDF."""
     session, docs = official_documents(tid)
     if not docs or index < 0 or index >= len(docs):
         return None
     doc = docs[index]
     resp = portal_get(session, doc["href"])
-    ctype = resp.headers.get("Content-Type", "application/octet-stream")
+    ctype = resp.headers.get("Content-Type", "application/octet-stream").lower()
+    head = resp.content[:64].lstrip().lower()
+    is_html = "text/html" in ctype or head[:5] in (b"<html", b"<!doc", b"<head")
+    if is_html:
+        return "gated", doc["name"]
     name = doc["name"]
     cd = resp.headers.get("Content-Disposition", "")
     m = re.search(r'filename="?([^"]+)"?', cd)
@@ -1412,7 +1438,22 @@ def official_file(tid, index):
     if "zip" in ctype and not name.lower().endswith(".zip"):
         name = "%s_documents.zip" % tid
     name = re.sub(r"[^A-Za-z0-9._-]+", "_", name)[:120] or ("%s.bin" % tid)
-    return resp.content, ctype, name
+    return "file", resp.content, resp.headers.get(
+        "Content-Type", "application/octet-stream"), name
+
+
+def official_gated_html(tid, name):
+    body = ('<p>The document <b>%s</b> for tender <b>%s</b> is published on '
+            'mahatenders.gov.in, but the portal serves it only through a '
+            'digitally-signed, in-session download that cannot be linked or '
+            'proxied directly (a standard NIC GePNIC protection).</p>'
+            '<p>To download the official file, open the tender on '
+            '<b>mahatenders.gov.in</b> (Search &rarr; Tender ID <code>%s</code>) '
+            'and use its document links. The English/Marathi work-detail PDFs '
+            'this dashboard generates carry the same field data.</p>'
+            % (xml_escape(name), xml_escape(tid), xml_escape(tid)))
+    return OFFICIAL_PAGE.replace("__TID__", xml_escape(tid)).replace(
+        "__BODY__", body)
 
 
 OFFICIAL_PAGE = ("""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
@@ -2711,14 +2752,19 @@ def serve_dashboard(port):
                         if res is None:
                             self.send_error(404, "Document not available")
                             return
-                        content, ctype, name = res
-                        self.send_response(200)
-                        self.send_header("Content-Type", ctype)
-                        self.send_header("Content-Disposition",
-                                         'attachment; filename="%s"' % name)
-                        self.send_header("Content-Length", str(len(content)))
-                        self.end_headers()
-                        self.wfile.write(content)
+                        if res[0] == "gated":
+                            send(self, 200,
+                                 official_gated_html(tid, res[1]).encode("utf-8"),
+                                 "text/html; charset=utf-8")
+                        else:
+                            _, content, ctype, name = res
+                            self.send_response(200)
+                            self.send_header("Content-Type", ctype)
+                            self.send_header("Content-Disposition",
+                                             'attachment; filename="%s"' % name)
+                            self.send_header("Content-Length", str(len(content)))
+                            self.end_headers()
+                            self.wfile.write(content)
                 elif url.path == "/manifest.webmanifest":
                     send(self, 200, MANIFEST_JSON.encode("utf-8"),
                          "application/manifest+json")
