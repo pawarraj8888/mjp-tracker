@@ -171,8 +171,8 @@ th.sorted .sortcaret{opacity:1}
 /* ---- Bars (analytics) ---- */
 .bar-row{display:grid;grid-template-columns:180px 1fr 110px;gap:10px;align-items:center;margin:7px 0;font-size:12.5px}
 .bar-row .lbl{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar-track{background:var(--bg);border-radius:6px;height:16px;overflow:hidden;border:1px solid var(--line)}
-.bar-fill{height:100%;background:var(--navy);border-radius:6px 0 0 6px;min-width:0}
+.bar-track{background:var(--bg);border-radius:6px;height:16px;overflow:hidden;border:1px solid var(--line);display:block}
+.bar-fill{display:block;height:100%;background:var(--navy);border-radius:6px 0 0 6px;min-width:0}
 .bar-row .val{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .scale{display:flex;justify-content:space-between;color:var(--faint);font-size:10.5px;margin:2px 0 8px;
   padding-left:190px}
