@@ -17,8 +17,16 @@ DASHBOARD_PAGE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Tender Watch — Maharashtra Procurement Intelligence</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#1a3e6e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tender Watch">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/static/favicon-32.png">
 <style>
 :root{
   --navy:#1a3e6e; --navy-700:#15325a; --navy-50:rgba(255,255,255,.45);
@@ -266,6 +274,34 @@ th.sorted .sortcaret{opacity:1}
 }
 .navtoggle{display:none}
 @media(max-width:760px){.navtoggle{display:grid}}
+
+/* Language + install controls */
+.lang-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);color:#fff;
+  border-radius:10px;height:38px;padding:0 12px;font-weight:700;font-size:12.5px}
+.lang-btn:hover{background:rgba(255,255,255,.22)}
+.install-btn{display:none}
+.install-btn.show{display:inline-flex}
+
+/* Safe-area + mobile polish for installed PWA on iOS/Android */
+body{overflow-x:hidden}
+.topbar{padding-left:max(18px,env(safe-area-inset-left));
+  padding-right:max(18px,env(safe-area-inset-right));
+  padding-top:max(10px,env(safe-area-inset-top))}
+@media(max-width:760px){
+  .topbar{gap:8px}
+  #refreshLbl{display:none}
+  .lang-btn{padding:0 9px}
+  .fresh{padding:6px 9px}
+  #freshText{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:30vw;display:inline-block;vertical-align:middle}
+  main{padding:14px 14px calc(48px + env(safe-area-inset-bottom))}
+  .nav{width:min(284px,86vw);box-shadow:var(--shadow-lg);
+    padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+  h1{font-size:18px}
+  .tiles{gap:10px}
+  .kv{grid-template-columns:118px 1fr}
+  .slideover,.drawer{width:100vw}
+  .status-panel{left:8px;right:8px}
+}
 .tooltip{position:relative}
 .tooltip:hover .tip{display:block}
 .tip{display:none;position:absolute;top:130%;left:0;z-index:20;background:var(--ink);color:#fff;
@@ -282,6 +318,8 @@ th.sorted .sortcaret{opacity:1}
     <span class="dot unknown" id="freshDot"></span>
     <span id="freshText">Checking…</span>
   </button>
+  <button class="lang-btn" id="langBtn" aria-label="Switch language">मराठी</button>
+  <button class="btn ghost install-btn" id="installBtn" aria-label="Install app">⤓ Install</button>
   <button class="btn ghost" id="refreshBtn" aria-label="Refresh data">
     <span id="refreshIco">↻</span><span id="refreshLbl">Refresh</span></button>
   <button class="icon-btn" id="bellBtn" aria-label="Notifications">🔔
@@ -371,6 +409,83 @@ var readN =LS.get('read_notifs',{});            // id -> true
 var lastVisit=LS.get('last_visit',0);
 function saveWatch(){LS.set('watch_tenders',watchT);LS.set('watch_contractors',watchC);renderNavCounts();}
 
+/* ---------- i18n (English / Marathi UI) ---------- */
+var LANG=LS.get('lang','en');
+var I18N={mr:{
+  "Maharashtra procurement intelligence":"महाराष्ट्र सार्वजनिक निविदा",
+  "Overview":"आढावा","Tenders":"निविदा","Open tenders":"खुल्या निविदा",
+  "Awards":"निवाडे","Contractors":"कंत्राटदार","Analytics":"विश्लेषण",
+  "Watchlist":"पाहण्याची यादी","Inbox":"सूचना","Personal":"वैयक्तिक",
+  "Tools":"साधने","Import awards":"निवाडे आयात करा","Refresh":"ताजे करा",
+  "Install":"इंस्टॉल","Notifications":"सूचना","Mark all read":"सर्व वाचले म्हणून खुणा",
+  // freshness
+  "Up to date":"अद्ययावत","Partial":"अर्धवट","Stale":"जुने",
+  "Collection failed":"संकलन अयशस्वी","Unknown":"अज्ञात","Checked":"तपासले",
+  // overview
+  "Your procurement decision homepage. Figures are drawn from the last committed data snapshot.":
+    "तुमचे निर्णय मुखपृष्ठ. आकडे शेवटच्या साठवलेल्या स्नॅपशॉटवरून.",
+  "Active opportunities":"सुरू असलेल्या संधी","Closing within 7 days":"७ दिवसांत बंद होणाऱ्या",
+  "Awards on record":"नोंदवलेले निवाडे","Known awarded value":"ज्ञात मंजूर मूल्य",
+  "Recently detected awards":"अलीकडील निवाडे","All tenders →":"सर्व निविदा →",
+  "All awards →":"सर्व निवाडे →","current state":"सद्यस्थिती","next 7 days":"पुढील ७ दिवस",
+  "all tracked":"सर्व मागोवा","Since your last visit":"तुमच्या मागील भेटीपासून",
+  // tenders
+  "Opportunities currently open for bidding on the portal. Estimated value is the pre-bid estimate (not the award). Awarded and closed tenders move to the Awards view. Click a row for full details and history.":
+    "पोर्टलवर सध्या निविदेसाठी खुल्या असलेल्या संधी. अंदाजित मूल्य हे निविदापूर्व अंदाज आहे (मंजूर रक्कम नाही). मंजूर व बंद निविदा 'निवाडे' मध्ये दिसतात. पूर्ण तपशीलासाठी ओळीवर क्लिक करा.",
+  "Search title, id, department…":"शीर्षक, आयडी, विभाग शोधा…",
+  "All sources":"सर्व स्रोत","All districts":"सर्व जिल्हे","Any deadline":"कोणतीही मुदत",
+  "Open":"खुली","Closing soon":"लवकरच बंद","Urgent (48h)":"तातडीचे (४८ता)",
+  "Tender":"निविदा","Ref no":"संदर्भ क्र.","District":"जिल्हा","Estimate":"अंदाजित",
+  "Published":"प्रकाशित","Closes":"बंद","Opening":"उघडणे","Status":"स्थिती",
+  // awards
+  "Confirmed Awards of Contract imported from the portal. Award value is the contract amount; the estimate is shown separately. Amounts are exact to the source (decimals preserved).":
+    "पोर्टलवरून घेतलेले निश्चित कंत्राट निवाडे. मंजूर मूल्य ही कंत्राट रक्कम; अंदाज वेगळा दाखवला आहे. रक्कम स्रोताप्रमाणे अचूक.",
+  "Search work, winner, department…":"काम, विजेता, विभाग शोधा…",
+  "Work":"काम","Winner":"विजेता","Award value":"मंजूर मूल्य","Contract date":"कंत्राट दिनांक",
+  // contractors
+  "Contracts":"कंत्राटे","Known value":"ज्ञात मूल्य","Known awarded value":"ज्ञात मंजूर मूल्य",
+  "With verified records":"पडताळलेल्या नोंदी","Search contractor…":"कंत्राटदार शोधा…",
+  "Contracts ":"कंत्राटे",
+  // analytics
+  "Floated (estimated) value":"प्रसारित (अंदाजित) मूल्य","Awarded (contract) value":"मंजूर (कंत्राट) मूल्य",
+  "Tracked tenders":"मागोवा निविदा","Bidding competition":"बोली स्पर्धा",
+  "Estimated value by district":"जिल्ह्यानुसार अंदाजित मूल्य",
+  "Estimated-value distribution":"अंदाजित-मूल्य वितरण",
+  "Tenders by funding scheme":"निधी योजनेनुसार निविदा",
+  "Top contractors (tracked)":"आघाडीचे कंत्राटदार","Single-bidder rate by publisher":"एकल-बोली दर",
+  // misc
+  "Documents & links":"कागदपत्रे व दुवे","Official portal documents":"अधिकृत पोर्टल कागदपत्रे",
+  "History":"इतिहास","Award":"निवाडा","Observed bidders":"आढळलेले बोलीदार",
+  "Watched tenders":"पाहत असलेल्या निविदा","Watched contractors":"पाहत असलेले कंत्राटदार",
+  "Unread":"न वाचलेले","All":"सर्व","Mark all read ":"सर्व वाचले",
+  // statuses
+  "Live":"सुरू","Closes today":"आज बंद","Awarded":"मंजूर","Closed":"बंद",
+  "Deadline passed":"मुदत संपली","No longer listed":"यादीत नाही",
+}};
+function T(s){ if(LANG==='mr' && I18N.mr[s]) return I18N.mr[s]; return s; }
+function tStatus(t){
+  var l=t.stLabel||'';
+  if(LANG!=='mr') return l;
+  if(I18N.mr[l]) return I18N.mr[l];
+  var m=l.match(/^(\d+)d left$/); if(m) return m[1]+' दिवस शिल्लक';
+  return l;
+}
+function applyStaticI18n(){
+  $('.brand small').textContent=T('Maharashtra procurement intelligence');
+  $all('.nav a[data-page]').forEach(function(a){
+    if(!a.dataset.label) a.dataset.label=a.childNodes[1]&&a.childNodes[1].nodeValue?a.childNodes[1].nodeValue.trim():a.dataset.page;
+    for(var i=0;i<a.childNodes.length;i++){var n=a.childNodes[i];
+      if(n.nodeType===3 && n.nodeValue.trim()){n.nodeValue=T(a.dataset.label);break;}}
+  });
+  var imp=$('.nav a[href="/unlock"]'); if(imp){for(var i=0;i<imp.childNodes.length;i++){
+    var n=imp.childNodes[i]; if(n.nodeType===3&&n.nodeValue.trim()){n.nodeValue=T('Import awards');break;}}}
+  $all('.navlabel').forEach(function(el){var k=el.dataset.k||el.textContent.trim();el.dataset.k=k;el.textContent=T(k);});
+  $('#refreshLbl').textContent=T('Refresh');
+  $('#installBtn').lastChild.textContent=' '+T('Install');
+  $('#langBtn').textContent=(LANG==='mr'?'EN':'मराठी');
+  $('#drawer .dh h3').firstChild.textContent=T('Notifications');
+}
+
 /* ---------- freshness top bar ---------- */
 function timeAgo(iso){
   if(!iso) return '';
@@ -389,7 +504,7 @@ function renderFresh(){
   var cls={up_to_date:'up',partial:'partial',stale:'stale',failed:'failed',unknown:'unknown'}[st]||'unknown';
   $('#freshDot').className='dot '+cls;
   var ago=timeAgo(STATUS.last_source_collection);
-  $('#freshText').innerHTML=(STATUS_LABEL[st]||'Unknown')+(ago?(' · Checked '+ago):'');
+  $('#freshText').textContent=T(STATUS_LABEL[st]||'Unknown')+(ago?(' · '+T('Checked')+' '+ago):'');
 }
 function renderStatusPanel(){
   var s=STATUS, srcs=s.sources||[];
@@ -462,8 +577,7 @@ function renderNavCounts(){
 
 /* ---------- status badge helper ---------- */
 function stBadge(t){
-  var cls=t.st, lbl=t.stLabel;
-  return '<span class="badge '+esc(cls)+'">'+esc(lbl)+'</span>';
+  return '<span class="badge '+esc(t.st)+'">'+esc(tStatus(t))+'</span>';
 }
 function starBtn(kind,id,on){
   return '<button class="star '+(on?'on':'')+'" data-star="'+kind+'" data-id="'+esc(id)+
@@ -474,10 +588,10 @@ function starBtn(kind,id,on){
 function renderOverview(){
   var o=OVERVIEW, p=$('#page-overview');
   var tiles=o.tiles.map(function(t){
-    return '<div class="tile"><div class="label">'+esc(t.label)+
+    return '<div class="tile"><div class="label">'+esc(T(t.label))+
       '<span class="help tooltip">?<span class="tip">'+esc(t.definition)+
       '</span></span></div><div class="val num">'+esc(t.value)+
-      '</div><div class="period">'+esc(t.period)+'</div></div>';
+      '</div><div class="period">'+esc(T(t.period))+'</div></div>';
   }).join('');
   /* since last visit */
   var newAwards=(NOTIFS.notifications||[]).filter(function(n){
@@ -486,7 +600,7 @@ function renderOverview(){
     return (watchT[n.tender_id]||watchC[n.contractorKey])&&Date.parse(n.detected_at)>lastVisit;});
   var since='';
   if(lastVisit){
-    since='<div class="callout"><b>Since your last visit</b> ('+fmtIso(new Date(lastVisit).toISOString())+
+    since='<div class="callout"><b>'+T('Since your last visit')+'</b> ('+fmtIso(new Date(lastVisit).toISOString())+
       '): '+newAwards.length+' new award notice'+(newAwards.length!=1?'s':'')+', '+
       watchedHits.length+' affecting your watchlist.</div>';
   }
@@ -502,19 +616,19 @@ function renderOverview(){
       '<td class="r">'+esc(a.contractDate||'—')+'</td></tr>';
   }).join('')||'<tr><td colspan="3" class="empty">No awards on record yet.</td></tr>';
 
-  p.innerHTML='<h1>Overview</h1><p class="sub">Your procurement decision homepage. '+
-    'Figures are drawn from the last committed data snapshot.</p>'+
+  p.innerHTML='<h1>'+T('Overview')+'</h1><p class="sub">'+
+    T('Your procurement decision homepage. Figures are drawn from the last committed data snapshot.')+'</p>'+
     since+'<div class="tiles">'+tiles+'</div>'+
     '<div class="grid2">'+
-      '<div class="card"><div class="head"><h2>Closing within 7 days</h2>'+
-        '<div class="spacer"></div><button class="linklike" data-goto="tenders">All tenders →</button></div>'+
-        '<div class="tablewrap"><table class="data"><thead><tr><th class="no-sort">Tender</th>'+
-        '<th class="no-sort">Status</th><th class="no-sort r">Closes</th></tr></thead><tbody>'+closing+
+      '<div class="card"><div class="head"><h2>'+T('Closing within 7 days')+'</h2>'+
+        '<div class="spacer"></div><button class="linklike" data-goto="tenders">'+T('All tenders →')+'</button></div>'+
+        '<div class="tablewrap"><table class="data"><thead><tr><th class="no-sort">'+T('Tender')+'</th>'+
+        '<th class="no-sort">'+T('Status')+'</th><th class="no-sort r">'+T('Closes')+'</th></tr></thead><tbody>'+closing+
         '</tbody></table></div></div>'+
-      '<div class="card"><div class="head"><h2>Recently detected awards</h2>'+
-        '<div class="spacer"></div><button class="linklike" data-goto="awards">All awards →</button></div>'+
-        '<div class="tablewrap"><table class="data"><thead><tr><th class="no-sort">Work / winner</th>'+
-        '<th class="no-sort r">Award value</th><th class="no-sort r">Contract date</th></tr></thead><tbody>'+
+      '<div class="card"><div class="head"><h2>'+T('Recently detected awards')+'</h2>'+
+        '<div class="spacer"></div><button class="linklike" data-goto="awards">'+T('All awards →')+'</button></div>'+
+        '<div class="tablewrap"><table class="data"><thead><tr><th class="no-sort">'+T('Work')+' / '+T('Winner')+'</th>'+
+        '<th class="no-sort r">'+T('Award value')+'</th><th class="no-sort r">'+T('Contract date')+'</th></tr></thead><tbody>'+
         recent+'</tbody></table></div></div>'+
     '</div>';
   wireOpens(p); wireGoto(p);
@@ -526,18 +640,17 @@ function openTenders(){return DATA.tenders.filter(function(t){return t.live;});}
 function renderTenders(){
   var p=$('#page-tenders');
   if(!$('#tFilters',p)){
-    p.innerHTML='<h1>Open tenders</h1><p class="sub">Opportunities currently open for bidding on the '+
-      'portal. Estimated value is the pre-bid estimate (not the award). Awarded and closed tenders move '+
-      'to the Awards view. Click a row for full details and history.</p>'+
+    p.innerHTML='<h1>'+T('Open tenders')+'</h1><p class="sub">'+
+      T('Opportunities currently open for bidding on the portal. Estimated value is the pre-bid estimate (not the award). Awarded and closed tenders move to the Awards view. Click a row for full details and history.')+'</p>'+
       '<div class="filters" id="tFilters">'+
-      '<input type="search" id="tSearch" placeholder="Search title, id, department…">'+
-      '<select id="tSource"><option value="">All sources</option>'+
+      '<input type="search" id="tSearch" placeholder="'+T('Search title, id, department…')+'">'+
+      '<select id="tSource"><option value="">'+T('All sources')+'</option>'+
         DATA.sources.map(function(s){return '<option>'+esc(s)+'</option>';}).join('')+'</select>'+
-      '<select id="tCity"><option value="">All districts</option>'+
+      '<select id="tCity"><option value="">'+T('All districts')+'</option>'+
         DATA.cities.map(function(c){return '<option>'+esc(c)+'</option>';}).join('')+'</select>'+
-      '<select id="tStatus"><option value="">Any deadline</option>'+
-        '<option value="live">Open</option><option value="soon">Closing soon</option>'+
-        '<option value="urgent">Urgent (48h)</option></select>'+
+      '<select id="tStatus"><option value="">'+T('Any deadline')+'</option>'+
+        '<option value="live">'+T('Open')+'</option><option value="soon">'+T('Closing soon')+'</option>'+
+        '<option value="urgent">'+T('Urgent (48h)')+'</option></select>'+
       '<span class="count" id="tCount"></span></div>'+
       '<div class="card"><div class="tablewrap"><table class="data" id="tTable"></table></div></div>';
     $('#tSearch',p).addEventListener('input',function(){tState.q=this.value.toLowerCase();drawTenders();});
@@ -562,15 +675,19 @@ function tendersFiltered(){
 var T_COLS=[['','',0],['Tender','title',0],['Ref no','ref',0],['District','cityGroup',0],
   ['Estimate','valueNum',1],['Published','publishedTs',1],['Closes','closingTs',1],
   ['Opening','openingTs',1],['Status','st',0]];
+var TENDER_RENDER_CAP=400;  // keep the DOM light on mobile; filters see all rows
 function drawTenders(){
   var rows=tendersFiltered();
   rows.sort(function(a,b){var k=tState.sort,va=a[k],vb=b[k];
     if(typeof va==='string'){va=(va||'').toLowerCase();vb=(vb||'').toLowerCase();}
     return (va<vb?-1:va>vb?1:0)*tState.dir;});
+  var totalRows=rows.length;
+  var capped=rows.length>TENDER_RENDER_CAP;
+  rows=rows.slice(0,TENDER_RENDER_CAP);
   var head='<thead><tr>'+T_COLS.map(function(c,i){
     var sorted=tState.sort===c[1]&&c[1];
     return '<th class="'+(c[2]?'r ':'')+(c[1]?'':'no-sort ')+(sorted?'sorted':'')+'" data-col="'+esc(c[1])+'">'+
-      esc(c[0])+(c[1]?' <span class="sortcaret">'+(sorted?(tState.dir>0?'▲':'▼'):'↕')+'</span>':'')+'</th>';
+      esc(T(c[0]))+(c[1]?' <span class="sortcaret">'+(sorted?(tState.dir>0?'▲':'▼'):'↕')+'</span>':'')+'</th>';
   }).join('')+'</tr></thead>';
   var body=rows.map(function(t){
     return '<tr data-open="'+esc(t.id)+'"><td>'+starBtn('t',t.id,!!watchT[t.id])+'</td>'+
@@ -585,7 +702,8 @@ function drawTenders(){
       '<td>'+stBadge(t)+'</td></tr>';
   }).join('')||'<tr><td colspan="9" class="empty">No open tenders match these filters.</td></tr>';
   $('#tTable').innerHTML=head+'<tbody>'+body+'</tbody>';
-  $('#tCount').textContent=rows.length+' of '+openTenders().length+' open tenders';
+  $('#tCount').textContent=(capped?('showing '+TENDER_RENDER_CAP+' of '+totalRows+' matches — refine to narrow'):
+    (totalRows+' of '+openTenders().length+' open tenders'));
   $all('#tTable th[data-col]').forEach(function(th){
     if(!th.dataset.col) return;
     th.addEventListener('click',function(){
@@ -601,11 +719,10 @@ var aState={q:'',sort:'contractDateTs',dir:-1};
 function renderAwards(){
   var p=$('#page-awards');
   if(!$('#aFilters',p)){
-    p.innerHTML='<h1>Awards</h1><p class="sub">Confirmed Awards of Contract imported from the portal. '+
-      'Award value is the contract amount; the estimate is shown separately. Amounts are exact to the '+
-      'source (decimals preserved).</p>'+
+    p.innerHTML='<h1>'+T('Awards')+'</h1><p class="sub">'+
+      T('Confirmed Awards of Contract imported from the portal. Award value is the contract amount; the estimate is shown separately. Amounts are exact to the source (decimals preserved).')+'</p>'+
       '<div class="filters" id="aFilters">'+
-      '<input type="search" id="aSearch" placeholder="Search work, winner, department…">'+
+      '<input type="search" id="aSearch" placeholder="'+T('Search work, winner, department…')+'">'+
       '<span class="count" id="aCount"></span></div>'+
       '<div class="card"><div class="tablewrap"><table class="data" id="aTable"></table></div></div>';
     $('#aSearch',p).addEventListener('input',function(){aState.q=this.value.toLowerCase();drawAwards();});
@@ -624,7 +741,7 @@ function drawAwards(){
     return (va<vb?-1:va>vb?1:0)*aState.dir;});
   var head='<thead><tr>'+A_COLS.map(function(c){
     var sorted=aState.sort===c[1];
-    return '<th class="'+(c[2]?'r ':'')+(sorted?'sorted':'')+'" data-col="'+esc(c[1])+'">'+esc(c[0])+
+    return '<th class="'+(c[2]?'r ':'')+(sorted?'sorted':'')+'" data-col="'+esc(c[1])+'">'+esc(T(c[0]))+
       ' <span class="sortcaret">'+(sorted?(aState.dir>0?'▲':'▼'):'↕')+'</span></th>';
   }).join('')+'</tr></thead>';
   var body=rows.map(function(a){
@@ -652,7 +769,7 @@ function renderContractors(){
   var p=$('#page-contractors');
   var list=CONTRACTORS.contractors||[];
   var st=CONTRACTORS.stats||{};
-  p.innerHTML='<h1>Contractors</h1><p class="sub">Firms winning the tracked contracts, built from imported '+
+  p.innerHTML='<h1>'+T('Contractors')+'</h1><p class="sub">Firms winning the tracked contracts, built from imported '+
     'Award of Contract pages. Ranked by known awarded value <b>across tenders we monitor</b> — not a '+
     'statewide total. Average is over contracts with a known amount.</p>'+
     '<div class="tiles">'+
@@ -672,7 +789,7 @@ function renderContractors(){
   else $('#cProfile').innerHTML='<div class="card"><div class="body empty">'+
     'Select a contractor to see their profile, contracts and evidence.</div></div>';
 }
-function tile(l,v){return '<div class="tile"><div class="label">'+esc(l)+
+function tile(l,v){return '<div class="tile"><div class="label">'+esc(T(l))+
   '</div><div class="val num">'+esc(v)+'</div></div>';}
 function drawContractorList(){
   var list=(CONTRACTORS.contractors||[]).filter(function(c){
@@ -758,26 +875,26 @@ function bars(items,labelKey,valKey,fmt,max){
 }
 function renderAnalytics(){
   var p=$('#page-analytics'), a=ANALYTICS;
-  if(!a||!a.summary){p.innerHTML='<h1>Analytics</h1><p class="sub">No analytics available yet.</p>';return;}
+  if(!a||!a.summary){p.innerHTML='<h1>'+T('Analytics')+'</h1><p class="sub">No analytics available yet.</p>';return;}
   var s=a.summary, rec=a.reconciliation||{}, bid=a.bidding||{};
   var vb=a.value_bands||[];
   var tiles='<div class="tiles">'+
-    '<div class="tile"><div class="label">Floated (estimated) value<span class="help tooltip">?'+
+    '<div class="tile"><div class="label">'+T('Floated (estimated) value')+'<span class="help tooltip">?'+
       '<span class="tip">Sum of pre-bid estimated values across tracked tenders with a known estimate ('+
       (s.tenders_with_known_estimate||0)+'). Not the award total.</span></span></div>'+
       '<div class="val num">₹'+esc(s.total_floated_value_fmt||'0')+'</div><div class="period">estimate</div></div>'+
-    '<div class="tile"><div class="label">Awarded (contract) value<span class="help tooltip">?'+
+    '<div class="tile"><div class="label">'+T('Awarded (contract) value')+'<span class="help tooltip">?'+
       '<span class="tip">Sum of awarded contract values across '+(s.awards_with_known_value||0)+
       ' awards with a known amount. A different measure from floated value; not compared 1:1.</span></span></div>'+
       '<div class="val num">₹'+esc(s.total_awarded_value_fmt||'0')+'</div><div class="period">awarded</div></div>'+
-    '<div class="tile"><div class="label">Tracked tenders<span class="help tooltip">?<span class="tip">'+
+    '<div class="tile"><div class="label">'+T('Tracked tenders')+'<span class="help tooltip">?<span class="tip">'+
       esc(rec.definition||'')+'</span></span></div><div class="val num">'+(rec.canonical_tenders||s.counts.tenders)+
       '</div><div class="period">'+(rec.live||0)+' live · '+(rec.awarded||0)+' awarded</div></div>'+
     '<div class="tile"><div class="label">Awards on record</div><div class="val num">'+(s.counts.awards||0)+
       '</div><div class="period">'+(rec.contractors||0)+' contractors</div></div>'+
     '</div>';
 
-  var biddingCard='<div class="card"><div class="head"><h2>Bidding competition</h2>'+
+  var biddingCard='<div class="card"><div class="head"><h2>'+T('Bidding competition')+'</h2>'+
     '<div class="desc">measurable only with full bidder lists</div></div><div class="body">'+
     '<div class="callout">Single-bidder rate is <b>not measurable</b> from the current data: the portal\'s '+
     'Award-of-Contract page lists only the winner. '+(bid.winner_only||0)+' of '+(bid.awards_total||0)+
@@ -789,30 +906,30 @@ function renderAnalytics(){
     '</div></div></div></div>';
 
   var districts=(a.by_district||[]).slice(0,12);
-  var districtCard='<div class="card"><div class="head"><h2>Estimated value by district</h2>'+
+  var districtCard='<div class="card"><div class="head"><h2>'+T('Estimated value by district')+'</h2>'+
     '<div class="desc">floated estimate, top 12</div></div><div class="body">'+
     (districts.length?bars(districts,'district','floated_inr',function(i){return '₹'+i.floated_fmt;}):'<div class="empty">No data</div>')+
     '</div></div>';
 
   var schemes=(a.by_funding_scheme||[]);
-  var schemeCard='<div class="card"><div class="head"><h2>Tenders by funding scheme</h2>'+
+  var schemeCard='<div class="card"><div class="head"><h2>'+T('Tenders by funding scheme')+'</h2>'+
     '<div class="desc">unclassified kept visible</div></div><div class="body">'+
     (schemes.length?bars(schemes,'scheme','tenders',function(i){return i.tenders+' · ₹'+i.floated_fmt;}):'<div class="empty">No data</div>')+
     '</div></div>';
 
   var bandMax=Math.max.apply(null,vb.map(function(b){return b.count;}).concat([1]));
-  var bandCard='<div class="card"><div class="head"><h2>Estimated-value distribution</h2>'+
+  var bandCard='<div class="card"><div class="head"><h2>'+T('Estimated-value distribution')+'</h2>'+
     '<div class="desc">unknown estimates shown separately</div></div><div class="body">'+
     bars(vb,'band','count',function(i){return i.count;},bandMax)+'</div></div>';
 
   var tc=(a.top_contractors||[]).slice(0,12);
-  var tcCard='<div class="card"><div class="head"><h2>Top contractors (tracked)</h2>'+
+  var tcCard='<div class="card"><div class="head"><h2>'+T('Top contractors (tracked)')+'</h2>'+
     '<div class="desc">by known awarded value, monitored tenders only</div></div><div class="body">'+
     (tc.length?bars(tc,'contractor','total_value_inr',function(i){return '₹'+i.total_value_fmt;}):'<div class="empty">No data</div>')+
     '</div></div>';
 
   var sb=(a.single_bidder||[]);
-  var sbCard='<div class="card"><div class="head"><h2>Single-bidder rate by publisher</h2>'+
+  var sbCard='<div class="card"><div class="head"><h2>'+T('Single-bidder rate by publisher')+'</h2>'+
     '<div class="desc">full-coverage awards only (0–100%)</div></div><div class="body">'+
     (sb.length?('<div class="scale"><span>0%</span><span>50%</span><span>100%</span></div>'+
       bars(sb,'org','single_bidder_rate',function(i){return pct(i.single_bidder_rate);},1)):
@@ -820,7 +937,7 @@ function renderAnalytics(){
       'Winner-only imports are excluded to avoid a false 100%.</div>')+
     '</div></div>';
 
-  p.innerHTML='<h1>Analytics</h1><p class="sub">Estimated and awarded values are separate measures. '+
+  p.innerHTML='<h1>'+T('Analytics')+'</h1><p class="sub">Estimated and awarded values are separate measures. '+
     'Percentages use a fixed 0–100% scale; zero shows an empty bar; unknowns are labelled, not zeroed. '+
     'Coverage reflects the tenders we monitor, not all of Maharashtra.</p>'+
     tiles+biddingCard+'<div class="grid2">'+districtCard+bandCard+'</div>'+
@@ -840,13 +957,13 @@ function renderWatchlist(){
   var cRows=wc.map(function(c){return '<tr data-contractor="'+esc(c.key)+'"><td class="t-title">'+esc(c.name)+
     '</td><td class="r num">'+c.count+'</td><td class="r">'+money(c.valueFmt)+'</td></tr>';}).join('')||
     '<tr><td colspan="3" class="empty">No watched contractors. Tap ☆ on any contractor.</td></tr>';
-  p.innerHTML='<h1>Watchlist</h1><p class="sub">Tenders and contractors you follow. Stored in this browser. '+
+  p.innerHTML='<h1>'+T('Watchlist')+'</h1><p class="sub">Tenders and contractors you follow. Stored in this browser. '+
     'Award notices affecting these appear in your Inbox and the "Since your last visit" summary.</p>'+
-    '<div class="grid2"><div class="card"><div class="head"><h2>Watched tenders</h2></div>'+
+    '<div class="grid2"><div class="card"><div class="head"><h2>'+T('Watched tenders')+'</h2></div>'+
       '<div class="tablewrap"><table class="data"><thead><tr><th class="no-sort">Tender</th>'+
       '<th class="no-sort">Status</th><th class="no-sort r">Closes</th></tr></thead><tbody>'+tRows+
       '</tbody></table></div></div>'+
-    '<div class="card"><div class="head"><h2>Watched contractors</h2></div>'+
+    '<div class="card"><div class="head"><h2>'+T('Watched contractors')+'</h2></div>'+
       '<div class="tablewrap"><table class="data"><thead><tr><th class="no-sort">Contractor</th>'+
       '<th class="no-sort r">Contracts</th><th class="no-sort r">Known value</th></tr></thead><tbody>'+cRows+
       '</tbody></table></div></div></div>';
@@ -877,7 +994,7 @@ function renderInboxPage(){
   var p=$('#page-inbox');
   var items=notifItems();
   var byKind=NOTIFS.by_kind||{};
-  p.innerHTML='<h1>Inbox</h1><p class="sub">Award notices, historical imports and data corrections are kept '+
+  p.innerHTML='<h1>'+T('Inbox')+'</h1><p class="sub">Award notices, historical imports and data corrections are kept '+
     'distinguishable. Read state is stored in this browser.</p>'+
     '<div class="filters">'+
       '<div class="seg" style="display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden">'+
@@ -960,14 +1077,14 @@ function renderDetail(id,t,aw,d){
   /* award panel */
   var award=d.award&&d.award.award;
   if(award && award.contractor){
-    body+='<div class="section-title">Award</div><div class="kv">'+
+    body+='<div class="section-title">'+T('Award')+'</div><div class="kv">'+
       '<div class="k">Winner</div><div><a href="#" data-contractor="'+esc(cKey(award.contractor))+'">'+esc(award.contractor)+'</a></div>'+
       '<div class="k">Award value</div><div>'+money(fmtAmt(award.awarded_value))+
         (award.awarded_value_raw?(' <span style="color:var(--faint)">('+esc(award.awarded_value_raw)+')</span>'):'')+'</div>'+
       '<div class="k">Contract date</div><div>'+esc(award.contract_date||'—')+'</div>'+
     '</div>';
     if(award.bidders&&award.bidders.length){
-      body+='<div class="section-title">Observed bidders</div><div>'+
+      body+='<div class="section-title">'+T('Observed bidders')+'</div><div>'+
         award.bidders.map(function(b){return '<span class="chip">'+esc(b.name)+(b.status?(' · '+esc(b.status)):'')+'</span>';}).join('')+
         '<p style="color:var(--faint);font-size:11px;margin:6px 0 0">Only the winner is listed on the AOC page; this is not the full participant list.</p></div>';
     }
@@ -975,7 +1092,7 @@ function renderDetail(id,t,aw,d){
   /* timeline */
   var events=d.events||[];
   if(events.length){
-    body+='<div class="section-title">History</div><ul class="timeline">';
+    body+='<div class="section-title">'+T('History')+'</div><ul class="timeline">';
     events.forEach(function(ev){
       var det={}; try{det=JSON.parse(ev.detail||'{}');}catch(e){}
       var label=ev.event_type==='award_record_discovered'?'Award record discovered':
@@ -988,7 +1105,7 @@ function renderDetail(id,t,aw,d){
     });
     body+='</ul>';
   } else if(t){
-    body+='<div class="section-title">History</div><p style="color:var(--muted);font-size:12.5px">'+
+    body+='<div class="section-title">'+T('History')+'</div><p style="color:var(--muted);font-size:12.5px">'+
       'Tracking began '+esc(t.first_seen||'when first observed')+'. No further recorded status changes.</p>';
   }
   /* raw fields grouped */
@@ -1002,7 +1119,9 @@ function renderDetail(id,t,aw,d){
     });
   }
   /* actions */
-  body+='<div class="section-title">Documents & links</div><div class="so-actions">'+
+  body+='<div class="section-title">'+T('Documents & links')+'</div><div class="so-actions">'+
+    '<a class="btn" target="_blank" rel="noopener" href="/official?id='+encodeURIComponent(id)+'">⬇ '+
+      T('Official portal documents')+'</a>'+
     '<a class="btn" target="_blank" rel="noopener" href="/pdf/'+encodeURIComponent(id)+'/en">Work details (EN) PDF</a>'+
     '<a class="btn" target="_blank" rel="noopener" href="/pdf/'+encodeURIComponent(id)+'/mr">कामाचा तपशील (MR) PDF</a>'+
     '</div>';
@@ -1087,7 +1206,35 @@ function wireStars(root){
   });
 }
 
+/* ---------- language switch ---------- */
+$('#langBtn').addEventListener('click',function(){
+  LANG=(LANG==='mr'?'en':'mr'); LS.set('lang',LANG);
+  applyStaticI18n();
+  var cur=$('.nav a.active'); cur=cur?cur.dataset.page:'overview';
+  $all('.page').forEach(function(p){p.innerHTML='';});  // force retranslated rebuild
+  renderFresh(); renderStatusPanel(); renderNavCounts(); show(cur);
+});
+
+/* ---------- PWA: service worker + install prompt ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+var deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault(); deferredPrompt=e; $('#installBtn').classList.add('show');
+});
+$('#installBtn').addEventListener('click',function(){
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(){deferredPrompt=null;
+    $('#installBtn').classList.remove('show');});
+});
+window.addEventListener('appinstalled',function(){$('#installBtn').classList.remove('show');});
+
 /* ---------- boot ---------- */
+applyStaticI18n();
 renderFresh(); renderStatusPanel(); renderNavCounts();
 var start=(location.hash||'#overview').slice(1);
 if(!$('#page-'+start)) start='overview';

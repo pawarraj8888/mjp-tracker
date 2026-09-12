@@ -35,6 +35,47 @@ def detail():
     return jsonify(tracker.detail_payload(request.args.get("id", "")))
 
 
+@app.get("/official")
+def official():
+    tid = request.args.get("id", "")
+    idx = request.args.get("i")
+    if idx is None:
+        return Response(tracker.official_list_html(tid),
+                        mimetype="text/html; charset=utf-8")
+    try:
+        result = tracker.official_file(tid, int(idx))
+    except (ValueError, TypeError):
+        result = None
+    if result is None:
+        return Response("Document not available", status=404)
+    content, ctype, name = result
+    return Response(content, mimetype=ctype, headers={
+        "Content-Disposition": 'attachment; filename="%s"' % name})
+
+
+@app.get("/manifest.webmanifest")
+def manifest():
+    return Response(tracker.MANIFEST_JSON,
+                    mimetype="application/manifest+json")
+
+
+@app.get("/sw.js")
+def service_worker():
+    return Response(tracker.SERVICE_WORKER_JS,
+                    mimetype="text/javascript; charset=utf-8",
+                    headers={"Service-Worker-Allowed": "/"})
+
+
+@app.get("/static/<name>")
+def static_file(name):
+    asset = tracker.static_asset(name)
+    if asset is None:
+        return Response("Not found", status=404)
+    body, ctype = asset
+    return Response(body, mimetype=ctype,
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/unlock")
 def unlock():
     return Response(tracker.unlock_page_html(),

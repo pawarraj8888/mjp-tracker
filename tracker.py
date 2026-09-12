@@ -96,6 +96,17 @@ ORG_WATCHES = [
 
 KEYWORD_WATCHES = [
     {
+        # Everything open on the portal, from every organisation and every
+        # district. `all: True` keeps every row (no keyword filter), so the
+        # dashboard shows the full public open-tender universe of Maharashtra.
+        # Collected by the scheduled all-orgs scan (too slow for a page load)
+        # and bridged into the dashboard via live.json, like the other keyword
+        # watches.
+        "name": "All Maharashtra",
+        "org_re": r".",
+        "all": True,
+    },
+    {
         # Scanned across every organisation: these fund markers appear in
         # ZP, Collector, and municipal tenders alike.
         "name": "Amdar Nidhi / DPDC",
@@ -498,7 +509,7 @@ def fetch_all_watch_rows(session, include_keyword_scan=True):
             for w in org_watch_hits:
                 add(row, w["name"])
             for w in kw_applicable:
-                if keyword_hit(row, w["keywords"]):
+                if w.get("all") or keyword_hit(row, w.get("keywords", [])):
                     add(row, w["name"])
         time.sleep(0.35)
     return [by_tid[t] for t in order]
@@ -1115,15 +1126,36 @@ def run_dry(session, rows):
     return 0
 
 
-def cache_missing_details(session, rows):
-    """Fetch and cache detail fields for any live tender not already cached,
-    so the dashboard has city and value for everything even when no delivery
-    channel is configured. Failures are skipped, not fatal."""
+# A single run only caches this many uncached detail pages. With the
+# All-Maharashtra watch there can be thousands of open tenders; caching them
+# all in one run would blow the CI timeout, so priority tenders (the pinned org
+# and specific keyword watches) are always done and the rest fill in over
+# successive runs.
+MAX_DETAIL_FETCHES_PER_RUN = int(os.environ.get("MAX_DETAIL_FETCHES", "150"))
+
+
+def _detail_priority(row):
+    """Pinned org watches and specific (non-'all') keyword watches come first
+    so their city/value always populate; the statewide backlog fills over time."""
+    priority_names = {w["name"] for w in ORG_WATCHES} | \
+        {w["name"] for w in KEYWORD_WATCHES if not w.get("all")}
+    return any(s in priority_names for s in row.get("sources", []))
+
+
+def cache_missing_details(session, rows, limit=MAX_DETAIL_FETCHES_PER_RUN):
+    """Fetch and cache detail fields for live tenders not already cached, so the
+    dashboard has city and value. Priority rows first, then up to ``limit`` of
+    the rest per run. Failures are skipped, not fatal."""
     cache = load_details_cache()
     todo = [r for r in rows if r["tender_id"] not in cache]
     if not todo:
         return
-    log.info("Caching details for %d tender(s)", len(todo))
+    todo.sort(key=lambda r: not _detail_priority(r))  # priority (True) first
+    priority = [r for r in todo if _detail_priority(r)]
+    budget = max(limit, len(priority))  # never starve priority rows
+    todo = todo[:budget]
+    log.info("Caching details for %d of %d uncached tender(s) this run",
+             len(todo), len([r for r in rows if r["tender_id"] not in cache]))
     for r in todo:
         try:
             details = fetch_tender_details(session, r["url"])
@@ -1271,6 +1303,128 @@ def refresh_live(force=False):
         _dash["session"] = session
         _dash["ts"] = time.time()
         return _dash["live"]
+
+
+_DOC_EXT_RE = re.compile(r"\.(pdf|zip|rar|docx?|xlsx?|rtf|jpe?g|png|tiff?)$", re.I)
+_DOC_SKIP = {"view more details", "back", "home", "print"}
+
+
+def parse_document_links(soup):
+    """Official document download links from a GePNIC tender detail page:
+    every anchor whose text is a real filename (Tendernotice_1.pdf, BOQ.xls,
+    ...) plus the 'Download as zip file' bundle. Returns [{name, href}] with
+    session-scoped hrefs (valid only in the fetching session)."""
+    out, seen = [], set()
+    for a in soup.find_all("a", href=True):
+        txt = a.get_text(" ", strip=True)
+        low = txt.casefold()
+        is_file = bool(_DOC_EXT_RE.search(txt))
+        is_zip = "download as zip" in low
+        if not (is_file or is_zip) or low in _DOC_SKIP:
+            continue
+        href = a["href"]
+        full = href if href.startswith("http") else BASE_URL + href
+        key = (txt or ("All documents (zip)" if is_zip else href))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"name": txt or "All documents (zip)", "href": full,
+                    "zip": is_zip})
+    return out
+
+
+def _fresh_detail_url(session, tid):
+    """A detail-page URL for ``tid`` valid in ``session`` (GePNIC links are
+    session-scoped, so a stored url from another session will not work). Found
+    by re-navigating the tender's own organisation listing."""
+    live = _dash.get("live") or []
+    row = next((r for r in live if r["tender_id"] == tid), None)
+    org_chain = (row or {}).get("org_chain", "")
+    if not org_chain:
+        det = load_details_cache().get(tid, {})
+        org_chain = det.get("Organisation Chain", "")
+    org = publisher(org_chain)
+    index = fetch_org_index(session)
+    key = org if org in index else next(
+        (k for k in index if org and (k.endswith(org) or org.endswith(k))), "")
+    if not key:
+        return ""
+    for r in fetch_rows_for_org(session, key, index):
+        if r["tender_id"] == tid:
+            return r["url"]
+    return ""
+
+
+def official_documents(tid):
+    """(session, [{name, href, zip}]) for a tender's official portal documents,
+    fetched live. Empty list when the tender is no longer listed or exposes no
+    documents. The session must be reused to download the hrefs."""
+    if not TENDER_ID_RE.match(tid or ""):
+        return None, []
+    session = _dash.get("session") or make_session()
+    try:
+        url = _fresh_detail_url(session, tid)
+        if not url:
+            return session, []
+        resp = portal_get(session, url)
+        return session, parse_document_links(BeautifulSoup(resp.text, "lxml"))
+    except Exception as exc:
+        log.warning("Official docs for %s failed: %s", tid, exc)
+        return session, []
+
+
+def official_list_html(tid):
+    """A small page listing a tender's official documents, each a proxied
+    download link. Used when /official is opened without a document index."""
+    _, docs = official_documents(tid)
+    if not docs:
+        body = ('<p>No official documents are available to download for this '
+                'tender right now. It may have closed or been removed from the '
+                'portal listing.</p>')
+    else:
+        items = "".join(
+            '<li><a href="/official?id=%s&i=%d">%s</a>%s</li>' % (
+                xml_escape(tid), i, xml_escape(d["name"]),
+                ' <span class="z">(bundle)</span>' if d.get("zip") else '')
+            for i, d in enumerate(docs))
+        body = ('<p>Official documents published on mahatenders.gov.in for '
+                'tender <b>%s</b>. Files are streamed from the portal.</p>'
+                '<ul>%s</ul>' % (xml_escape(tid), items))
+    return (OFFICIAL_PAGE
+            .replace("__TID__", xml_escape(tid))
+            .replace("__BODY__", body))
+
+
+def official_file(tid, index):
+    """(bytes, content_type, filename) for the index-th official document, or
+    None. Streamed live from the portal in the current session."""
+    session, docs = official_documents(tid)
+    if not docs or index < 0 or index >= len(docs):
+        return None
+    doc = docs[index]
+    resp = portal_get(session, doc["href"])
+    ctype = resp.headers.get("Content-Type", "application/octet-stream")
+    name = doc["name"]
+    cd = resp.headers.get("Content-Disposition", "")
+    m = re.search(r'filename="?([^"]+)"?', cd)
+    if m:
+        name = m.group(1)
+    if "zip" in ctype and not name.lower().endswith(".zip"):
+        name = "%s_documents.zip" % tid
+    name = re.sub(r"[^A-Za-z0-9._-]+", "_", name)[:120] or ("%s.bin" % tid)
+    return resp.content, ctype, name
+
+
+OFFICIAL_PAGE = ("""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Official documents - __TID__</title>
+<style>body{font-family:system-ui,Arial,sans-serif;max-width:640px;margin:40px auto;
+padding:0 20px;color:#152238;line-height:1.6}a{color:#1a3e6e;font-weight:600}
+li{margin:6px 0}.z{color:#64748b;font-weight:400;font-size:12px}
+h1{font-size:18px}</style></head><body><h1>Official tender documents</h1>
+__BODY__<p style="color:#64748b;font-size:12px;margin-top:24px">Source: """
+"""mahatenders.gov.in. Documents are fetched on demand; large bundles may take """
+"""a few seconds.</p></body></html>""")
 
 
 def fetch_detail_for_tid(tid):
@@ -2405,6 +2559,70 @@ tender's popup).</p>
 from dashboard_page import DASHBOARD_PAGE  # noqa: E402  (large HTML template)
 
 
+# ---------------------------------------------------------------------------
+# PWA: web app manifest, service worker, and icons so the dashboard installs
+# to the home screen on Android (Samsung) and iOS (Apple) and works offline
+# for the app shell.
+# ---------------------------------------------------------------------------
+
+MANIFEST_JSON = json.dumps({
+    "name": "Tender Watch - Maharashtra Procurement Intelligence",
+    "short_name": "Tender Watch",
+    "description": "Live Maharashtra public tenders, awards and contractors.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#eaf0f8",
+    "theme_color": "#1a3e6e",
+    "categories": ["business", "government", "productivity"],
+    "icons": [
+        {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png"},
+        {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png"},
+        {"src": "/static/icon-maskable-512.png", "sizes": "512x512",
+         "type": "image/png", "purpose": "maskable"},
+    ],
+}, ensure_ascii=False)
+
+SERVICE_WORKER_JS = r"""
+const CACHE='tw-v1';
+self.addEventListener('install',function(e){self.skipWaiting();});
+self.addEventListener('activate',function(e){e.waitUntil(self.clients.claim());});
+self.addEventListener('fetch',function(e){
+  var req=e.request; if(req.method!=='GET') return;
+  var url=new URL(req.url);
+  if(url.origin!==self.location.origin) return;
+  if(url.pathname.indexOf('/static/')===0){
+    e.respondWith(caches.open(CACHE).then(function(c){
+      return c.match(req).then(function(r){return r||fetch(req).then(function(res){
+        c.put(req,res.clone());return res;});});}));
+    return;
+  }
+  // Network-first; fall back to a cached shell when offline.
+  e.respondWith(fetch(req).then(function(res){
+    if(url.pathname==='/'||url.pathname===''){
+      var copy=res.clone();caches.open(CACHE).then(function(c){c.put('/',copy);});}
+    return res;
+  }).catch(function(){return caches.match(req).then(function(r){return r||caches.match('/');});}));
+});
+"""
+
+_STATIC_TYPES = {".png": "image/png", ".webmanifest": "application/manifest+json",
+                 ".js": "text/javascript; charset=utf-8"}
+
+
+def static_asset(name):
+    """(bytes, content_type) for a file in static/, or None. Only simple asset
+    names are allowed (no path traversal)."""
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", name or ""):
+        return None
+    path = ROOT / "static" / name
+    if not path.is_file():
+        return None
+    ext = path.suffix.lower()
+    return path.read_bytes(), _STATIC_TYPES.get(ext, "application/octet-stream")
+
+
 def build_dashboard_page():
     def js(obj):
         return json.dumps(obj, ensure_ascii=False, default=str).replace(
@@ -2479,6 +2697,46 @@ def serve_dashboard(port):
                     send(self, 200,
                          json.dumps(import_status()).encode("utf-8"),
                          "application/json; charset=utf-8")
+                elif url.path == "/official":
+                    q = parse_qs(url.query)
+                    tid = q.get("id", [""])[0]
+                    if "i" not in q:
+                        send(self, 200, official_list_html(tid).encode("utf-8"),
+                             "text/html; charset=utf-8")
+                    else:
+                        try:
+                            res = official_file(tid, int(q.get("i", ["0"])[0]))
+                        except (ValueError, TypeError):
+                            res = None
+                        if res is None:
+                            self.send_error(404, "Document not available")
+                            return
+                        content, ctype, name = res
+                        self.send_response(200)
+                        self.send_header("Content-Type", ctype)
+                        self.send_header("Content-Disposition",
+                                         'attachment; filename="%s"' % name)
+                        self.send_header("Content-Length", str(len(content)))
+                        self.end_headers()
+                        self.wfile.write(content)
+                elif url.path == "/manifest.webmanifest":
+                    send(self, 200, MANIFEST_JSON.encode("utf-8"),
+                         "application/manifest+json")
+                elif url.path == "/sw.js":
+                    body = SERVICE_WORKER_JS.encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/javascript; charset=utf-8")
+                    self.send_header("Service-Worker-Allowed", "/")
+                    self.send_header("Content-Length", str(len(body)))
+                    self.end_headers()
+                    self.wfile.write(body)
+                elif url.path.startswith("/static/"):
+                    asset = static_asset(url.path[len("/static/"):])
+                    if asset is None:
+                        self.send_error(404)
+                        return
+                    body, ctype = asset
+                    send(self, 200, body, ctype)
                 elif url.path.startswith("/pdf/"):
                     parts = url.path.strip("/").split("/")
                     if len(parts) != 3 or parts[2] not in ("en", "mr") \
