@@ -1,0 +1,209 @@
+{
+ "alerts": {
+  "delivered": 0,
+  "pending": 0,
+  "recipients": []
+ },
+ "counts": {
+  "linked_tenders": 0,
+  "mjp_alerts": 0,
+  "mjp_documents": 1,
+  "mjp_events": 3,
+  "mjp_projects": 1,
+  "mjp_review_queue": 1,
+  "mjp_tender_links": 1,
+  "suggested_tenders": 1
+ },
+ "discovery": {
+  "added": [],
+  "checked_at": "2026-09-17T03:22:48+05:30",
+  "failures": [],
+  "listing_ok": true,
+  "refreshed": [
+   "202606251057023925"
+  ]
+ },
+ "generated": "2026-09-17T03:22:49+05:30",
+ "projects": [
+  {
+   "approved_cost": {
+    "display": "24.99 Cr",
+    "inr": "249925000",
+    "plain": "24,99,25,000"
+   },
+   "components": [
+    "Intake Well @ Bagling Dam (3.00 MM dia. 5.5 M Depth)",
+    "Inspection Well From Baglinga Dam (Dia. 2.00 M, Depth - 9.80 M)",
+    "Connecting Main 400 mm dia., L-60 M",
+    "Jack Well 8.00 M Dia. 19.00 M Deep with overhead Pump House 8.60 x 19.60 M",
+    "Approch Bund L-20 M",
+    "R.C.C. Approach Bridge For H-W (L-96.00 M)",
+    "Approach Road For Head Works 650 Rmt. Length",
+    "Raw Water Pumping Machinery at Intermidiate Sump: 97270 LPH 20 Discharge 315 m Head 240 HP Horizontal Centrifügal Multistage Pumpsets with 100% standby"
+   ],
+   "district": "Amravati",
+   "document_date": "2026-06-25",
+   "documents": [
+    {
+     "components": [
+      "2875000",
+      "1368000",
+      "6132000",
+      "17181000",
+      "8910000",
+      "177533000",
+      "11374000",
+      "15052000"
+     ],
+     "department": "नगर विकास विभाग",
+     "doc_code": "202606251057023925",
+     "doc_type": "funding_sanction",
+     "extract_ok": true,
+     "first_detected_at": "2026-09-17T02:49:48+05:30",
+     "gr_number": "नपावै-2026/प्र.क्र. 105 /भार्-1/नशव-16 (ई- 1657466 )",
+     "issue_date": "2026-06-25",
+     "language": "mr",
+     "ocr_used": false,
+     "publication_date": "2026-06-25",
+     "sha256": "c4a260cc6a7752a545e0a1c599298346927b06a1e684a4a0a37cbeff66f90028",
+     "title_original": "“वैशिष्ट्यपूर्ण” योजनेअंतर्गत चिखलदरा नगरपरिषद, जि. अमरावती करीता निधी मंजूर करण्याबाबत.",
+     "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/English/202606251057023925.........pdf"
+    }
+   ],
+   "events": [
+    {
+     "date": "",
+     "detail": {
+      "confidence": 0.85,
+      "reasons": [
+       "municipality_in_tender",
+       "mjp_is_tendering_agency",
+       "district_match"
+      ],
+      "tender_id": "2026_COJAL_1337629_1"
+     },
+     "event_type": "tender_suggested",
+     "label": "Possible tender match",
+     "source_doc_code": "2026_COJAL_1337629_1"
+    },
+    {
+     "date": "2026-06-25",
+     "detail": {
+      "doc_code": "202606251057023925",
+      "note": "First official document recorded."
+     },
+     "event_type": "project_discovered",
+     "label": "Project discovered",
+     "source_doc_code": "202606251057023925"
+    },
+    {
+     "date": "2026-06-25",
+     "detail": {
+      "amount_fmt": "24.99 Cr",
+      "amount_inr": "249925000",
+      "doc_code": "202606251057023925",
+      "evidence": "ासकीय मान्यता प्रदान करावी. 3. सदर िासन शनर्णयातील कामािी कायान्वयन यंत्रर्ा “महाराष्ट्र जीवन प्राशधकरर्” राशहल. 4. सदर िासन शनर्णयानुसार प्रत्येक कामाच्या रक्कम रू. 10.00 लक्ष अथवा त्यापेक्षा जास्त शकमतीस मान्यता देण्यात आली आहे.सबब,"
+     },
+     "event_type": "funding_sanctioned",
+     "label": "Funding sanctioned",
+     "source_doc_code": "202606251057023925"
+    }
+   ],
+   "first_detected_at": "2026-09-17T02:49:48+05:30",
+   "funds_released": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
+   "last_checked_at": "2026-09-17T03:22:48+05:30",
+   "latest_approval": {
+    "date": "2026-06-25",
+    "label": "Funding sanctioned"
+   },
+   "links": [
+    {
+     "amount_note": "Scheme wording differs (project: वैशिष्ट्यपूर्ण (special grant); tender: MSJNM); relationship not confirmed on scheme. Approved cost 249925000 vs tender estimate 211804330 -- kept as separate figures; a difference is not assumed to be GST or scope change.",
+     "confidence": 0.85,
+     "confirmed_at": null,
+     "confirmed_by": null,
+     "reasons": [
+      {
+       "detail": "Chikhaldara named in tender",
+       "signal": "municipality_in_tender",
+       "weight": 0.4
+      },
+      {
+       "detail": "MJP office in tender address/organisation",
+       "signal": "mjp_is_tendering_agency",
+       "weight": 0.3
+      },
+      {
+       "detail": "district Amravati",
+       "signal": "district_match",
+       "weight": 0.15
+      }
+     ],
+     "status": "suggested",
+     "tender_id": "2026_COJAL_1337629_1"
+    }
+   ],
+   "missing": [],
+   "mjp_office": "Executive Engineer, MJP WM Division Amravati",
+   "mjp_role": "implementing_agency",
+   "mjp_role_confidence": 0.9,
+   "mjp_role_evidence": "ासकीय मान्यता प्रदान करावी. 3. सदर िासन शनर्णयातील कामािी कायान्वयन यंत्रर्ा “महाराष्ट्र जीवन प्राशधकरर्” राशहल. 4. सदर िासन शनर्णयानुसार प्रत्येक कामाच्या रक्कम रू. 10.00 लक्ष अथवा त्यापेक्षा जास्त शकमतीस मान्यता देण्यात आली आहे.सबब,",
+   "mjp_role_page": 1,
+   "municipality": "Chikhaldara",
+   "primary_doc_code": "202606251057023925",
+   "revised_cost": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "scheme": "वैशिष्ट्यपूर्ण (special grant)",
+   "status_label": "Possible tender match",
+   "tender_estimate": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "tender_match_status": "Possible tender match: 2026_COJAL_1337629_1",
+   "title_en": "Water-supply works for Chikhaldara, Amravati. Components include: Intake Well @ Bagling Dam (3.00 MM dia. 5.5 M Depth); Inspection Well From Baglinga Dam (Dia. 2.00 M, Depth - 9.80 M); Connecting Main 400 mm dia., L-60 M; Jack Well 8.00 M Dia. 19.00 M Deep with overhead Pump House 8.60 x 19.60 M.",
+   "title_original": "“वैशिष्ट्यपूर्ण” योजनेअंतर्गत चिखलदरा नगरपरिषद, जि. अमरावती करीता निधी मंजूर करण्याबाबत.",
+   "uncertainties": [
+    "Component sum (240425000) and stated total (249925000) differ; components may be incomplete."
+   ],
+   "work_theme": "water_supply"
+  }
+ ],
+ "review_queue": [
+  {
+   "detail": {
+    "confidence": 0.85,
+    "note": "Scheme wording differs (project: वैशिष्ट्यपूर्ण (special grant); tender: MSJNM); relationship not confirmed on scheme. Approved cost 249925000 vs tender estimate 211804330 -- kept as separate figures; a difference is not assumed to be GST or scope change.",
+    "reasons": [
+     {
+      "detail": "Chikhaldara named in tender",
+      "signal": "municipality_in_tender",
+      "weight": 0.4
+     },
+     {
+      "detail": "MJP office in tender address/organisation",
+      "signal": "mjp_is_tendering_agency",
+      "weight": 0.3
+     },
+     {
+      "detail": "district Amravati",
+      "signal": "district_match",
+      "weight": 0.15
+     }
+    ]
+   },
+   "item_type": "tender_match_suggested",
+   "reason": "Possible tender match for review.",
+   "ref": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5|2026_COJAL_1337629_1",
+   "score": 0.85
+  }
+ ]
+}

@@ -4,6 +4,18 @@ Upgrade of Tender Watch (https://tender-watch-eta.vercel.app/) into a
 procurement-intelligence dashboard. This documents what changed, the data
 correction and backfill results, verification, and the honest remaining limits.
 
+## 0. Upcoming MJP Projects (new feature)
+
+Tracks Maharashtra Jeevan Pradhikaran projects from official approval / funding
+Government Resolutions **before** their tenders publish, links each approval to a
+tender cautiously as it appears, and emails alerts (with the original PDFs
+attached) for projects above ₹1 crore. New `pipeline/mjp/` package
+(extract/gr_source/store/match/ingest/export/alerts/verify), `mjp_*` schema
+tables, a dashboard "Upcoming MJP" section, and a cron step. Verified end-to-end
+on the real Chikhaldara GR (`202606251057023925`, ₹24,99,25,000, implementing
+agency) and tender `2026_COJAL_1337629_1` (surfaced as a *possible* match, never
+auto-confirmed). Full detail in **docs/MJP.md**.
+
 ## 1. Data audit and correction (the core fix)
 
 **Root cause.** `parse_inr()` (tracker.py) and its duplicate `_inr()`

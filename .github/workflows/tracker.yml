@@ -52,6 +52,22 @@ jobs:
           python -m pipeline ingest || true
           python -m pipeline export || true
 
+      # Upcoming MJP Projects: discover GR approvals, extract, match tenders,
+      # regenerate the feed, and send/queue alerts. Best-effort so a hiccup
+      # never blocks the core state commit. Alerts only send when SMTP secrets
+      # are set; otherwise they stay pending (recorded, never falsely "sent").
+      - name: Refresh MJP projects
+        if: always()
+        continue-on-error: true
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          MJP_ALERT_TO: ${{ secrets.MJP_ALERT_TO }}
+        run: |
+          python -m pipeline mjp || true
+
       - name: Commit state
         if: always()
         run: |
@@ -60,6 +76,9 @@ jobs:
           git add seen.json
           git add details_cache.json live.json 2>/dev/null || true
           git add awards.json analytics.json notifications.json data_status.json corrections.json awards.pre_money_fix.json 2>/dev/null || true
+          git add mjp_projects.json 2>/dev/null || true
+          git add mjp_store/index.json mjp_store/seeds.json mjp_store/alerts.json mjp_store/link_decisions.json 2>/dev/null || true
+          git add mjp_store/documents 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Update tracker + pipeline state"
             for i in 1 2 3; do

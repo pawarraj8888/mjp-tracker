@@ -60,8 +60,11 @@ class Store:
         # EXISTS throughout, but skipping the re-run avoids needless work (and
         # any DDL contention) when many short-lived Store() connections open,
         # e.g. one per API request.
+        # Guard on the LAST table the script creates (mjp_alerts), not the
+        # first (tenders): a database created before the MJP tables were added
+        # would otherwise skip the (idempotent) re-run and never gain them.
         have = self.conn.execute(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='tenders'"
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='mjp_alerts'"
         ).fetchone()
         if have:
             return

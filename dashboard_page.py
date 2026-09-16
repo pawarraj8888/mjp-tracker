@@ -241,6 +241,27 @@ th.sorted .sortcaret{opacity:1}
 .timeline li .td{color:var(--muted);font-size:12px}
 .so-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
 
+/* ---- MJP project detail ---- */
+.so-facts{display:grid;grid-template-columns:1fr;gap:6px;margin:6px 0 4px}
+.so-facts .fact{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:13px}
+.so-facts .fk{color:var(--muted)}
+.so-h{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);
+  font-weight:700;margin:18px 0 6px;border-top:1px solid var(--line);padding-top:12px}
+.so-quote{margin:6px 0;padding:8px 12px;border-left:3px solid var(--navy);background:var(--bg);
+  border-radius:0 8px 8px 0;font-size:12.5px;color:var(--ink-2)}
+.so-list{margin:6px 0 6px 18px;padding:0;font-size:12.5px;color:var(--ink-2)}
+.so-list li{margin:2px 0}
+.tl{margin:8px 0}
+.tl-item{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:0 0 10px}
+.tl-d{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.tl-b{font-size:13px}
+.doc-row,.link-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
+  border:1px solid var(--line);border-radius:9px;padding:9px 11px;margin:6px 0;font-size:12.5px}
+.link-row{display:block}
+.btn-sm{white-space:nowrap;background:var(--navy);color:#fff;border-radius:8px;padding:6px 10px;
+  font-size:12px;text-decoration:none;font-weight:600;align-self:center}
+.btn-sm:hover{opacity:.9}
+
 /* ---- Inbox drawer ---- */
 .drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,94vw);
   background:rgba(255,255,255,.82);-webkit-backdrop-filter:saturate(180%) blur(26px);
@@ -335,6 +356,7 @@ body{overflow-x:hidden}
     <a data-page="awards"><span class="ico">✓</span>Awards<span class="tag" id="navAwards">0</span></a>
     <a data-page="contractors"><span class="ico">◧</span>Contractors<span class="tag" id="navContractors">0</span></a>
     <a data-page="analytics"><span class="ico">◔</span>Analytics</a>
+    <a data-page="mjp"><span class="ico">◈</span>Upcoming MJP<span class="tag" id="navMjp">0</span></a>
     <div class="navlabel">Personal</div>
     <a data-page="watchlist"><span class="ico">★</span>Watchlist<span class="tag" id="navWatch">0</span></a>
     <a data-page="inbox"><span class="ico">✉</span>Inbox<span class="tag" id="navInbox">0</span></a>
@@ -348,6 +370,7 @@ body{overflow-x:hidden}
     <section class="page" id="page-awards"></section>
     <section class="page" id="page-contractors"></section>
     <section class="page" id="page-analytics"></section>
+    <section class="page" id="page-mjp"></section>
     <section class="page" id="page-watchlist"></section>
     <section class="page" id="page-inbox"></section>
   </main>
@@ -388,6 +411,7 @@ var NOTIFS = __NOTIFS_JSON__;
 var STATUS = __STATUS_JSON__;
 var AWARDS = __AWARDS_JSON__;
 var OVERVIEW = __OVERVIEW_JSON__;
+var MJP = __MJP_JSON__;
 
 /* ---------- small helpers ---------- */
 function $(s,r){return (r||document).querySelector(s)}
@@ -461,6 +485,35 @@ var I18N={mr:{
   // statuses
   "Live":"सुरू","Closes today":"आज बंद","Awarded":"मंजूर","Closed":"बंद",
   "Deadline passed":"मुदत संपली","No longer listed":"यादीत नाही",
+  // MJP
+  "Upcoming MJP":"आगामी मजीप्रा","Upcoming MJP Projects":"आगामी मजीप्रा प्रकल्प",
+  "Maharashtra Jeevan Pradhikaran projects identified from official approvals and funding Government Resolutions before their tenders are published. Each figure is tied to the source document; MJP’s role is shown with the passage that establishes it.":
+    "निविदा प्रसिद्ध होण्यापूर्वी अधिकृत मंजुरी व निधी शासन निर्णयांवरून ओळखलेले महाराष्ट्र जीवन प्राधिकरणाचे प्रकल्प. प्रत्येक आकडा मूळ कागदपत्राशी जोडलेला आहे; मजीप्राची भूमिका ती सिद्ध करणाऱ्या उताऱ्यासह दाखवली आहे.",
+  "Tracked projects":"मागोवा प्रकल्प","with an official document":"अधिकृत कागदपत्रासह",
+  "Tenders linked":"जोडलेल्या निविदा","confirmed match":"निश्चित जुळणी",
+  "Possible matches":"संभाव्य जुळण्या","awaiting confirmation":"पुष्टीकरणाच्या प्रतीक्षेत",
+  "In review queue":"पुनरावलोकन रांगेत","needs a human check":"मानवी तपासणी आवश्यक",
+  "Monitoring":"देखरेख","Runs on the shared 15-minute schedule (target: hourly).":
+    "सामायिक १५-मिनिटांच्या वेळापत्रकावर चालते (लक्ष्य: दर तासाला).",
+  "Last checked":"शेवटची तपासणी","Search project, district, department…":"प्रकल्प, जिल्हा, विभाग शोधा…",
+  "All schemes":"सर्व योजना","All departments":"सर्व विभाग","Any match status":"कोणतीही जुळणी स्थिती",
+  "Tender linked":"निविदा जोडली","Possible tender match":"संभाव्य निविदा जुळणी",
+  "No matching tender":"जुळणारी निविदा नाही","No tender yet":"अजून निविदा नाही",
+  "Project":"प्रकल्प","Location":"ठिकाण","MJP role":"मजीप्रा भूमिका",
+  "Latest approval":"अलीकडील मंजुरी","Sanctioned amount":"मंजूर रक्कम","Tender status":"निविदा स्थिती",
+  "project(s)":"प्रकल्प","Implementing agency":"कार्यान्वयन यंत्रणा","Tendering authority":"निविदा प्राधिकरण",
+  "Technical sanction":"तांत्रिक मान्यता","Mentioned (unconfirmed)":"उल्लेख (अपुष्ट)","Not established":"स्थापित नाही",
+  "MJP office":"मजीप्रा कार्यालय","Not stated":"नमूद नाही","Scheme":"योजना",
+  "Amounts":"रक्कम","Approved cost":"मंजूर खर्च","Revised cost":"सुधारित खर्च",
+  "Funds released":"वितरित निधी","Tender estimate":"निविदा अंदाज",
+  "Evidence of MJP involvement":"मजीप्रा सहभागाचा पुरावा","page":"पृष्ठ",
+  "Proposed works":"प्रस्तावित कामे","Approval history":"मंजुरी इतिहास",
+  "Official documents":"अधिकृत कागदपत्रे","issued":"जारी","portal":"पोर्टल","Official PDF":"अधिकृत PDF",
+  "text recovered via OCR":"OCR द्वारे मजकूर","text layer empty (needs manual review)":"मजकूर स्तर रिकामा (तपासणी आवश्यक)",
+  "Tender relationship":"निविदा संबंध","confidence":"विश्वास","Gaps & uncertainties":"त्रुटी व अनिश्चितता",
+  "Missing":"अनुपलब्ध","Funding sanctioned":"निधी मंजूर","Administrative approval recorded":"प्रशासकीय मान्यता नोंदवली",
+  "No MJP projects tracked yet. The monitor adds them as qualifying Government Resolutions are published.":
+    "अद्याप कोणतेही मजीप्रा प्रकल्प नाहीत. पात्र शासन निर्णय प्रसिद्ध होताच देखरेख ते जोडते.",
 }};
 function T(s){ if(LANG==='mr' && I18N.mr[s]) return I18N.mr[s]; return s; }
 function tStatus(t){
@@ -553,6 +606,7 @@ function show(page){
   if(page==='awards') renderAwards();
   if(page==='contractors') renderContractors();
   if(page==='analytics') renderAnalytics();
+  if(page==='mjp') renderMjp();
   if(page==='watchlist') renderWatchlist();
   if(page==='inbox') renderInboxPage();
   if(location.hash!=='#'+page) history.replaceState(null,'','#'+page);
@@ -567,6 +621,7 @@ function renderNavCounts(){
   $('#navTenders').textContent=DATA.tenders.filter(function(t){return t.live;}).length;
   $('#navAwards').textContent=AWARDS.length;
   $('#navContractors').textContent=(CONTRACTORS.contractors||[]).length;
+  $('#navMjp').textContent=(MJP.projects||[]).length;
   var w=Object.keys(watchT).length+Object.keys(watchC).length;
   $('#navWatch').textContent=w;
   var unread=(NOTIFS.notifications||[]).filter(function(n){return !readN[n.id];}).length;
@@ -1204,6 +1259,208 @@ function wireStars(root){
         o.classList.toggle('on',!!map[id]); o.textContent=map[id]?'★':'☆';});
     });
   });
+}
+
+/* ---------- UPCOMING MJP PROJECTS ---------- */
+var mjpState={q:'',district:'',scheme:'',dept:'',doctype:'',match:''};
+function mjpAmt(a){
+  if(!a||!a.inr) return '<span class="unknown">'+T('Unknown')+'</span>';
+  return '₹'+esc(a.plain||a.inr)+(a.display?(' <span class="t-sub" style="display:inline">('+esc(a.display)+')</span>'):'');
+}
+function mjpMatchClass(p){
+  var s=(p.tender_match_status||'');
+  if(s.indexOf('Tender linked')===0) return 'awarded';
+  if(s.indexOf('Possible')===0) return 'soon';
+  return 'closed';
+}
+function mjpUniq(fn){
+  var seen={},out=[];
+  (MJP.projects||[]).forEach(function(p){var v=fn(p);if(v&&!seen[v]){seen[v]=1;out.push(v);}});
+  out.sort(); return out;
+}
+function renderMjp(){
+  var p=$('#page-mjp'), m=MJP||{}, c=m.counts||{};
+  var d=(m.discovery||{}), checked=d.checked_at||m.generated||'';
+  var review=(m.review_queue||[]).length;
+  var note=(d.coverage_note)|| (m.coverage_note) ||
+    'Newly published GRs are polled from the portal listing; deep history needs seed codes or manual assist.';
+  var opts=function(arr){return arr.map(function(x){return '<option>'+esc(x)+'</option>';}).join('');};
+  p.innerHTML='<h1>'+T('Upcoming MJP Projects')+'</h1><p class="sub">'+
+    T('Maharashtra Jeevan Pradhikaran projects identified from official approvals and funding Government Resolutions before their tenders are published. Each figure is tied to the source document; MJP’s role is shown with the passage that establishes it.')+'</p>'+
+    '<div class="tiles">'+
+      mjpTile(T('Tracked projects'),(m.projects||[]).length,T('with an official document'))+
+      mjpTile(T('Tenders linked'),c.linked_tenders||0,T('confirmed match'))+
+      mjpTile(T('Possible matches'),c.suggested_tenders||0,T('awaiting confirmation'))+
+      mjpTile(T('In review queue'),review,T('needs a human check'))+
+    '</div>'+
+    '<div class="callout" style="font-size:12.5px"><b>'+T('Monitoring')+':</b> '+
+      esc(T('Runs on the shared 15-minute schedule (target: hourly).'))+' '+T('Last checked')+' '+
+      esc(fmtIso(checked))+'. '+esc(note)+'</div>'+
+    '<div class="filters" id="mjpFilters">'+
+      '<input type="search" id="mSearch" placeholder="'+T('Search project, district, department…')+'">'+
+      '<select id="mDistrict"><option value="">'+T('All districts')+'</option>'+opts(mjpUniq(function(x){return x.district;}))+'</select>'+
+      '<select id="mScheme"><option value="">'+T('All schemes')+'</option>'+opts(mjpUniq(function(x){return x.scheme;}))+'</select>'+
+      '<select id="mDept"><option value="">'+T('All departments')+'</option>'+opts(mjpUniq(function(x){return (x.documents[0]||{}).department;}))+'</select>'+
+      '<select id="mMatch"><option value="">'+T('Any match status')+'</option>'+
+        '<option value="linked">'+T('Tender linked')+'</option>'+
+        '<option value="suggested">'+T('Possible tender match')+'</option>'+
+        '<option value="none">'+T('No matching tender')+'</option></select>'+
+      '<span class="count" id="mCount"></span></div>'+
+    '<div class="card"><div class="tablewrap"><table class="data" id="mTable"></table></div></div>';
+  $('#mSearch',p).addEventListener('input',function(){mjpState.q=this.value.toLowerCase();drawMjp();});
+  $('#mDistrict',p).addEventListener('change',function(){mjpState.district=this.value;drawMjp();});
+  $('#mScheme',p).addEventListener('change',function(){mjpState.scheme=this.value;drawMjp();});
+  $('#mDept',p).addEventListener('change',function(){mjpState.dept=this.value;drawMjp();});
+  $('#mMatch',p).addEventListener('change',function(){mjpState.match=this.value;drawMjp();});
+  drawMjp();
+}
+function mjpTile(label,val,period){
+  return '<div class="tile"><div class="label">'+esc(label)+'</div><div class="val num">'+
+    esc(val)+'</div><div class="period">'+esc(period)+'</div></div>';
+}
+function mjpFiltered(){
+  return (MJP.projects||[]).filter(function(x){
+    if(mjpState.district && x.district!==mjpState.district) return false;
+    if(mjpState.scheme && x.scheme!==mjpState.scheme) return false;
+    if(mjpState.dept && ((x.documents[0]||{}).department||'')!==mjpState.dept) return false;
+    if(mjpState.match){
+      var st=(x.tender_match_status||'');
+      var is=st.indexOf('Tender linked')===0?'linked':(st.indexOf('Possible')===0?'suggested':'none');
+      if(is!==mjpState.match) return false;
+    }
+    if(mjpState.q){
+      var hay=(x.title_en+' '+x.title_original+' '+x.municipality+' '+x.district+' '+
+        x.scheme+' '+((x.documents[0]||{}).department||'')+' '+x.primary_doc_code).toLowerCase();
+      if(hay.indexOf(mjpState.q)<0) return false;
+    }
+    return true;
+  });
+}
+function drawMjp(){
+  var rows=mjpFiltered();
+  var head='<thead><tr><th class="no-sort">'+T('Project')+'</th><th class="no-sort">'+T('Location')+'</th>'+
+    '<th class="no-sort">'+T('MJP role')+'</th><th class="no-sort">'+T('Latest approval')+'</th>'+
+    '<th class="no-sort r">'+T('Sanctioned amount')+'</th><th class="no-sort">'+T('Tender status')+'</th>'+
+    '<th class="no-sort r">'+T('Last checked')+'</th></tr></thead>';
+  var body=rows.map(function(x){
+    var loc=[x.municipality,x.district].filter(Boolean).map(esc).join(', ')||'<span class="unknown">'+T('Unknown')+'</span>';
+    var la=x.latest_approval||{};
+    return '<tr data-mjp="'+esc(x.id)+'"><td class="t-title">'+esc(x.municipality||x.title_en.slice(0,60))+
+      '<div class="t-sub">'+esc(x.title_en.slice(0,90))+'</div></td>'+
+      '<td>'+loc+'</td>'+
+      '<td>'+esc(T(mjpRoleLabel(x.mjp_role)))+'</td>'+
+      '<td>'+esc(T(la.label||'—'))+(la.date?('<div class="t-sub">'+esc(la.date)+'</div>'):'')+'</td>'+
+      '<td class="r num">'+mjpAmt(x.approved_cost)+'</td>'+
+      '<td><span class="badge '+mjpMatchClass(x)+'">'+esc(T(mjpMatchShort(x)))+'</span></td>'+
+      '<td class="r"><span class="t-sub">'+esc(timeAgo(x.last_checked_at)||'—')+'</span></td></tr>';
+  }).join('')||'<tr><td colspan="7" class="empty">'+T('No MJP projects tracked yet. The monitor adds them as qualifying Government Resolutions are published.')+'</td></tr>';
+  $('#mTable').innerHTML=head+'<tbody>'+body+'</tbody>';
+  $('#mCount').textContent=rows.length+' '+T('project(s)');
+  $all('#mTable tr[data-mjp]').forEach(function(tr){tr.addEventListener('click',function(){openMjp(tr.dataset.mjp);});});
+}
+function mjpRoleLabel(r){
+  return {implementing_agency:'Implementing agency',tendering_authority:'Tendering authority',
+    technical_sanction:'Technical sanction',mentioned:'Mentioned (unconfirmed)',none:'Not established'}[r]||r||'—';
+}
+function mjpMatchShort(x){
+  var s=(x.tender_match_status||'');
+  if(s.indexOf('Tender linked')===0) return 'Tender linked';
+  if(s.indexOf('Possible')===0) return 'Possible tender match';
+  return 'No tender yet';
+}
+function openMjp(id){
+  var x=(MJP.projects||[]).find(function(p){return p.id===id;});
+  if(!x) return;
+  $('#soTitle').textContent=x.municipality||x.title_en.slice(0,60);
+  var h=[];
+  h.push('<p class="sub">'+esc(x.title_en)+'</p>');
+  if(x.title_original) h.push('<p class="t-sub" style="margin-top:-6px">'+esc(x.title_original)+'</p>');
+  /* key facts */
+  h.push('<div class="so-facts">');
+  h.push(mjpFact(T('Location'),[x.municipality,x.district].filter(Boolean).join(', ')||T('Unknown')));
+  h.push(mjpFact(T('MJP office'),x.mjp_office||T('Not stated')));
+  h.push(mjpFact(T('MJP role'),T(mjpRoleLabel(x.mjp_role))+' ('+Math.round((x.mjp_role_confidence||0)*100)+'%)'));
+  h.push(mjpFact(T('Scheme'),x.scheme||T('Unknown')));
+  h.push(mjpFact(T('Status'),T(x.status_label||'')));
+  h.push('</div>');
+  /* amounts kept separate */
+  h.push('<h4 class="so-h">'+T('Amounts')+'</h4><div class="so-facts">');
+  h.push(mjpFact(T('Approved cost'),mjpAmt(x.approved_cost)));
+  h.push(mjpFact(T('Revised cost'),mjpAmt(x.revised_cost)));
+  h.push(mjpFact(T('Funds released'),mjpAmt(x.funds_released)));
+  h.push(mjpFact(T('Tender estimate'),mjpAmt(x.tender_estimate)));
+  h.push('</div>');
+  /* MJP involvement evidence */
+  if(x.mjp_role_evidence){
+    h.push('<h4 class="so-h">'+T('Evidence of MJP involvement')+'</h4>');
+    h.push('<blockquote class="so-quote">'+esc(x.mjp_role_evidence)+
+      (x.mjp_role_page?('<span class="t-sub"> — '+T('page')+' '+esc(x.mjp_role_page)+'</span>'):'')+'</blockquote>');
+  }
+  /* plain-english works */
+  if((x.components||[]).length){
+    h.push('<h4 class="so-h">'+T('Proposed works')+'</h4><ul class="so-list">');
+    x.components.forEach(function(w){h.push('<li>'+esc(w)+'</li>');});
+    h.push('</ul>');
+  }
+  /* dated history */
+  if((x.events||[]).length){
+    h.push('<h4 class="so-h">'+T('Approval history')+'</h4><div class="tl">');
+    x.events.slice().sort(function(a,b){return (a.date||'').localeCompare(b.date||'');}).forEach(function(e){
+      h.push('<div class="tl-item"><div class="tl-d">'+esc(e.date||'—')+'</div>'+
+        '<div class="tl-b"><b>'+esc(T(e.label))+'</b>'+
+        (e.detail&&e.detail.amount_fmt&&e.detail.amount_fmt!=='Unknown'?(' — ₹'+esc(e.detail.amount_fmt)):'')+
+        (e.source_doc_code?('<div class="t-sub">'+esc(e.source_doc_code)+'</div>'):'')+'</div></div>');
+    });
+    h.push('</div>');
+  }
+  /* documents */
+  if((x.documents||[]).length){
+    h.push('<h4 class="so-h">'+T('Official documents')+'</h4>');
+    x.documents.forEach(function(d){
+      h.push('<div class="doc-row"><div><b>'+esc(mjpDocType(d.doc_type))+'</b> · '+esc(d.doc_code)+
+        (d.gr_number?('<div class="t-sub">GR: '+esc(d.gr_number)+'</div>'):'')+
+        '<div class="t-sub">'+esc(d.department||'')+(d.issue_date?(' · '+T('issued')+' '+esc(d.issue_date)):'')+
+        (d.publication_date?(' · '+T('portal')+' '+esc(d.publication_date)):'')+'</div>'+
+        (d.sha256?('<div class="t-sub">sha256 '+esc(d.sha256.slice(0,16))+'…</div>'):'')+
+        (d.ocr_used?('<div class="t-sub">'+T('text recovered via OCR')+'</div>'):'')+
+        (!d.extract_ok?('<div class="t-sub" style="color:var(--danger)">'+T('text layer empty (needs manual review)')+'</div>'):'')+'</div>'+
+        (d.url?('<a class="btn-sm" href="'+esc(d.url)+'" target="_blank" rel="noopener">'+T('Official PDF')+' ↓</a>'):'')+
+        '</div>');
+    });
+  }
+  /* tender links */
+  h.push('<h4 class="so-h">'+T('Tender relationship')+'</h4>');
+  h.push('<p>'+esc(x.tender_match_status)+'</p>');
+  (x.links||[]).forEach(function(l){
+    h.push('<div class="link-row"><div><b><span class="badge '+(l.status==='linked'?'awarded':'soon')+'">'+
+      esc(T(l.status==='linked'?'Tender linked':'Possible tender match'))+'</span></b> '+
+      '<a href="#" data-tender="'+esc(l.tender_id)+'">'+esc(l.tender_id)+'</a>'+
+      ' <span class="t-sub">('+T('confidence')+' '+Math.round((l.confidence||0)*100)+'%)</span>');
+    if((l.reasons||[]).length){
+      h.push('<ul class="so-list">');
+      l.reasons.forEach(function(r){h.push('<li>'+esc(r.detail||r.signal)+'</li>');});
+      h.push('</ul>');
+    }
+    if(l.amount_note) h.push('<div class="t-sub">'+esc(l.amount_note)+'</div>');
+    h.push('</div></div>');
+  });
+  /* gaps */
+  if((x.missing||[]).length||(x.uncertainties||[]).length){
+    h.push('<h4 class="so-h">'+T('Gaps & uncertainties')+'</h4><ul class="so-list">');
+    (x.missing||[]).forEach(function(g){h.push('<li>'+T('Missing')+': '+esc(g)+'</li>');});
+    (x.uncertainties||[]).forEach(function(g){h.push('<li>'+esc(g)+'</li>');});
+    h.push('</ul>');
+  }
+  $('#soBody').innerHTML=h.join('');
+  $all('#soBody a[data-tender]').forEach(function(a){a.addEventListener('click',function(e){
+    e.preventDefault(); openDetail(a.dataset.tender);});});
+  openOverlay('#slideover');
+}
+function mjpFact(k,v){return '<div class="fact"><span class="fk">'+esc(k)+'</span><span class="fv">'+v+'</span></div>';}
+function mjpDocType(t){
+  return {funding_sanction:'Funding sanctioned',administrative_approval:'Administrative approval',
+    technical_sanction:'Technical sanction',fund_release:'Fund release',revised_sanction:'Revised sanction',
+    other:'Official document'}[t]||t;
 }
 
 /* ---------- language switch ---------- */

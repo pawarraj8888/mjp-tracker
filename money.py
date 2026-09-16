@@ -31,7 +31,21 @@ from decimal import Decimal, InvalidOperation
 __all__ = [
     "parse_amount", "parse_currency", "dec_to_str", "str_to_dec",
     "add", "format_inr", "format_plain", "is_known",
+    "normalize_digits", "parse_indian_amount",
 ]
+
+# Devanagari (Marathi/Hindi) digits -> ASCII. Government resolutions mix these
+# with Latin digits, so amounts must be normalized before parsing.
+_DEVANAGARI_DIGITS = str.maketrans("०१२३४५६७८९", "0123456789")
+
+# Scale words. Crore = 10^7, lakh = 10^5. Both the correct Unicode spellings and
+# the mangled forms produced by the GR portal's broken embedded-font ToUnicode
+# map are listed, so "24.9925 कोटी" parses whether the PDF text layer is clean
+# or garbled.
+_CRORE_WORDS = ("कोटी", "कोटि", "करोड", "crore", "crores", " cr")
+_LAKH_WORDS = ("लक्ष", "लाख", "lakh", "lakhs", "lac", "lacs")
+_CRORE = Decimal(10) ** 7
+_LAKH = Decimal(10) ** 5
 
 # Currency tokens that may prefix/suffix an amount. Order matters only for
 # detection, not stripping (all are removed before number parsing).
@@ -114,6 +128,64 @@ def parse_amount(text: str | None) -> Decimal | None:
     except InvalidOperation:
         return None
     return -d if neg else d
+
+
+def normalize_digits(text: str | None) -> str:
+    """Translate Devanagari digits to ASCII (``२४`` -> ``24``). Non-digit
+    characters are untouched. ``None`` becomes ``""``."""
+    if not text:
+        return ""
+    return str(text).translate(_DEVANAGARI_DIGITS)
+
+
+def parse_indian_amount(text: str | None,
+                        default_unit: str | None = None) -> Decimal | None:
+    """Parse an amount that may carry an Indian scale word or Devanagari digits.
+
+    Handles ``"24.9925 कोटी"`` (-> 249925000), ``"28.75 लाख"`` (-> 2875000) and
+    plain ``"रु. 24,99,25,000/-"`` (-> 24992500). ``default_unit`` (``"lakh"`` or
+    ``"crore"``) applies when the text carries no scale word itself -- e.g. a GR
+    cost table whose column header already states "रक्कम रु. लक्ष" (amount in
+    lakh). Returns ``None`` for no parseable number, exactly like
+    :func:`parse_amount`, so unknown is never confused with zero.
+
+    The scale word is only honoured when the amount has no thousands grouping
+    that already spells out full rupees: ``"24,99,25,000"`` is taken at face
+    value even if the word "कोटी" trails it (the writer wrote out the rupees),
+    whereas a bare ``"24.9925 कोटी"`` is scaled. This avoids the classic
+    double-counting error (turning 24.99 crore, already written in full, into
+    2.499 * 10^15).
+    """
+    if text is None:
+        return None
+    norm = normalize_digits(text)
+    low = norm.lower()
+    unit = None
+    if any(w in norm or w in low for w in _CRORE_WORDS):
+        unit = "crore"
+    elif any(w in norm or w in low for w in _LAKH_WORDS):
+        unit = "lakh"
+    base = parse_amount(norm)
+    if base is None:
+        return None
+    # A value already written out in full rupees (>= 1 lakh with grouping, or a
+    # large integer) is not re-scaled by a trailing word.
+    written_in_full = base >= _LAKH
+    if unit is None:
+        unit = default_unit
+    if unit == "crore" and not written_in_full:
+        return _drop_trailing_zeros(base * _CRORE)
+    if unit == "lakh" and not written_in_full:
+        return _drop_trailing_zeros(base * _LAKH)
+    return base
+
+
+def _drop_trailing_zeros(d: Decimal) -> Decimal:
+    """Scaling a decimal by 10^5/10^7 leaves trailing fractional zeros
+    (``24.9925 * 10^7`` -> ``249925000.0000``). Collapse a whole result back to
+    an integer so the canonical string is ``"249925000"``, not ``"...0000"``."""
+    integral = d.to_integral_value()
+    return integral if d == integral else d
 
 
 def str_to_dec(value: str | int | float | Decimal | None) -> Decimal | None:

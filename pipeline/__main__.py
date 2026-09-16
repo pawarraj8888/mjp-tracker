@@ -72,6 +72,13 @@ def main(argv=None) -> int:
     p_ex.add_argument("--out", default="analytics.json")
     sub.add_parser("export")  # analytics + notifications + data_status
     sub.add_parser("review")
+    p_mjp = sub.add_parser("mjp")  # Upcoming MJP Projects
+    p_mjp.add_argument("action", nargs="?", default="ingest",
+                       choices=["ingest", "export", "alerts", "verify"])
+    p_mjp.add_argument("--no-live", action="store_true",
+                       help="skip the live GR listing fetch (seeds only)")
+    p_mjp.add_argument("--dry-run-alerts", action="store_true",
+                       help="prepare alerts without attempting delivery")
     args = ap.parse_args(argv)
 
     if args.cmd == "init-db":
@@ -131,7 +138,42 @@ def main(argv=None) -> int:
             "SELECT name_raw, candidate_name, score FROM contractors_review"
             " WHERE resolved=0 ORDER BY score DESC"))
         return 0
+    if args.cmd == "mjp":
+        return _mjp(args)
     return 1
+
+
+def _load_details():
+    try:
+        import tracker
+        return tracker.load_details_cache()
+    except Exception:
+        return {}
+
+
+def _mjp(args) -> int:
+    from .mjp import alerts, export, ingest, verify
+    if args.action == "verify":
+        result = verify.run()
+        _print(result)
+        return 0 if result.get("pass") else 2
+    store = Store()
+    if args.action == "export":
+        _print(export.write_feed(store))
+        return 0
+    if args.action == "alerts":
+        projects = export.build_feed(store)["projects"]
+        _print(alerts.run(store, projects, _load_details(),
+                          dry_run=args.dry_run_alerts))
+        return 0
+    # default: full ingest -> export -> prepare/send alerts
+    summary = ingest.run(store, fetch_live=not args.no_live)
+    exp = export.write_feed(store, summary.get("discovery"))
+    projects = export.build_feed(store)["projects"]
+    al = alerts.run(store, projects, _load_details(),
+                    dry_run=args.dry_run_alerts)
+    _print({"ingest": summary, "export": exp, "alerts": al})
+    return 0
 
 
 if __name__ == "__main__":

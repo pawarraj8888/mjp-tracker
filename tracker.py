@@ -1950,6 +1950,17 @@ def load_data_status():
     return _load_state(DATA_STATUS_FILE, {"overall_status": "unknown"})
 
 
+MJP_FILE = ROOT / "mjp_projects.json"
+
+
+def load_mjp():
+    """Upcoming MJP Projects feed (mjp_projects.json), produced by
+    `python -m pipeline mjp`. Read like the other committed state so the hosted
+    dashboard shows it without a redeploy."""
+    return _load_state(MJP_FILE, {"projects": [], "counts": {},
+                                  "review_queue": [], "discovery": {}})
+
+
 def _award_of(entry):
     ai = entry.get("award")
     if not ai or not ai.get("contractor"):
@@ -2677,7 +2688,8 @@ def build_dashboard_page():
             .replace("__NOTIFS_JSON__", js(load_notifications()))
             .replace("__STATUS_JSON__", js(load_data_status()))
             .replace("__AWARDS_JSON__", js(awards_feed()))
-            .replace("__OVERVIEW_JSON__", js(overview_data(dash))))
+            .replace("__OVERVIEW_JSON__", js(overview_data(dash)))
+            .replace("__MJP_JSON__", js(load_mjp())))
 
 
 def dashboard_pdf(tid, lang):
