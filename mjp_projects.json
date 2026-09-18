@@ -10,23 +10,28 @@
  "counts": {
   "linked_tenders": 0,
   "mjp_alerts": 0,
-  "mjp_documents": 1,
-  "mjp_events": 3,
-  "mjp_projects": 1,
-  "mjp_review_queue": 1,
+  "mjp_documents": 5,
+  "mjp_events": 7,
+  "mjp_projects": 5,
+  "mjp_review_queue": 5,
   "mjp_tender_links": 1,
   "suggested_tenders": 1
  },
  "discovery": {
-  "added": [],
-  "checked_at": "2026-09-18T10:45:19+05:30",
+  "added": [
+   "202609181455323925",
+   "202609181458237725",
+   "202609181501033725",
+   "202609181503325725"
+  ],
+  "checked_at": "2026-09-18T15:17:04+05:30",
   "failures": [],
   "listing_ok": true,
   "refreshed": [
    "202606251057023925"
   ]
  },
- "generated": "2026-09-18T10:45:21+05:30",
+ "generated": "2026-09-18T15:17:15+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -119,7 +124,7 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-09-18T10:45:19+05:30",
+   "last_checked_at": "2026-09-18T15:17:04+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
@@ -178,9 +183,377 @@
     "Component sum (240425000) and stated total (249925000) differ; components may be incomplete."
    ],
    "work_theme": "water_supply"
+  },
+  {
+   "approved_cost": {
+    "display": "2954.75 Cr",
+    "inr": "29547500000",
+    "plain": "29,54,75,00,000"
+   },
+   "components": [],
+   "district": "",
+   "document_date": "2026-09-18",
+   "documents": [
+    {
+     "components": [],
+     "department": "नगर विकास विभाग",
+     "doc_code": "202609181455323925",
+     "doc_type": "other",
+     "extract_ok": true,
+     "first_detected_at": "2026-09-18T15:17:04+05:30",
+     "gr_number": "",
+     "issue_date": "2026-09-18",
+     "language": "mr",
+     "ocr_used": false,
+     "publication_date": "2026-09-18",
+     "sha256": "f637359344b417a468740acb601fca8e1e025841025b82e1d1ba8c3cc52699fe",
+     "title_original": "पुणे मेट्रो रेल्वे प्रकल्पाच्या स्वारगेट-कात्रज मेट्रो रेल्वे कॉरीडॉर प्रकल्पामधील राज्य शासनाच्या हिश्श्याची समभागाची रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत  (सन 2026-27)",
+     "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/Marathi/202609181455323925.pdf"
+    }
+   ],
+   "events": [
+    {
+     "date": "2026-09-18",
+     "detail": {
+      "doc_code": "202609181455323925",
+      "note": "First official document recorded."
+     },
+     "event_type": "project_discovered",
+     "label": "Project discovered",
+     "source_doc_code": "202609181455323925"
+    }
+   ],
+   "first_detected_at": "2026-09-18T15:17:04+05:30",
+   "funds_released": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "id": "2e421e91-6aad-5f46-abc6-06edc178e271",
+   "last_checked_at": "2026-09-18T15:17:04+05:30",
+   "latest_approval": {
+    "date": "",
+    "label": ""
+   },
+   "links": [],
+   "missing": [
+    "mjp_role",
+    "municipality"
+   ],
+   "mjp_office": "",
+   "mjp_role": "none",
+   "mjp_role_confidence": 0.0,
+   "mjp_role_evidence": "",
+   "mjp_role_page": null,
+   "municipality": "",
+   "primary_doc_code": "202609181455323925",
+   "revised_cost": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "scheme": "",
+   "status_label": "Approval recorded",
+   "tender_estimate": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "tender_match_status": "No matching tender found as of 18 Sep 2026, 15:17 IST",
+   "title_en": "Road works for the listed area.",
+   "title_original": "पुणे मेट्रो रेल्वे प्रकल्पाच्या स्वारगेट-कात्रज मेट्रो रेल्वे कॉरीडॉर प्रकल्पामधील राज्य शासनाच्या हिश्श्याची समभागाची रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत  (सन 2026-27)",
+   "uncertainties": [],
+   "work_theme": "roads"
+  },
+  {
+   "approved_cost": {
+    "display": "2954.75 Cr",
+    "inr": "29547500000",
+    "plain": "29,54,75,00,000"
+   },
+   "components": [],
+   "district": "",
+   "document_date": "2026-09-18",
+   "documents": [
+    {
+     "components": [],
+     "department": "नगर विकास विभाग",
+     "doc_code": "202609181458237725",
+     "doc_type": "other",
+     "extract_ok": true,
+     "first_detected_at": "2026-09-18T15:17:04+05:30",
+     "gr_number": "",
+     "issue_date": "2026-09-18",
+     "language": "mr",
+     "ocr_used": false,
+     "publication_date": "2026-09-18",
+     "sha256": "f4b337c17f0beac830b7d007cb30a44b900e7fcbea3235b42eb6ad206701e30f",
+     "title_original": "पुणे मेट्रो रेल्वे प्रकल्पाच्या स्वारगेट-कात्रज मेट्रो रेल्वे कॉरीडॉर प्रकल्पामधील राज्य शासनाच्या हिश्श्याची दुय्यम कर्जाची रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत  (सन 2026-27)",
+     "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/Marathi/202609181458237725.pdf"
+    }
+   ],
+   "events": [
+    {
+     "date": "2026-09-18",
+     "detail": {
+      "doc_code": "202609181458237725",
+      "note": "First official document recorded."
+     },
+     "event_type": "project_discovered",
+     "label": "Project discovered",
+     "source_doc_code": "202609181458237725"
+    }
+   ],
+   "first_detected_at": "2026-09-18T15:17:04+05:30",
+   "funds_released": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "id": "e95f5b28-004f-5bee-b8d3-8904dd65028a",
+   "last_checked_at": "2026-09-18T15:17:04+05:30",
+   "latest_approval": {
+    "date": "",
+    "label": ""
+   },
+   "links": [],
+   "missing": [
+    "mjp_role",
+    "municipality"
+   ],
+   "mjp_office": "",
+   "mjp_role": "none",
+   "mjp_role_confidence": 0.0,
+   "mjp_role_evidence": "",
+   "mjp_role_page": null,
+   "municipality": "",
+   "primary_doc_code": "202609181458237725",
+   "revised_cost": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "scheme": "",
+   "status_label": "Approval recorded",
+   "tender_estimate": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "tender_match_status": "No matching tender found as of 18 Sep 2026, 15:17 IST",
+   "title_en": "Road works for the listed area.",
+   "title_original": "पुणे मेट्रो रेल्वे प्रकल्पाच्या स्वारगेट-कात्रज मेट्रो रेल्वे कॉरीडॉर प्रकल्पामधील राज्य शासनाच्या हिश्श्याची दुय्यम कर्जाची रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत  (सन 2026-27)",
+   "uncertainties": [],
+   "work_theme": "roads"
+  },
+  {
+   "approved_cost": {
+    "display": "54777 Cr",
+    "inr": "547770000000",
+    "plain": "5,47,77,00,00,000"
+   },
+   "components": [],
+   "district": "",
+   "document_date": "2026-09-18",
+   "documents": [
+    {
+     "components": [],
+     "department": "नगर विकास विभाग",
+     "doc_code": "202609181501033725",
+     "doc_type": "other",
+     "extract_ok": true,
+     "first_detected_at": "2026-09-18T15:17:04+05:30",
+     "gr_number": "",
+     "issue_date": "2026-09-18",
+     "language": "mr",
+     "ocr_used": false,
+     "publication_date": "2026-09-18",
+     "sha256": "ea00a8ed03017b1a0c1d8db3b07af62b537560c602d0fb58894e854114e0b4e1",
+     "title_original": "मुंबई नागरी परिवहन प्रकल्प टप्पा-3अ (एमयुटीपी-3ए) प्रकल्पासाठी राज्य शासनाच्या अर्थसहाय्याची रक्कम मुंबई रेल्वे विकास महामंडळास प्रदान करण्याबाबत (सन 2026-27)",
+     "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/Marathi/202609181501033725.pdf"
+    }
+   ],
+   "events": [
+    {
+     "date": "2026-09-18",
+     "detail": {
+      "doc_code": "202609181501033725",
+      "note": "First official document recorded."
+     },
+     "event_type": "project_discovered",
+     "label": "Project discovered",
+     "source_doc_code": "202609181501033725"
+    }
+   ],
+   "first_detected_at": "2026-09-18T15:17:04+05:30",
+   "funds_released": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "id": "c0e6c50c-de50-5c30-b893-7bfab696f1b1",
+   "last_checked_at": "2026-09-18T15:17:04+05:30",
+   "latest_approval": {
+    "date": "",
+    "label": ""
+   },
+   "links": [],
+   "missing": [
+    "mjp_role",
+    "municipality"
+   ],
+   "mjp_office": "",
+   "mjp_role": "none",
+   "mjp_role_confidence": 0.0,
+   "mjp_role_evidence": "",
+   "mjp_role_page": null,
+   "municipality": "",
+   "primary_doc_code": "202609181501033725",
+   "revised_cost": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "scheme": "",
+   "status_label": "Approval recorded",
+   "tender_estimate": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "tender_match_status": "No matching tender found as of 18 Sep 2026, 15:17 IST",
+   "title_en": "Road works for the listed area.",
+   "title_original": "मुंबई नागरी परिवहन प्रकल्प टप्पा-3अ (एमयुटीपी-3ए) प्रकल्पासाठी राज्य शासनाच्या अर्थसहाय्याची रक्कम मुंबई रेल्वे विकास महामंडळास प्रदान करण्याबाबत (सन 2026-27)",
+   "uncertainties": [],
+   "work_theme": "roads"
+  },
+  {
+   "approved_cost": {
+    "display": "998.2 Cr",
+    "inr": "9982000000",
+    "plain": "9,98,20,00,000"
+   },
+   "components": [],
+   "district": "",
+   "document_date": "2026-09-18",
+   "documents": [
+    {
+     "components": [],
+     "department": "नगर विकास विभाग",
+     "doc_code": "202609181503325725",
+     "doc_type": "other",
+     "extract_ok": true,
+     "first_detected_at": "2026-09-18T15:17:04+05:30",
+     "gr_number": "",
+     "issue_date": "2026-09-18",
+     "language": "mr",
+     "ocr_used": false,
+     "publication_date": "2026-09-18",
+     "sha256": "30770cbb3043d28fddd461f856617985a531456613c522c053b7705473a07a9b",
+     "title_original": "नागपूर मेट्रो रेल्वे टप्पा-2 प्रकल्पामधील राज्य शासनाचा समभागापोटी रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत (सन 2026-27)",
+     "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/Marathi/202609181503325725.pdf"
+    }
+   ],
+   "events": [
+    {
+     "date": "2026-09-18",
+     "detail": {
+      "doc_code": "202609181503325725",
+      "note": "First official document recorded."
+     },
+     "event_type": "project_discovered",
+     "label": "Project discovered",
+     "source_doc_code": "202609181503325725"
+    }
+   ],
+   "first_detected_at": "2026-09-18T15:17:04+05:30",
+   "funds_released": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "id": "d3bf8379-c6b1-5e9f-8616-8f6a803b065b",
+   "last_checked_at": "2026-09-18T15:17:04+05:30",
+   "latest_approval": {
+    "date": "",
+    "label": ""
+   },
+   "links": [],
+   "missing": [
+    "mjp_role",
+    "municipality"
+   ],
+   "mjp_office": "",
+   "mjp_role": "none",
+   "mjp_role_confidence": 0.0,
+   "mjp_role_evidence": "",
+   "mjp_role_page": null,
+   "municipality": "",
+   "primary_doc_code": "202609181503325725",
+   "revised_cost": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "scheme": "",
+   "status_label": "Approval recorded",
+   "tender_estimate": {
+    "display": null,
+    "inr": null,
+    "plain": null
+   },
+   "tender_match_status": "No matching tender found as of 18 Sep 2026, 15:17 IST",
+   "title_en": "Road works for the listed area.",
+   "title_original": "नागपूर मेट्रो रेल्वे टप्पा-2 प्रकल्पामधील राज्य शासनाचा समभागापोटी रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत (सन 2026-27)",
+   "uncertainties": [],
+   "work_theme": "roads"
   }
  ],
  "review_queue": [
+  {
+   "detail": {
+    "district": "",
+    "municipality": "",
+    "primary_doc_code": "202609181455323925"
+   },
+   "item_type": "project_role_uncertain",
+   "reason": "MJP named but role not established from extractable text.",
+   "ref": "2e421e91-6aad-5f46-abc6-06edc178e271",
+   "score": 1.0
+  },
+  {
+   "detail": {
+    "district": "",
+    "municipality": "",
+    "primary_doc_code": "202609181458237725"
+   },
+   "item_type": "project_role_uncertain",
+   "reason": "MJP named but role not established from extractable text.",
+   "ref": "e95f5b28-004f-5bee-b8d3-8904dd65028a",
+   "score": 1.0
+  },
+  {
+   "detail": {
+    "district": "",
+    "municipality": "",
+    "primary_doc_code": "202609181501033725"
+   },
+   "item_type": "project_role_uncertain",
+   "reason": "MJP named but role not established from extractable text.",
+   "ref": "c0e6c50c-de50-5c30-b893-7bfab696f1b1",
+   "score": 1.0
+  },
+  {
+   "detail": {
+    "district": "",
+    "municipality": "",
+    "primary_doc_code": "202609181503325725"
+   },
+   "item_type": "project_role_uncertain",
+   "reason": "MJP named but role not established from extractable text.",
+   "ref": "d3bf8379-c6b1-5e9f-8616-8f6a803b065b",
+   "score": 1.0
+  },
   {
    "detail": {
     "confidence": 0.85,
