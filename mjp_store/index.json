@@ -6,7 +6,7 @@
   "first_detected_at": "2026-09-17T02:49:48+05:30",
   "gr_date": "2026-06-25",
   "language": "en",
-  "last_checked_at": "2026-09-21T11:03:20+05:30",
+  "last_checked_at": "2026-09-21T16:30:51+05:30",
   "local_path": "mjp_store/documents/202606251057023925.pdf",
   "municipality": "Chikhaldara",
   "relevance": "seed",
@@ -83,5 +83,22 @@
   "size": 151889,
   "title": "नागपूर मेट्रो रेल्वे टप्पा-2 प्रकल्पामधील राज्य शासनाचा समभागापोटी रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत (सन 2026-27)",
   "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/Marathi/202609181503325725.pdf"
+ },
+ "202609211259514125": {
+  "department": "नगर विकास विभाग",
+  "district": "",
+  "doc_code": "202609211259514125",
+  "first_detected_at": "2026-09-21T16:30:51+05:30",
+  "gr_date": "2026-09-21",
+  "language": "mr",
+  "last_checked_at": "2026-09-21T16:30:51+05:30",
+  "local_path": "mjp_store/documents/202609211259514125.pdf",
+  "municipality": "",
+  "relevance": "department:नगर विकास विभाग",
+  "scheme": "",
+  "sha256": "7ffd4de211a0fcebb4efaec19f82aaa4bc7d5c7a3dd2e0bec845599a877f1e69",
+  "size": 149901,
+  "title": "पिसे ते पांजरापूर पाणीवहन करण्यासाठी जलबोगद्याच्या बांधकामास शासनाची पुर्वमंजूरी देण्याबाबत.",
+  "url": "https://gr.maharashtra.gov.in/Site/Upload/Government%20Resolutions/Marathi/202609211259514125.pdf"
  }
 }
