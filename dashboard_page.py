@@ -1583,12 +1583,12 @@ function buildSearchIndex(){
       fmt:a.awardValueFmt,district:a.cityGroup});
   });
   ((CONTRACTORS&&CONTRACTORS.contractors)||[]).forEach(function(c){
-    idx.push({type:'contractor',key:c.key,title:c.name,
+    idx.push({type:'contractor',key:c.key,title:c.name||c.key||'(unnamed contractor)',
       sub:((c.contracts!=null?c.contracts+' contracts':'')+(c.total_value_fmt?(' · ₹'+c.total_value_fmt):'')),
       hay:((c.name||'')+' '+((c.departments||[]).join(' '))+' '+((c.cities||[]).join(' '))).toLowerCase()});
   });
   ((MJP&&MJP.projects)||[]).forEach(function(p){
-    idx.push({type:'mjp',id:p.id,title:p.municipality||p.title_en,
+    idx.push({type:'mjp',id:p.id,title:p.municipality||p.title_en||p.id||'(MJP project)',
       sub:[p.district,p.status_label].filter(Boolean).join(' · '),
       hay:((p.title_en||'')+' '+(p.title_original||'')+' '+(p.municipality||'')+' '+(p.district||'')+' '+(p.scheme||'')+' '+(p.mjp_office||'')).toLowerCase(),
       value:(p.approved_cost&&p.approved_cost.inr?parseFloat(p.approved_cost.inr):null),
@@ -1609,13 +1609,12 @@ function parseQuery(raw,mode){
   var q=' '+(raw||'').toLowerCase()+' ', f={}, chips=[];
   if(mode==='smart'){
     var m;
-    m=q.match(/\b(?:over|above|more than|greater than|>=?|min)\s*₹?\s*([\d.,]+)\s*(crore|cr|lakh|lac|l|k)?\b/);
+    m=q.match(/(?:\b(?:over|above|more than|greater than|min)\b|>=?)\s*₹?\s*([\d.,]+)\s*(crore|cr|lakh|lac|l|k)?\b/);
     if(m){f.minValue=parseUnit(m[1],m[2]); if(f.minValue!=null){chips.push('≥ ₹'+m[1]+(m[2]||'')); q=q.replace(m[0],' ');}}
-    m=q.match(/\b(?:under|below|less than|<=?|upto|up to|max)\s*₹?\s*([\d.,]+)\s*(crore|cr|lakh|lac|l|k)?\b/);
+    m=q.match(/(?:\b(?:under|below|less than|upto|up to|max)\b|<=?)\s*₹?\s*([\d.,]+)\s*(crore|cr|lakh|lac|l|k)?\b/);
     if(m){f.maxValue=parseUnit(m[1],m[2]); if(f.maxValue!=null){chips.push('≤ ₹'+m[1]+(m[2]||'')); q=q.replace(m[0],' ');}}
-    if(/\bclosing today\b|\bcloses today\b|\bdue today\b/.test(q)){f.closeBefore=Date.now()+DAY;f.closeAfter=Date.now()-DAY;chips.push('closing today');q=q.replace(/closing today|closes today|due today/g,' ');}
-    m=q.match(/\bclos\w*\s*(?:this week|in 7 days|within 7 days|this week)\b/)||(/\bclosing soon\b/.test(q)&&['closing soon']);
-    if(/\bclosing (?:this week|soon)\b|\bclos\w* in 7 days\b|\bclos\w* within 7 days\b/.test(q)){f.closeBefore=Date.now()+7*DAY;f.closeAfter=Date.now();chips.push('closing ≤7 days');q=q.replace(/closing this week|closing soon|clos\w* in 7 days|clos\w* within 7 days/g,' ');}
+    if(/\bclos\w* today\b|\bdue today\b/.test(q)){f.closeBefore=Date.now()+DAY;f.closeAfter=Date.now()-DAY;chips.push('closing today');q=q.replace(/clos\w* today|due today/g,' ');}
+    if(/\bclos\w* (?:this week|soon)\b|\bclos\w* (?:in|within) 7 days\b/.test(q)){f.closeBefore=Date.now()+7*DAY;f.closeAfter=Date.now();chips.push('closing ≤7 days');q=q.replace(/clos\w* this week|clos\w* soon|clos\w* (?:in|within) 7 days/g,' ');}
     m=q.match(/\bclos\w* (?:in|within) (\d+) days?\b/);
     if(m){f.closeBefore=Date.now()+parseInt(m[1])*DAY;f.closeAfter=Date.now();chips.push('closing ≤'+m[1]+'d');q=q.replace(m[0],' ');}
     m=q.match(/\bpublished (?:last|past) (\d+) days?\b|\bpublished this month\b|\bpublished this week\b/);
@@ -1650,7 +1649,7 @@ function compileTerms(terms){
 }
 function scoreDoc(d,cterms){
   if(!cterms.length) return 1;  // filter-only query: everything that passed matches
-  var title=d.title.toLowerCase(), sub=(d.sub||'').toLowerCase(), s=0, matchedAll=true;
+  var title=(d.title||'').toLowerCase(), sub=(d.sub||'').toLowerCase(), s=0, matchedAll=true;
   for(var i=0;i<cterms.length;i++){
     var ct=cterms[i], t=ct.t, hit=0, ti=title.indexOf(t);
     if(ti===0||(ct.re&&ct.re.test(title))) hit=(ti===0?12:8);
@@ -1676,11 +1675,12 @@ function runSearch(){
     counts[d.type]++;                              // facet-independent (for chips)
     if(!facet || d.type===facet) out.push({d:d,score:sc});
   });
-  out.sort(function(a,b){return b.score-a.score || a.d.title.localeCompare(b.d.title);});
+  out.sort(function(a,b){return b.score-a.score || (a.d.title||'').localeCompare(b.d.title||'');});
   SEARCH.results=out.slice(0,80); SEARCH.active=0; SEARCH.lastTerms=parsed.terms;
   SEARCH.counts=counts;
   renderSearchResults(parsed);
-  if(raw) pushHistory(raw);
+  // History is recorded on selection (openResult), not per keystroke, so
+  // "Recent" holds real queries rather than every prefix typed.
 }
 function hl(text,terms){
   var s=esc(text||'');
@@ -1720,7 +1720,9 @@ function renderSearchResults(parsed){
 }
 function fmtNum(n){try{return Math.round(n).toLocaleString('en-IN');}catch(e){return ''+n;}}
 function openResult(i){
-  var r=SEARCH.results[i]; if(!r) return; var d=r.d; closeSearch();
+  var r=SEARCH.results[i]; if(!r) return; var d=r.d;
+  var raw=$('#searchInput').value.trim(); if(raw) pushHistory(raw);   // record acted-on query
+  closeSearch();
   if(d.type==='tender'||d.type==='award') openDetail(d.id);
   else if(d.type==='mjp'){ show('mjp'); openMjp(d.id); }
   else if(d.type==='contractor'){ cState.selected=d.key; show('contractors'); }
@@ -1741,7 +1743,9 @@ function exportSearchCSV(){
   downloadCSV(rows,['type','title','detail','value','id'],'tenderwatch-search.csv');
 }
 function downloadCSV(rows,cols,name){
-  var esc2=function(v){v=(v==null?'':String(v));return '"'+v.replace(/"/g,'""')+'"';};
+  var esc2=function(v){v=(v==null?'':String(v));
+    if(/^[=+\-@\t\r]/.test(v)) v="'"+v;   // neutralize spreadsheet formula injection
+    return '"'+v.replace(/"/g,'""')+'"';};
   var csv=cols.join(',')+'\n'+rows.map(function(r){return cols.map(function(c){return esc2(r[c]);}).join(',');}).join('\n');
   var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   var url=URL.createObjectURL(blob); var a=document.createElement('a');
@@ -1781,10 +1785,10 @@ $('#searchHint').addEventListener('click',function(e){
 });
 document.addEventListener('keydown',function(e){
   var open=$('#searchModal').classList.contains('open');
-  if(!open && e.key==='/' && !/input|textarea|select/i.test((e.target.tagName||''))){e.preventDefault();openSearch();return;}
+  if(!open && e.key==='/' && !e.ctrlKey && !e.metaKey && !e.altKey && !/input|textarea|select/i.test((e.target.tagName||''))){e.preventDefault();openSearch();return;}
   if(!open) return;
   if(e.key==='Escape'){closeSearch();}
-  else if(e.key==='ArrowDown'){e.preventDefault();SEARCH.active=Math.min(SEARCH.active+1,SEARCH.results.length-1);paintActive();}
+  else if(e.key==='ArrowDown'){e.preventDefault();SEARCH.active=Math.max(0,Math.min(SEARCH.active+1,SEARCH.results.length-1));paintActive();}
   else if(e.key==='ArrowUp'){e.preventDefault();SEARCH.active=Math.max(SEARCH.active-1,0);paintActive();}
   else if(e.key==='Enter'){if(SEARCH.results.length)openResult(SEARCH.active);}
 });
