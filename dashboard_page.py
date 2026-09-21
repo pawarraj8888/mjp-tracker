@@ -1562,6 +1562,9 @@ window.addEventListener('appinstalled',function(){$('#installBtn').classList.rem
 var SEARCH={index:null,mode:LS.get('search_mode','smart'),facet:'',active:0,results:[]};
 var TYPE_LABEL={tender:'Tender',award:'Award',contractor:'Contractor',mjp:'MJP project'};
 
+// Tender timestamps are stored as seconds-epoch; the date filters compare
+// against Date.now() (milliseconds), so normalize to ms here.
+function toMs(v){return (typeof v==='number'&&v>0)?(v<1e11?v*1000:v):null;}
 function buildSearchIndex(){
   if(SEARCH.index) return SEARCH.index;
   var idx=[];
@@ -1570,7 +1573,7 @@ function buildSearchIndex(){
       sub:[t.org,t.cityGroup].filter(Boolean).join(' · '),
       hay:((t.title||'')+' '+t.id+' '+(t.org||'')+' '+(t.ref||'')+' '+(t.cityGroup||'')).toLowerCase(),
       value:(typeof t.valueNum==='number'?t.valueNum:null),
-      closingTs:t.closingTs,publishedTs:t.publishedTs,live:!!t.live,st:t.st,district:t.cityGroup});
+      closingTs:toMs(t.closingTs),publishedTs:toMs(t.publishedTs),live:!!t.live,st:t.st,district:t.cityGroup});
   });
   (AWARDS||[]).forEach(function(a){
     idx.push({type:'award',id:a.id,title:a.title||a.id,
