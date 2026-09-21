@@ -138,6 +138,25 @@ def test_revision_does_not_remint_approval_key():
     assert any(k.startswith("revision:") for k in keys)
 
 
+def test_original_pdf_survives_storage_and_attachment_unchanged(env):
+    # The brief requires the original PDF to survive storage + email attachment
+    # byte-for-byte. Capture what the send path would attach and compare hashes.
+    import hashlib
+    original = (env / "documents" / "202606251057023925.pdf").read_bytes()
+    src_sha = hashlib.sha256(original).hexdigest()
+    s = Store(":memory:")
+    attached = {}
+
+    def capture(subject, body, to, atts):
+        for a in atts:
+            with open(a["path"], "rb") as fh:
+                attached[a["filename"]] = hashlib.sha256(fh.read()).hexdigest()
+        return True, ""
+
+    alerts.run(s, [_project()], {}, send_fn=capture)
+    assert attached["OFFICIAL-GR-202606251057023925.pdf"] == src_sha
+
+
 def test_missing_original_keeps_alert_pending(env, monkeypatch):
     # Remove the stored PDF: the alert must not be reported sent.
     (env / "documents" / "202606251057023925.pdf").unlink()
