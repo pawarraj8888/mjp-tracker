@@ -153,7 +153,11 @@ def discover(index: dict, session=None, seeds: list | None = None,
             continue
         prior = index.get(code)
         local = DOCS_DIR / ("%s.pdf" % code)
-        if prior and local.exists():
+        # A document already known to be non-MJP (its original was pruned) is not
+        # re-downloaded -- unless an operator explicitly re-seeds it.
+        non_mjp_known = (prior is not None and prior.get("mjp") is False
+                         and e.get("relevance") != "seed")
+        if prior and (local.exists() or non_mjp_known):
             prior["last_checked_at"] = now
             # Carry any seed-provided metadata forward without overwriting.
             for k in ("district", "municipality", "scheme"):
@@ -196,6 +200,14 @@ def discover(index: dict, session=None, seeds: list | None = None,
 
 _ROLE_RANK = {"implementing_agency": 4, "tendering_authority": 3,
               "technical_sanction": 2, "mentioned": 1, "none": 0}
+# A GR only becomes a tracked MJP project when MJP's role is actually
+# established. Documents that merely come from the same department but never
+# establish MJP's involvement (metro rail, MMRDA works, etc.) are NOT shown as
+# projects; an incidental mention goes to the review queue, and a document with
+# no MJP reference at all is dropped entirely (the brief: "A document mentioning
+# MJP incidentally is insufficient").
+ESTABLISHED_ROLES = {"implementing_agency", "tendering_authority",
+                     "technical_sanction"}
 _DOCTYPE_EVENT = {
     "funding_sanction": "funding_sanctioned",
     "administrative_approval": "administrative_approval_recorded",
@@ -267,6 +279,30 @@ def build_projects(store: Store, index: dict, now: str) -> dict:
             for w in i["doc"].get("works_en", []):
                 if w not in works:
                     works.append(w)
+
+        # Gate: only keep GRs where MJP's role is established. Mark every
+        # document's index entry so run() can prune non-MJP originals, and drop
+        # (or, for a bare mention, review) the rest instead of showing it.
+        role = best_role["doc"]["mjp_role"]
+        codes = [i["doc"]["doc_code"] for i in items]
+        if role not in ESTABLISHED_ROLES:
+            for c in codes:
+                if c in index:
+                    index[c]["mjp"] = False
+            if role == "mentioned":
+                mstore.queue_review(
+                    store, "project_role_uncertain", codes[0],
+                    "MJP is named but its role is not established; not shown "
+                    "as a project.",
+                    {"municipality": muni, "district": district,
+                     "title": (items[0]["doc"].get("title_original") or "")[:160],
+                     "doc_code": codes[0]}, score=1.0 -
+                    best_role["doc"]["mjp_role_confidence"])
+                n_review += 1
+            continue
+        for c in codes:
+            if c in index:
+                index[c]["mjp"] = True
 
         approved = revised = released = None
         for i in items:
@@ -349,16 +385,7 @@ def build_projects(store: Store, index: dict, now: str) -> dict:
                     created_at=now):
                 n_evt += 1
 
-        # Route uncertain role / low-confidence extraction to review.
-        role = best_role["doc"]["mjp_role"]
-        if role in ("mentioned", "none"):
-            mstore.queue_review(
-                store, "project_role_uncertain", pid,
-                "MJP named but role not established from extractable text.",
-                {"municipality": muni, "district": district,
-                 "primary_doc_code": items[0]["doc"]["doc_code"]},
-                score=1.0 - best_role["doc"]["mjp_role_confidence"])
-            n_review += 1
+        # A kept project whose text layer was empty still needs a human check.
         if any(not i["doc"]["extract_ok"] for i in items):
             mstore.queue_review(
                 store, "extraction_low_confidence", pid,
@@ -481,6 +508,23 @@ def match_all(store: Store, state: dict, now: str) -> dict:
             "candidates_scanned": len(pool)}
 
 
+def _prune_non_mjp_docs(index: dict) -> int:
+    """Delete the stored original of any document that turned out not to be an
+    MJP project, so the durable store keeps only genuine MJP GRs. The index
+    entry stays (marked mjp=False) so it is never re-downloaded."""
+    n = 0
+    for code, entry in index.items():
+        if entry.get("mjp") is False:
+            local = ROOT / entry.get("local_path", "")
+            try:
+                if entry.get("local_path") and local.exists():
+                    local.unlink()
+                    n += 1
+            except OSError:
+                pass
+    return n
+
+
 # -- top-level run -----------------------------------------------------------
 
 def run(store: Store, fetch_live: bool = True, session=None,
@@ -492,8 +536,9 @@ def run(store: Store, fetch_live: bool = True, session=None,
     seeds = _load_json(SEEDS_FILE, [])
     disc = discover(index, session=session, seeds=seeds,
                     fetch_live=fetch_live, now=now)
-    _save_json(INDEX_FILE, index)
-    built = build_projects(store, index, now)
+    built = build_projects(store, index, now)   # sets index[code]["mjp"]
+    pruned = _prune_non_mjp_docs(index)
+    _save_json(INDEX_FILE, index)               # save AFTER mjp flags + prune
     if state is None:
         try:
             import tracker
@@ -508,7 +553,7 @@ def run(store: Store, fetch_live: bool = True, session=None,
                      % (built["documents"], built["projects"],
                         matched["linked"], matched["suggested"]))
     return {"discovery": disc, "build": built, "match": matched,
-            "indexed_docs": len(index),
+            "pruned_non_mjp": pruned, "indexed_docs": len(index),
             "coverage_note": (
                 "Listing polling + direct-code ingest are captcha-free. "
                 "Department/date search and pagination are gated by a CAPTCHA "

@@ -97,6 +97,36 @@ def test_repeated_ingestion_is_idempotent(wired):
     assert s.query("SELECT COUNT(*) c FROM mjp_documents")[0]["c"] == 1
 
 
+def test_non_mjp_gr_is_not_tracked_as_a_project(wired):
+    # A department GR with NO MJP role (e.g. a metro-rail GR) must not become a
+    # tracked project, must not be reviewed, and must be marked mjp=False.
+    docs, table = wired
+    s = Store(":memory:")
+    metro = _doc("m1", "", "", role="none")
+    metro["mjp_role"] = "none"
+    metro["mjp_role_confidence"] = 0.0
+    metro["title_original"] = "पुणे मेट्रो रेल्वे प्रकल्प"
+    _prep(docs, table, "m1", metro)
+    index = _index(docs, "m1")
+    built = ingest.build_projects(s, index, "2026-09-21T00:00:00+05:30")
+    assert built["projects"] == 0                 # dropped, not shown
+    assert built["review"] == 0                   # role=none is not "uncertain"
+    assert mstore.all_projects(s) == []
+    assert index["m1"]["mjp"] is False            # marked so it won't re-download
+
+
+def test_prune_non_mjp_docs_deletes_original(wired):
+    docs, table = wired
+    s = Store(":memory:")
+    _prep(docs, table, "m1", dict(_doc("m1", "", "", role="none"),
+                                  mjp_role="none", mjp_role_confidence=0.0))
+    index = _index(docs, "m1")
+    ingest.build_projects(s, index, "2026-09-21T00:00:00+05:30")
+    assert (docs / "m1.pdf").exists()
+    n = ingest._prune_non_mjp_docs(index)
+    assert n == 1 and not (docs / "m1.pdf").exists()
+
+
 def test_incidental_mention_goes_to_review(wired):
     docs, table = wired
     s = Store(":memory:")
