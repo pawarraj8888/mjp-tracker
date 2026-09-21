@@ -18,17 +18,15 @@
   "suggested_tenders": 1
  },
  "discovery": {
-  "added": [
-   "202609211259514125"
-  ],
-  "checked_at": "2026-09-21T16:30:51+05:30",
+  "added": [],
+  "checked_at": "2026-09-21T21:09:43+05:30",
   "failures": [],
   "listing_ok": true,
   "refreshed": [
    "202606251057023925"
   ]
  },
- "generated": "2026-09-21T16:30:56+05:30",
+ "generated": "2026-09-21T21:09:46+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -121,7 +119,7 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-09-21T16:30:51+05:30",
+   "last_checked_at": "2026-09-21T21:09:43+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
@@ -227,7 +225,7 @@
     "plain": null
    },
    "id": "2e421e91-6aad-5f46-abc6-06edc178e271",
-   "last_checked_at": "2026-09-21T16:30:51+05:30",
+   "last_checked_at": "2026-09-21T21:09:43+05:30",
    "latest_approval": {
     "date": "",
     "label": ""
@@ -256,7 +254,7 @@
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "No matching tender found as of 21 Sep 2026, 16:30 IST",
+   "tender_match_status": "No matching tender found as of 21 Sep 2026, 21:09 IST",
    "title_en": "Road works for the listed area.",
    "title_original": "पुणे मेट्रो रेल्वे प्रकल्पाच्या स्वारगेट-कात्रज मेट्रो रेल्वे कॉरीडॉर प्रकल्पामधील राज्य शासनाच्या हिश्श्याची समभागाची रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत  (सन 2026-27)",
    "uncertainties": [],
@@ -308,7 +306,7 @@
     "plain": null
    },
    "id": "e95f5b28-004f-5bee-b8d3-8904dd65028a",
-   "last_checked_at": "2026-09-21T16:30:51+05:30",
+   "last_checked_at": "2026-09-21T21:09:43+05:30",
    "latest_approval": {
     "date": "",
     "label": ""
@@ -337,7 +335,7 @@
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "No matching tender found as of 21 Sep 2026, 16:30 IST",
+   "tender_match_status": "No matching tender found as of 21 Sep 2026, 21:09 IST",
    "title_en": "Road works for the listed area.",
    "title_original": "पुणे मेट्रो रेल्वे प्रकल्पाच्या स्वारगेट-कात्रज मेट्रो रेल्वे कॉरीडॉर प्रकल्पामधील राज्य शासनाच्या हिश्श्याची दुय्यम कर्जाची रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत  (सन 2026-27)",
    "uncertainties": [],
@@ -389,7 +387,7 @@
     "plain": null
    },
    "id": "c0e6c50c-de50-5c30-b893-7bfab696f1b1",
-   "last_checked_at": "2026-09-21T16:30:51+05:30",
+   "last_checked_at": "2026-09-21T21:09:43+05:30",
    "latest_approval": {
     "date": "",
     "label": ""
@@ -418,7 +416,7 @@
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "No matching tender found as of 21 Sep 2026, 16:30 IST",
+   "tender_match_status": "No matching tender found as of 21 Sep 2026, 21:09 IST",
    "title_en": "Road works for the listed area.",
    "title_original": "मुंबई नागरी परिवहन प्रकल्प टप्पा-3अ (एमयुटीपी-3ए) प्रकल्पासाठी राज्य शासनाच्या अर्थसहाय्याची रक्कम मुंबई रेल्वे विकास महामंडळास प्रदान करण्याबाबत (सन 2026-27)",
    "uncertainties": [],
@@ -470,7 +468,7 @@
     "plain": null
    },
    "id": "d3bf8379-c6b1-5e9f-8616-8f6a803b065b",
-   "last_checked_at": "2026-09-21T16:30:51+05:30",
+   "last_checked_at": "2026-09-21T21:09:43+05:30",
    "latest_approval": {
     "date": "",
     "label": ""
@@ -499,7 +497,7 @@
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "No matching tender found as of 21 Sep 2026, 16:30 IST",
+   "tender_match_status": "No matching tender found as of 21 Sep 2026, 21:09 IST",
    "title_en": "Road works for the listed area.",
    "title_original": "नागपूर मेट्रो रेल्वे टप्पा-2 प्रकल्पामधील राज्य शासनाचा समभागापोटी रक्कम महाराष्ट्र मेट्रो रेल कार्पोरेशन लि. यांना प्रदान करण्याबाबत (सन 2026-27)",
    "uncertainties": [],
@@ -551,7 +549,7 @@
     "plain": null
    },
    "id": "5f24c8e8-5590-56d2-9d54-794d5ea75633",
-   "last_checked_at": "2026-09-21T16:30:51+05:30",
+   "last_checked_at": "2026-09-21T21:09:43+05:30",
    "latest_approval": {
     "date": "",
     "label": ""
@@ -581,7 +579,7 @@
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "No matching tender found as of 21 Sep 2026, 16:30 IST",
+   "tender_match_status": "No matching tender found as of 21 Sep 2026, 21:09 IST",
    "title_en": "Road works for the listed area.",
    "title_original": "पिसे ते पांजरापूर पाणीवहन करण्यासाठी जलबोगद्याच्या बांधकामास शासनाची पुर्वमंजूरी देण्याबाबत.",
    "uncertainties": [],
