@@ -327,6 +327,46 @@ body{overflow-x:hidden}
 .tooltip:hover .tip{display:block}
 .tip{display:none;position:absolute;top:130%;left:0;z-index:20;background:var(--ink);color:#fff;
   padding:8px 10px;border-radius:8px;font-size:11.5px;font-weight:500;width:240px;line-height:1.4;box-shadow:var(--shadow-lg)}
+
+/* ---- Command-palette search ---- */
+.searchbtn{display:flex;align-items:center;gap:8px;min-width:210px;max-width:340px;flex:0 1 300px;
+  background:var(--glass);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--line);border-radius:10px;padding:8px 12px;color:var(--muted);
+  font-size:13px;cursor:text;text-align:left}
+.searchbtn .kbd{margin-left:auto;font-size:10.5px;border:1px solid var(--line);border-radius:5px;
+  padding:1px 5px;color:var(--faint)}
+@media(max-width:760px){.searchbtn{min-width:0;flex:0 0 40px;width:40px;padding:8px 0;justify-content:center}
+  .searchbtn .sblabel,.searchbtn .kbd{display:none}}
+.searchmodal{position:fixed;inset:0;z-index:60;display:none;
+  padding:max(48px,8vh) 16px 16px;justify-content:center;align-items:flex-start;
+  background:rgba(15,23,42,.38)}
+.searchmodal.open{display:flex}
+.searchmodal .box{width:min(760px,100%);max-height:84vh;display:flex;flex-direction:column;
+  background:var(--glass-2,#fff);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);
+  border:1px solid var(--glass-brd);border-radius:14px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.searchmodal .shead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.searchmodal .shead input{flex:1;border:none;outline:none;font-size:16px;background:transparent;color:var(--ink)}
+.searchmodal .modeseg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.searchmodal .modeseg button{border:none;background:var(--bg);color:var(--muted);font-size:11.5px;padding:5px 9px;cursor:pointer}
+.searchmodal .modeseg button.on{background:var(--navy);color:#fff}
+.sfacets{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px;border-bottom:1px solid var(--line);align-items:center}
+.sfacets .chip{cursor:pointer}.sfacets .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.sparse{display:flex;flex-wrap:wrap;gap:6px}
+.sparse .tag{background:var(--award-bg,#e7f0ff);color:var(--navy);border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600}
+.sresults{overflow:auto;padding:6px}
+.sres{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:9px;cursor:pointer;text-decoration:none;color:inherit}
+.sres:hover,.sres.active{background:var(--bg)}
+.sres .stype{flex:0 0 74px;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);font-weight:700;padding-top:2px}
+.sres .sbody{flex:1;min-width:0}
+.sres .stitle{font-size:13.5px;color:var(--ink);font-weight:600}
+.sres .ssub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.sres .spct{flex:0 0 auto;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sres mark,.data mark{background:#fde68a;color:inherit;border-radius:2px;padding:0 1px}
+.sgroup{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);font-weight:700;padding:10px 12px 4px}
+.sempty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
+.shint{padding:8px 14px;color:var(--faint);font-size:11px;border-top:1px solid var(--line)}
+.exportbtn{margin-left:8px}
+@media(max-width:760px){.searchmodal{padding:0}.searchmodal .box{max-height:100vh;height:100vh;border-radius:0}}
 </style>
 </head>
 <body>
@@ -334,6 +374,9 @@ body{overflow-x:hidden}
   <button class="icon-btn navtoggle" id="navToggle" aria-label="Menu">☰</button>
   <div class="brand"><span class="mark">TW</span>
     <span>Tender Watch<small>Maharashtra procurement intelligence</small></span></div>
+  <button class="searchbtn" id="searchOpen" aria-label="Search everything">
+    <span aria-hidden="true">🔍</span><span class="sblabel" id="searchOpenLbl">Search everything…</span>
+    <span class="kbd">/</span></button>
   <div class="spacer"></div>
   <button class="fresh" id="freshPill" aria-label="Data freshness — open status">
     <span class="dot unknown" id="freshDot"></span>
@@ -377,6 +420,23 @@ body{overflow-x:hidden}
 </div>
 
 <div class="overlay" id="overlay"></div>
+<div class="searchmodal" id="searchModal" role="dialog" aria-label="Search">
+  <div class="box">
+    <div class="shead">
+      <span aria-hidden="true">🔍</span>
+      <input id="searchInput" type="search" autocomplete="off"
+        placeholder="Search tenders, awards, contractors, projects…">
+      <div class="modeseg" id="searchMode">
+        <button data-m="smart" class="on" title="Understands amounts, dates, places">Smart</button>
+        <button data-m="keyword">Keyword</button>
+      </div>
+      <button class="so-close" id="searchClose" aria-label="Close">✕</button>
+    </div>
+    <div class="sfacets" id="searchFacets"></div>
+    <div class="sresults" id="searchResults"></div>
+    <div class="shint" id="searchHint"></div>
+  </div>
+</div>
 <aside class="slideover" id="slideover" role="dialog" aria-label="Tender detail">
   <div class="so-head"><h3 id="soTitle">Detail</h3>
     <button class="so-close" id="soClose" aria-label="Close">✕</button></div>
@@ -441,6 +501,7 @@ var I18N={mr:{
   "Awards":"निवाडे","Contractors":"कंत्राटदार","Analytics":"विश्लेषण",
   "Watchlist":"पाहण्याची यादी","Inbox":"सूचना","Personal":"वैयक्तिक",
   "Tools":"साधने","Import awards":"निवाडे आयात करा","Refresh":"ताजे करा",
+  "Search everything…":"सर्व शोधा…",
   "Install":"इंस्टॉल","Notifications":"सूचना","Mark all read":"सर्व वाचले म्हणून खुणा",
   // freshness
   "Up to date":"अद्ययावत","Partial":"अर्धवट","Stale":"जुने",
@@ -534,6 +595,7 @@ function applyStaticI18n(){
     var n=imp.childNodes[i]; if(n.nodeType===3&&n.nodeValue.trim()){n.nodeValue=T('Import awards');break;}}}
   $all('.navlabel').forEach(function(el){var k=el.dataset.k||el.textContent.trim();el.dataset.k=k;el.textContent=T(k);});
   $('#refreshLbl').textContent=T('Refresh');
+  var so=$('#searchOpenLbl'); if(so) so.textContent=T('Search everything…');
   $('#installBtn').lastChild.textContent=' '+T('Install');
   $('#langBtn').textContent=(LANG==='mr'?'EN':'मराठी');
   $('#drawer .dh h3').firstChild.textContent=T('Notifications');
@@ -706,12 +768,14 @@ function renderTenders(){
       '<select id="tStatus"><option value="">'+T('Any deadline')+'</option>'+
         '<option value="live">'+T('Open')+'</option><option value="soon">'+T('Closing soon')+'</option>'+
         '<option value="urgent">'+T('Urgent (48h)')+'</option></select>'+
-      '<span class="count" id="tCount"></span></div>'+
+      '<span class="count" id="tCount"></span>'+
+      '<button class="btn ghost exportbtn" id="tExport">⤓ CSV</button></div>'+
       '<div class="card"><div class="tablewrap"><table class="data" id="tTable"></table></div></div>';
     $('#tSearch',p).addEventListener('input',function(){tState.q=this.value.toLowerCase();drawTenders();});
     $('#tSource',p).addEventListener('change',function(){tState.source=this.value;drawTenders();});
     $('#tCity',p).addEventListener('change',function(){tState.city=this.value;drawTenders();});
     $('#tStatus',p).addEventListener('change',function(){tState.status=this.value;drawTenders();});
+    $('#tExport',p).addEventListener('click',exportTenders);
   }
   drawTenders();
 }
@@ -778,9 +842,11 @@ function renderAwards(){
       T('Confirmed Awards of Contract imported from the portal. Award value is the contract amount; the estimate is shown separately. Amounts are exact to the source (decimals preserved).')+'</p>'+
       '<div class="filters" id="aFilters">'+
       '<input type="search" id="aSearch" placeholder="'+T('Search work, winner, department…')+'">'+
-      '<span class="count" id="aCount"></span></div>'+
+      '<span class="count" id="aCount"></span>'+
+      '<button class="btn ghost exportbtn" id="aExport">⤓ CSV</button></div>'+
       '<div class="card"><div class="tablewrap"><table class="data" id="aTable"></table></div></div>';
     $('#aSearch',p).addEventListener('input',function(){aState.q=this.value.toLowerCase();drawAwards();});
+    $('#aExport',p).addEventListener('click',exportAwards);
   }
   drawAwards();
 }
@@ -1305,13 +1371,15 @@ function renderMjp(){
         '<option value="linked">'+T('Tender linked')+'</option>'+
         '<option value="suggested">'+T('Possible tender match')+'</option>'+
         '<option value="none">'+T('No matching tender')+'</option></select>'+
-      '<span class="count" id="mCount"></span></div>'+
+      '<span class="count" id="mCount"></span>'+
+      '<button class="btn ghost exportbtn" id="mExport">⤓ CSV</button></div>'+
     '<div class="card"><div class="tablewrap"><table class="data" id="mTable"></table></div></div>';
   $('#mSearch',p).addEventListener('input',function(){mjpState.q=this.value.toLowerCase();drawMjp();});
   $('#mDistrict',p).addEventListener('change',function(){mjpState.district=this.value;drawMjp();});
   $('#mScheme',p).addEventListener('change',function(){mjpState.scheme=this.value;drawMjp();});
   $('#mDept',p).addEventListener('change',function(){mjpState.dept=this.value;drawMjp();});
   $('#mMatch',p).addEventListener('change',function(){mjpState.match=this.value;drawMjp();});
+  $('#mExport',p).addEventListener('click',exportMjp);
   drawMjp();
 }
 function mjpTile(label,val,period){
@@ -1489,6 +1557,235 @@ $('#installBtn').addEventListener('click',function(){
     $('#installBtn').classList.remove('show');});
 });
 window.addEventListener('appinstalled',function(){$('#installBtn').classList.remove('show');});
+
+/* ---------- command-palette search (ranked, cross-entity, smart) ---------- */
+var SEARCH={index:null,mode:LS.get('search_mode','smart'),facet:'',active:0,results:[]};
+var TYPE_LABEL={tender:'Tender',award:'Award',contractor:'Contractor',mjp:'MJP project'};
+
+function buildSearchIndex(){
+  if(SEARCH.index) return SEARCH.index;
+  var idx=[];
+  (DATA.tenders||[]).forEach(function(t){
+    idx.push({type:'tender',id:t.id,title:t.title||t.id,
+      sub:[t.org,t.cityGroup].filter(Boolean).join(' · '),
+      hay:((t.title||'')+' '+t.id+' '+(t.org||'')+' '+(t.ref||'')+' '+(t.cityGroup||'')).toLowerCase(),
+      value:(typeof t.valueNum==='number'?t.valueNum:null),
+      closingTs:t.closingTs,publishedTs:t.publishedTs,live:!!t.live,st:t.st,district:t.cityGroup});
+  });
+  (AWARDS||[]).forEach(function(a){
+    idx.push({type:'award',id:a.id,title:a.title||a.id,
+      sub:[a.contractor,a.contractDate].filter(Boolean).join(' · '),
+      hay:((a.title||'')+' '+(a.id||'')+' '+(a.contractor||'')).toLowerCase(),
+      value:(typeof a.valueNum==='number'?a.valueNum:(typeof a.awardValueNum==='number'?a.awardValueNum:null)),
+      fmt:a.awardValueFmt,district:a.cityGroup});
+  });
+  ((CONTRACTORS&&CONTRACTORS.contractors)||[]).forEach(function(c){
+    idx.push({type:'contractor',key:c.key,title:c.name,
+      sub:((c.contracts!=null?c.contracts+' contracts':'')+(c.total_value_fmt?(' · ₹'+c.total_value_fmt):'')),
+      hay:((c.name||'')+' '+((c.departments||[]).join(' '))+' '+((c.cities||[]).join(' '))).toLowerCase()});
+  });
+  ((MJP&&MJP.projects)||[]).forEach(function(p){
+    idx.push({type:'mjp',id:p.id,title:p.municipality||p.title_en,
+      sub:[p.district,p.status_label].filter(Boolean).join(' · '),
+      hay:((p.title_en||'')+' '+(p.title_original||'')+' '+(p.municipality||'')+' '+(p.district||'')+' '+(p.scheme||'')+' '+(p.mjp_office||'')).toLowerCase(),
+      value:(p.approved_cost&&p.approved_cost.inr?parseFloat(p.approved_cost.inr):null),
+      fmt:(p.approved_cost&&p.approved_cost.display)||null,district:p.district});
+  });
+  SEARCH.index=idx; return idx;
+}
+function parseUnit(num,unit){
+  var n=parseFloat(String(num).replace(/,/g,'')); if(isNaN(n)) return null;
+  unit=(unit||'').toLowerCase();
+  if(/^(cr|crore)/.test(unit)) return n*1e7;
+  if(/^(l|lac|lakh)/.test(unit)) return n*1e5;
+  if(/^k/.test(unit)) return n*1e3;
+  return n;
+}
+var DAY=86400000;
+function parseQuery(raw,mode){
+  var q=' '+(raw||'').toLowerCase()+' ', f={}, chips=[];
+  if(mode==='smart'){
+    var m;
+    m=q.match(/\b(?:over|above|more than|greater than|>=?|min)\s*₹?\s*([\d.,]+)\s*(crore|cr|lakh|lac|l|k)?\b/);
+    if(m){f.minValue=parseUnit(m[1],m[2]); if(f.minValue!=null){chips.push('≥ ₹'+m[1]+(m[2]||'')); q=q.replace(m[0],' ');}}
+    m=q.match(/\b(?:under|below|less than|<=?|upto|up to|max)\s*₹?\s*([\d.,]+)\s*(crore|cr|lakh|lac|l|k)?\b/);
+    if(m){f.maxValue=parseUnit(m[1],m[2]); if(f.maxValue!=null){chips.push('≤ ₹'+m[1]+(m[2]||'')); q=q.replace(m[0],' ');}}
+    if(/\bclosing today\b|\bcloses today\b|\bdue today\b/.test(q)){f.closeBefore=Date.now()+DAY;f.closeAfter=Date.now()-DAY;chips.push('closing today');q=q.replace(/closing today|closes today|due today/g,' ');}
+    m=q.match(/\bclos\w*\s*(?:this week|in 7 days|within 7 days|this week)\b/)||(/\bclosing soon\b/.test(q)&&['closing soon']);
+    if(/\bclosing (?:this week|soon)\b|\bclos\w* in 7 days\b|\bclos\w* within 7 days\b/.test(q)){f.closeBefore=Date.now()+7*DAY;f.closeAfter=Date.now();chips.push('closing ≤7 days');q=q.replace(/closing this week|closing soon|clos\w* in 7 days|clos\w* within 7 days/g,' ');}
+    m=q.match(/\bclos\w* (?:in|within) (\d+) days?\b/);
+    if(m){f.closeBefore=Date.now()+parseInt(m[1])*DAY;f.closeAfter=Date.now();chips.push('closing ≤'+m[1]+'d');q=q.replace(m[0],' ');}
+    m=q.match(/\bpublished (?:last|past) (\d+) days?\b|\bpublished this month\b|\bpublished this week\b/);
+    if(m){var d=m[1]?parseInt(m[1]):(/month/.test(m[0])?30:7);f.pubAfter=Date.now()-d*DAY;chips.push('published ≤'+d+'d');q=q.replace(m[0],' ');}
+    (DATA.cities||[]).forEach(function(c){var cl=c.toLowerCase();
+      if(q.indexOf(' '+cl+' ')>=0){f.district=c;chips.push('in '+c);q=q.replace(new RegExp('\\b'+cl.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g'),' ');}});
+    if(/\b(open|live)\b/.test(q)){f.status='live';chips.push('open');q=q.replace(/\b(open|live)\b/g,' ');}
+    if(/\bclosed\b/.test(q)){f.status='closed';chips.push('closed');q=q.replace(/\bclosed\b/g,' ');}
+    var tmap=[[/\btenders?\b/,'tender'],[/\bawards?\b|\bresults?\b/,'award'],[/\bcontractors?\b|\bcompan(?:y|ies)\b|\bfirms?\b/,'contractor'],[/\bmjp\b|\bprojects?\b|\bapprovals?\b/,'mjp']];
+    var types=[]; tmap.forEach(function(p){if(p[0].test(q)){types.push(p[1]);q=q.replace(new RegExp(p[0].source,'g'),' ');}});
+    if(types.length){f.types=types;chips.push(types.map(function(t){return TYPE_LABEL[t]+'s';}).join('/'));}
+  }
+  var terms=q.split(/\s+/).filter(function(w){return w.length>=2;});
+  return {terms:terms,f:f,chips:chips};
+}
+function passFilters(d,f){
+  if(f.types && f.types.indexOf(d.type)<0) return false;
+  if(f.minValue!=null && !(d.value!=null && d.value>=f.minValue)) return false;
+  if(f.maxValue!=null && !(d.value!=null && d.value<=f.maxValue)) return false;
+  if(f.district && (d.district||'')!==f.district) return false;
+  if(f.status==='live' && d.type==='tender' && !d.live) return false;
+  if(f.status==='closed' && d.type==='tender' && d.live) return false;
+  if(f.closeBefore!=null){if(!(d.closingTs && d.closingTs<=f.closeBefore)) return false;}
+  if(f.closeAfter!=null){if(!(d.closingTs && d.closingTs>=f.closeAfter)) return false;}
+  if(f.pubAfter!=null){if(!(d.publishedTs && d.publishedTs>=f.pubAfter)) return false;}
+  return true;
+}
+function compileTerms(terms){
+  return terms.map(function(t){var re=null;
+    try{re=new RegExp('\\b'+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}catch(e){}
+    return {t:t,re:re};});
+}
+function scoreDoc(d,cterms){
+  if(!cterms.length) return 1;  // filter-only query: everything that passed matches
+  var title=d.title.toLowerCase(), sub=(d.sub||'').toLowerCase(), s=0, matchedAll=true;
+  for(var i=0;i<cterms.length;i++){
+    var ct=cterms[i], t=ct.t, hit=0, ti=title.indexOf(t);
+    if(ti===0||(ct.re&&ct.re.test(title))) hit=(ti===0?12:8);
+    else if(ti>=0) hit=4;
+    if(sub.indexOf(t)>=0) hit=Math.max(hit,3);
+    if(!hit && d.hay.indexOf(t)>=0) hit=1;
+    if(!hit) matchedAll=false;
+    s+=hit;
+  }
+  if(!matchedAll) return 0;
+  if(d.type==='tender'&&d.live) s+=1.2;               // gently favour open opportunities
+  return s;
+}
+function runSearch(){
+  var raw=$('#searchInput').value.trim();
+  var parsed=parseQuery(raw,SEARCH.mode);
+  var facet=SEARCH.facet, cterms=compileTerms(parsed.terms);
+  var out=[], counts={tender:0,award:0,contractor:0,mjp:0};
+  buildSearchIndex().forEach(function(d){          // single pass: counts + results
+    if(!passFilters(d,parsed.f)) return;
+    var sc=scoreDoc(d,cterms);
+    if(sc<=0) return;
+    counts[d.type]++;                              // facet-independent (for chips)
+    if(!facet || d.type===facet) out.push({d:d,score:sc});
+  });
+  out.sort(function(a,b){return b.score-a.score || a.d.title.localeCompare(b.d.title);});
+  SEARCH.results=out.slice(0,80); SEARCH.active=0; SEARCH.lastTerms=parsed.terms;
+  SEARCH.counts=counts;
+  renderSearchResults(parsed);
+  if(raw) pushHistory(raw);
+}
+function hl(text,terms){
+  var s=esc(text||'');
+  (terms||[]).forEach(function(t){
+    try{s=s.replace(new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig'),'<mark>$1</mark>');}catch(e){}
+  });
+  return s;
+}
+function renderSearchResults(parsed){
+  var facEl=$('#searchFacets'); var counts=SEARCH.counts||{tender:0,award:0,contractor:0,mjp:0};
+  var fac='<span class="chip'+(SEARCH.facet===''?' on':'')+'" data-facet="">All</span>';
+  ['tender','award','mjp','contractor'].forEach(function(tp){
+    fac+='<span class="chip'+(SEARCH.facet===tp?' on':'')+'" data-facet="'+tp+'">'+TYPE_LABEL[tp]+'s '+(counts[tp]||0)+'</span>';
+  });
+  if(parsed.chips.length) fac+='<span class="sparse" style="margin-left:8px">'+parsed.chips.map(function(c){return '<span class="tag">'+esc(c)+'</span>';}).join('')+'</span>';
+  facEl.innerHTML=fac;
+  $all('#searchFacets .chip').forEach(function(ch){ch.addEventListener('click',function(){SEARCH.facet=ch.dataset.facet;runSearch();});});
+
+  var res=$('#searchResults');
+  if(!$('#searchInput').value.trim() && !SEARCH.facet){ res.innerHTML=historyHtml(); wireHistory(); $('#searchHint').innerHTML=hintHtml(); return; }
+  if(!SEARCH.results.length){ res.innerHTML='<div class="sempty">No matches. Try fewer words, or switch to Keyword mode.</div>'; $('#searchHint').innerHTML=hintHtml(); return; }
+  var max=SEARCH.results[0].score||1;
+  var terms=SEARCH.lastTerms;
+  var html=SEARCH.results.map(function(r,i){
+    var d=r.d, pct=Math.round(100*r.score/max);
+    var right=d.fmt?('₹'+esc(d.fmt)):(d.value!=null?'₹'+fmtNum(d.value):'');
+    return '<a class="sres'+(i===SEARCH.active?' active':'')+'" data-i="'+i+'" href="#">'+
+      '<span class="stype">'+TYPE_LABEL[d.type]+'</span>'+
+      '<span class="sbody"><span class="stitle">'+hl(d.title,terms)+'</span>'+
+      '<span class="ssub">'+hl(d.sub,terms)+(right?(' · '+right):'')+'</span></span>'+
+      '<span class="spct">'+pct+'%</span></a>';
+  }).join('');
+  res.innerHTML=html;
+  $all('#searchResults .sres').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();openResult(parseInt(a.dataset.i));});});
+  $('#searchHint').innerHTML='<b>'+SEARCH.results.length+'</b> results · <span class="linklike" id="searchExport">Export CSV</span> · ↑↓ to move, Enter to open';
+  var ex=$('#searchExport'); if(ex) ex.addEventListener('click',exportSearchCSV);
+}
+function fmtNum(n){try{return Math.round(n).toLocaleString('en-IN');}catch(e){return ''+n;}}
+function openResult(i){
+  var r=SEARCH.results[i]; if(!r) return; var d=r.d; closeSearch();
+  if(d.type==='tender'||d.type==='award') openDetail(d.id);
+  else if(d.type==='mjp'){ show('mjp'); openMjp(d.id); }
+  else if(d.type==='contractor'){ cState.selected=d.key; show('contractors'); }
+}
+function historyHtml(){
+  var h=LS.get('search_history',[]), sv=LS.get('saved_searches',[]);
+  var out='';
+  if(sv.length){out+='<div class="sgroup">Saved searches</div>'+sv.map(function(q){return '<a class="sres" data-q="'+esc(q)+'" href="#"><span class="stype">Saved</span><span class="sbody"><span class="stitle">'+esc(q)+'</span></span><span class="spct">★</span></a>';}).join('');}
+  if(h.length){out+='<div class="sgroup">Recent</div>'+h.map(function(q){return '<a class="sres" data-q="'+esc(q)+'" href="#"><span class="stype">Recent</span><span class="sbody"><span class="stitle">'+esc(q)+'</span></span></a>';}).join('');}
+  if(!out) out='<div class="sempty">Type to search across tenders, awards, contractors and MJP projects.<br>Try: <b>water tenders in Pune over 1 crore closing this week</b></div>';
+  return out;
+}
+function wireHistory(){$all('#searchResults .sres[data-q]').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();$('#searchInput').value=a.dataset.q;runSearch();$('#searchInput').focus();});});}
+function hintHtml(){var raw=$('#searchInput').value.trim();return raw?('<span class="linklike" id="saveSearch">☆ Save this search</span> · <span class="linklike" id="searchExport2">Export CSV</span>'):'Smart mode understands amounts (over 1 crore), dates (closing this week) and places.';}
+function pushHistory(q){var h=LS.get('search_history',[]).filter(function(x){return x!==q;});h.unshift(q);LS.set('search_history',h.slice(0,8));}
+function exportSearchCSV(){
+  var rows=SEARCH.results.map(function(r){return {type:TYPE_LABEL[r.d.type],title:r.d.title,detail:r.d.sub,value:(r.d.value!=null?r.d.value:''),id:(r.d.id||r.d.key||'')};});
+  downloadCSV(rows,['type','title','detail','value','id'],'tenderwatch-search.csv');
+}
+function downloadCSV(rows,cols,name){
+  var esc2=function(v){v=(v==null?'':String(v));return '"'+v.replace(/"/g,'""')+'"';};
+  var csv=cols.join(',')+'\n'+rows.map(function(r){return cols.map(function(c){return esc2(r[c]);}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob); var a=document.createElement('a');
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove();},400);
+}
+function exportTenders(){
+  var rows=tendersFiltered().map(function(t){return {title:t.title,ref:t.ref||'',district:t.cityGroup||'',
+    estimate:(typeof t.valueNum==='number'?t.valueNum:''),published:t.published||'',closes:t.closing||'',
+    status:t.stLabel||t.st||'',id:t.id};});
+  downloadCSV(rows,['title','ref','district','estimate','published','closes','status','id'],'tenderwatch-open-tenders.csv');
+}
+function exportAwards(){
+  var rows=AWARDS.filter(function(a){return !aState.q||(a.title+' '+a.contractor+' '+a.org+' '+a.id).toLowerCase().indexOf(aState.q)>=0;})
+    .map(function(a){return {work:a.title,winner:a.contractor,award_value_inr:(typeof a.awardValueNum==='number'?a.awardValueNum:''),
+      estimate_inr:(typeof a.estimate==='number'?a.estimate:''),contract_date:a.contractDate||'',district:a.city||'',id:a.id};});
+  downloadCSV(rows,['work','winner','award_value_inr','estimate_inr','contract_date','district','id'],'tenderwatch-awards.csv');
+}
+function exportMjp(){
+  var rows=mjpFiltered().map(function(p){return {project:p.municipality||p.title_en,district:p.district||'',
+    mjp_role:p.mjp_role||'',approved_inr:((p.approved_cost||{}).inr||''),status:p.status_label||'',
+    tender_status:p.tender_match_status||'',doc_code:p.primary_doc_code||''};});
+  downloadCSV(rows,['project','district','mjp_role','approved_inr','status','tender_status','doc_code'],'tenderwatch-mjp-projects.csv');
+}
+function openSearch(){buildSearchIndex();$('#searchModal').classList.add('open');document.body.style.overflow='hidden';
+  $all('#searchMode button').forEach(function(b){b.classList.toggle('on',b.dataset.m===SEARCH.mode);});
+  $('#searchInput').focus();runSearch();}
+function closeSearch(){$('#searchModal').classList.remove('open');document.body.style.overflow='';}
+$('#searchOpen').addEventListener('click',openSearch);
+$('#searchClose').addEventListener('click',closeSearch);
+$('#searchModal').addEventListener('click',function(e){if(e.target===this)closeSearch();});
+$('#searchInput').addEventListener('input',runSearch);
+$all('#searchMode button').forEach(function(b){b.addEventListener('click',function(){SEARCH.mode=b.dataset.m;LS.set('search_mode',SEARCH.mode);$all('#searchMode button').forEach(function(x){x.classList.toggle('on',x===b);});runSearch();});});
+$('#searchHint').addEventListener('click',function(e){
+  if(e.target.id==='saveSearch'){var q=$('#searchInput').value.trim();if(q){var sv=LS.get('saved_searches',[]).filter(function(x){return x!==q;});sv.unshift(q);LS.set('saved_searches',sv.slice(0,12));e.target.textContent='★ Saved';}}
+  if(e.target.id==='searchExport2') exportSearchCSV();
+});
+document.addEventListener('keydown',function(e){
+  var open=$('#searchModal').classList.contains('open');
+  if(!open && e.key==='/' && !/input|textarea|select/i.test((e.target.tagName||''))){e.preventDefault();openSearch();return;}
+  if(!open) return;
+  if(e.key==='Escape'){closeSearch();}
+  else if(e.key==='ArrowDown'){e.preventDefault();SEARCH.active=Math.min(SEARCH.active+1,SEARCH.results.length-1);paintActive();}
+  else if(e.key==='ArrowUp'){e.preventDefault();SEARCH.active=Math.max(SEARCH.active-1,0);paintActive();}
+  else if(e.key==='Enter'){if(SEARCH.results.length)openResult(SEARCH.active);}
+});
+function paintActive(){$all('#searchResults .sres').forEach(function(a,i){a.classList.toggle('active',i===SEARCH.active);if(i===SEARCH.active&&a.scrollIntoView)a.scrollIntoView({block:'nearest'});});}
 
 /* ---------- boot ---------- */
 applyStaticI18n();
