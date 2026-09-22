@@ -19,14 +19,14 @@
  },
  "discovery": {
   "added": [],
-  "checked_at": "2026-09-22T22:27:18+05:30",
+  "checked_at": "2026-09-23T01:28:56+05:30",
   "failures": [],
   "listing_ok": true,
   "refreshed": [
    "202606251057023925"
   ]
  },
- "generated": "2026-09-22T22:27:20+05:30",
+ "generated": "2026-09-23T01:28:58+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -119,7 +119,7 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-09-22T22:27:18+05:30",
+   "last_checked_at": "2026-09-23T01:28:56+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
