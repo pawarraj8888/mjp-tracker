@@ -1,24 +1,24 @@
 {
- "age_minutes": 0,
+ "age_minutes": 3,
  "cadence_minutes": 15,
- "generated": "2026-09-23T06:27:08+05:30",
- "last_attempt": "2026-09-23T06:27:08+05:30",
- "last_material_change": "2026-09-23T06:27:08+05:30",
- "last_source_collection": "2026-09-23T06:26:58+05:30",
- "last_source_collection_label": "23 Sep 2026, 06:26 IST",
- "last_successful_collection": "2026-09-23T06:27:08+05:30",
- "next_scheduled_run": "2026-09-23T06:41:58+05:30",
+ "generated": "2026-09-23T10:54:01+05:30",
+ "last_attempt": "2026-09-23T10:54:01+05:30",
+ "last_material_change": "2026-09-23T10:54:01+05:30",
+ "last_source_collection": "2026-09-23T10:50:59+05:30",
+ "last_source_collection_label": "23 Sep 2026, 10:50 IST",
+ "last_successful_collection": "2026-09-23T10:54:01+05:30",
+ "next_scheduled_run": "2026-09-23T11:05:59+05:30",
  "overall_status": "up_to_date",
  "sources": [
   {
    "errors": 0,
-   "last_run": "2026-09-23T06:27:08+05:30",
-   "last_run_label": "23 Sep 2026, 06:27 IST",
-   "new": 3478,
-   "note": "tenders=3860 awards=100 retenders=0",
+   "last_run": "2026-09-23T10:54:01+05:30",
+   "last_run_label": "23 Sep 2026, 10:54 IST",
+   "new": 3582,
+   "note": "tenders=3981 awards=100 retenders=0",
    "portal": "mahatenders",
    "status": "ok",
-   "updated": 382
+   "updated": 399
   }
  ]
 }
