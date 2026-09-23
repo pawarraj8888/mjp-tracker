@@ -18,15 +18,17 @@
   "suggested_tenders": 1
  },
  "discovery": {
-  "added": [],
-  "checked_at": "2026-09-23T10:54:02+05:30",
+  "added": [
+   "202609231244077025"
+  ],
+  "checked_at": "2026-09-23T15:43:23+05:30",
   "failures": [],
   "listing_ok": true,
   "refreshed": [
    "202606251057023925"
   ]
  },
- "generated": "2026-09-23T10:54:04+05:30",
+ "generated": "2026-09-23T15:43:28+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -119,7 +121,7 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-09-23T10:54:02+05:30",
+   "last_checked_at": "2026-09-23T15:43:23+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
