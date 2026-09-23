@@ -65,6 +65,11 @@ jobs:
           SMTP_USER: ${{ secrets.SMTP_USER }}
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           MJP_ALERT_TO: ${{ secrets.MJP_ALERT_TO }}
+          # Optional: enables continuous GR search over the portal (the portal's
+          # own department search is CAPTCHA-blocked and not bypassed). Without
+          # these, discovery uses the captcha-free listing + curated GR URLs.
+          GOOGLE_CSE_KEY: ${{ secrets.GOOGLE_CSE_KEY }}
+          GOOGLE_CSE_CX: ${{ secrets.GOOGLE_CSE_CX }}
         run: |
           python -m pipeline mjp || true
 
@@ -77,7 +82,7 @@ jobs:
           git add details_cache.json live.json 2>/dev/null || true
           git add awards.json analytics.json notifications.json data_status.json corrections.json awards.pre_money_fix.json 2>/dev/null || true
           git add mjp_projects.json 2>/dev/null || true
-          git add mjp_store/index.json mjp_store/seeds.json mjp_store/alerts.json mjp_store/link_decisions.json 2>/dev/null || true
+          git add mjp_store/index.json mjp_store/seeds.json mjp_store/alerts.json mjp_store/link_decisions.json mjp_store/gr_candidates.json 2>/dev/null || true
           git add mjp_store/documents 2>/dev/null || true
           if ! git diff --cached --quiet; then
             git commit -m "Update tracker + pipeline state"

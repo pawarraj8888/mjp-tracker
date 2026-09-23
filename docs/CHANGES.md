@@ -16,6 +16,29 @@ on the real Chikhaldara GR (`202606251057023925`, ₹24,99,25,000, implementing
 agency) and tender `2026_COJAL_1337629_1` (surfaced as a *possible* match, never
 auto-confirmed). Full detail in **docs/MJP.md**.
 
+### 0a. GR search + review queue surfaced (follow-up)
+
+The GR portal's own department search is CAPTCHA + load-balancer protected and is
+not bypassed. Added a legitimate, automatable substitute: `search_discovery.py`
+harvests MJP-relevant GR PDF URLs from a search index (Google Programmable Search,
+env-keyed) plus a curated `mjp_store/gr_candidates.json`; every URL flows through
+the same MJP-role gate. GRs that only *mention* MJP now populate a visible
+**Under review** list in the Upcoming MJP section — each with the amount, the
+supporting passage + page, and a link to the source PDF — instead of being
+invisible. Review-candidate PDFs are retained (not pruned) so the queue is
+reproducible on each fresh-DB cron run.
+
+### 0b. Estimated value for "NA" tenders
+
+The portal publishes no "Tender Value in ₹" for ~20% of tenders (it shows "NA").
+Those rows previously read "Unknown". They now show a clearly-labelled estimate
+derived from the EMD (Maharashtra GePNIC EMD is 1% of the estimated cost; the
+median EMD/value ratio across tenders with both known is exactly 0.0100), e.g.
+"≈ ₹47.8 L est.", guarded by a floor so a token/exempt EMD yields no number.
+Exact values stay authoritative and are never mixed with the estimate; when there
+is no basis the cell reads "Not published" rather than a bare "Unknown". The CSV
+export carries a `value_basis` column (exact / estimate / not published).
+
 ## 1. Data audit and correction (the core fix)
 
 **Root cause.** `parse_inr()` (tracker.py) and its duplicate `_inr()`

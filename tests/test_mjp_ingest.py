@@ -140,6 +140,31 @@ def test_incidental_mention_goes_to_review(wired):
     assert any(r["item_type"] == "project_role_uncertain" for r in items)
 
 
+def test_review_item_keeps_amount_evidence_and_pdf(wired):
+    # A "mentioned" GR must (a) enrich the review row with the amount, the
+    # supporting passage and the source URL, and (b) keep its original PDF (flag
+    # "review", not pruned) so the queue survives a fresh-DB run.
+    import json
+    docs, table = wired
+    s = Store(":memory:")
+    d = _doc("cx", "Testville", "Beed", role="mentioned")
+    d["mjp_role_confidence"] = 0.3
+    _prep(docs, table, "cx", d)
+    index = _index(docs, "cx")
+    ingest.build_projects(s, index, "2026-09-17T00:00:00+05:30")
+
+    item = next(r for r in mstore.review_items(s)
+                if r["item_type"] == "project_role_uncertain")
+    detail = json.loads(item["detail"])
+    assert detail["amount_inr"] == "249925000"
+    assert "जीवन" in detail["evidence"]
+    assert detail["url"].endswith("cx.pdf")
+
+    assert index["cx"]["mjp"] == "review"          # kept, not False
+    assert ingest._prune_non_mjp_docs(index) == 0  # so the PDF is not pruned
+    assert (docs / "cx.pdf").exists()
+
+
 def test_suggested_match_flow(wired):
     docs, table = wired
     s = Store(":memory:")

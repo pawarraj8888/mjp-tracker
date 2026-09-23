@@ -1632,6 +1632,27 @@ def format_inr(n):
     return money.format_inr(n)
 
 
+# Estimated-value fallback. On Maharashtra GePNIC the EMD is, by rule, 1% of the
+# estimated tender cost (verified: the median EMD/value ratio across all tenders
+# with both known is exactly 0.0100). For the ~20% of tenders where the portal
+# publishes no "Tender Value in Rs" (it literally shows "NA") we surface
+# value ~= EMD * 100 as a clearly-labelled estimate -- never as the exact figure,
+# and never fed into award/L1 comparisons or alert thresholds. A floor guards
+# against token or exempt EMDs (e.g. Rs 1) yielding a nonsense number.
+EMD_TO_VALUE_MULTIPLE = 100
+MIN_EMD_FOR_ESTIMATE = money.str_to_dec("1000")   # >= Rs 1,000 EMD -> est >= Rs 1 L
+
+
+def emd_value_estimate(details):
+    """A labelled estimate of the tender value from the EMD (1% rule), or None
+    when the EMD is missing or below the reliability floor. Callers use this
+    only when the exact 'Tender Value in Rs' is unknown."""
+    emd = money.parse_amount((details or {}).get("EMD Amount in ₹", ""))
+    if emd is None or emd < MIN_EMD_FOR_ESTIMATE:
+        return None
+    return emd * EMD_TO_VALUE_MULTIPLE
+
+
 def portal_ts(text):
     dt = parse_portal_datetime(text)
     return int(dt.timestamp()) if dt else 0
@@ -1659,8 +1680,19 @@ def dashboard_data():
             cls, label = "awarded", "Awarded"
         else:
             cls, label = tender_status(closing, r is not None, now)
-        # Estimated (pre-bid) value only. Unknown stays unknown (None).
+        # Estimated (pre-bid) value only. Unknown stays unknown (None). When the
+        # portal publishes no value, fall back to a labelled EMD-derived estimate
+        # (kept strictly separate from the exact figure; see emd_value_estimate).
         est = money.parse_amount(d.get("Tender Value in ₹", ""))
+        est_emd = emd_value_estimate(d) if est is None else None
+        if est is not None:
+            value_source = "exact"
+        elif est_emd is not None:
+            value_source = "emd_estimate"
+        elif d:
+            value_source = "not_published"   # detail fetched, portal shows NA
+        else:
+            value_source = "no_detail"       # detail not fetched yet
         award_obj = awards.get(tid, {}).get("award") if awarded else None
         award_val = money.str_to_dec(award_obj.get("awarded_value")) \
             if award_obj else None
@@ -1685,10 +1717,17 @@ def dashboard_data():
             "contractor": contractor,
             "city": city,
             "cityGroup": city_group(city),
-            # Estimated value (exact string | null) + sortable numeric.
+            # Estimated value (exact string | null) + sortable numeric. When the
+            # exact value is unknown, valueNum falls back to the EMD estimate so
+            # the row still sorts/filters sensibly; the display marks it "est.".
             "value": money.dec_to_str(est),
             "valueFmt": format_inr(est) or "",
-            "valueNum": float(est) if est is not None else -1,
+            "valueNum": float(est) if est is not None
+                        else (float(est_emd) if est_emd is not None else -1),
+            # EMD-derived estimate, present only when the exact value is unknown.
+            "estValue": money.dec_to_str(est_emd),
+            "estValueFmt": format_inr(est_emd) or "",
+            "valueSource": value_source,
             # Awarded value kept strictly separate from the estimate.
             "awardValue": money.dec_to_str(award_val),
             "awardValueFmt": format_inr(award_val) or "",

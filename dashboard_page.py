@@ -187,6 +187,8 @@ th.sorted .sortcaret{opacity:1}
 .chip{display:inline-block;background:var(--bg);border:1px solid var(--line);color:var(--ink-2);
   border-radius:7px;padding:2px 8px;font-size:11.5px;margin:2px 4px 2px 0}
 .unknown{color:var(--faint);font-style:italic}
+.estval{color:var(--muted);cursor:help;white-space:nowrap}
+.esttag{font-size:10px;font-weight:600;color:#92600b;background:#fef3c7;border-radius:4px;padding:0 4px;margin-left:2px;vertical-align:1px}
 
 /* ---- Filters ---- */
 .filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;align-items:center}
@@ -251,6 +253,7 @@ th.sorted .sortcaret{opacity:1}
   border-radius:0 8px 8px 0;font-size:12.5px;color:var(--ink-2)}
 .so-list{margin:6px 0 6px 18px;padding:0;font-size:12.5px;color:var(--ink-2)}
 .so-list li{margin:2px 0}
+.rev-ev{margin-top:4px;font-size:11.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:8px}
 .tl{margin:8px 0}
 .tl-item{display:grid;grid-template-columns:96px 1fr;gap:10px;padding:0 0 10px}
 .tl-d{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
@@ -480,6 +483,18 @@ function esc(s){return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){
   return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function el(html){var d=document.createElement('div');d.innerHTML=html.trim();return d.firstChild;}
 function money(fmt){return fmt?('₹'+fmt):'<span class="unknown">Unknown</span>';}
+/* Tender amount cell. Exact value -> plain rupees; portal-NA value -> a clearly
+   labelled EMD-derived estimate; detail fetched but no basis -> "Not published";
+   detail not yet fetched -> "Unknown". Never renders an estimate as exact. */
+function tval(t){
+  if(t.valueFmt) return '₹'+esc(t.valueFmt);
+  if(t.estValueFmt) return '<span class="estval" title="'+
+    esc(T('EMD estimate tip'))+'">≈ ₹'+esc(t.estValueFmt)+
+    ' <span class="esttag">'+esc(T('est.'))+'</span></span>';
+  if(t.valueSource==='not_published') return '<span class="unknown" title="'+
+    esc(T('Not published tip'))+'">'+esc(T('Not published'))+'</span>';
+  return '<span class="unknown">'+esc(T('Unknown'))+'</span>';
+}
 function shortId(t){return t.title && t.title!==t.id ? esc(t.title) : esc(t.id);}
 
 /* localStorage-backed per-viewer state (documented as per-browser). */
@@ -506,6 +521,9 @@ var I18N={mr:{
   // freshness
   "Up to date":"अद्ययावत","Partial":"अर्धवट","Stale":"जुने",
   "Collection failed":"संकलन अयशस्वी","Unknown":"अज्ञात","Checked":"तपासले",
+  "est.":"अंदाजे","Not published":"पोर्टलवर मूल्य नाही",
+  "EMD estimate tip":"पोर्टलवर या निविदेचे मूल्य दिलेले नाही. नियमानुसार बयाणा रक्कम (EMD) ही अंदाजित मूल्याच्या १% असते, त्यावरून हा अंदाज (EMD×१००). अचूक आकडा नाही.",
+  "Not published tip":"पोर्टलने या निविदेचे मूल्य प्रसिद्ध केलेले नाही.",
   // overview
   "Your procurement decision homepage. Figures are drawn from the last committed data snapshot.":
     "तुमचे निर्णय मुखपृष्ठ. आकडे शेवटच्या साठवलेल्या स्नॅपशॉटवरून.",
@@ -554,6 +572,10 @@ var I18N={mr:{
   "Tenders linked":"जोडलेल्या निविदा","confirmed match":"निश्चित जुळणी",
   "Possible matches":"संभाव्य जुळण्या","awaiting confirmation":"पुष्टीकरणाच्या प्रतीक्षेत",
   "In review queue":"पुनरावलोकन रांगेत","needs a human check":"मानवी तपासणी आवश्यक",
+  "Under review":"पुनरावलोकनाधीन","Government Resolution":"शासन निर्णय",
+  "Amount in document":"दस्तऐवजातील रक्कम","GR date":"शासन निर्णय दिनांक",
+  "These Government Resolutions name MJP, but the document does not establish MJP as the implementing, tendering or technical authority. They are candidates for a human to confirm, not tracked projects.":
+    "या शासन निर्णयांत महाराष्ट्र जीवन प्राधिकरणाचा उल्लेख आहे, परंतु दस्तऐवज मजीप्राला कार्यान्वयन, निविदा किंवा तांत्रिक यंत्रणा म्हणून सिद्ध करत नाही. हे मानवी पुष्टीकरणासाठीचे उमेदवार आहेत, मागोवा घेतलेले प्रकल्प नाहीत.",
   "Monitoring":"देखरेख","Runs on the shared 15-minute schedule (target: hourly).":
     "सामायिक १५-मिनिटांच्या वेळापत्रकावर चालते (लक्ष्य: दर तासाला).",
   "Last checked":"शेवटची तपासणी","Search project, district, department…":"प्रकल्प, जिल्हा, विभाग शोधा…",
@@ -814,7 +836,7 @@ function drawTenders(){
         '<div class="t-sub">'+esc(t.org||'')+' · '+t.sources.map(esc).join(', ')+'</div></td>'+
       '<td>'+esc(t.ref||'—')+'</td>'+
       '<td>'+esc(t.cityGroup||'')+'</td>'+
-      '<td class="r">'+money(t.valueFmt)+'</td>'+
+      '<td class="r">'+tval(t)+'</td>'+
       '<td class="r">'+esc(t.published||'—')+'</td>'+
       '<td class="r">'+esc(t.closing||'—')+'</td>'+
       '<td class="r">'+esc(t.opening||'—')+'</td>'+
@@ -1188,7 +1210,7 @@ function renderDetail(id,t,aw,d){
     body+='<div class="kv">'+
       '<div class="k">Department</div><div>'+esc(t.org||'—')+'</div>'+
       '<div class="k">District</div><div>'+esc(t.cityGroup||'—')+'</div>'+
-      '<div class="k">Estimated value</div><div>'+money(t.valueFmt)+'</div>'+
+      '<div class="k">Estimated value</div><div>'+tval(t)+'</div>'+
       '<div class="k">Published</div><div>'+esc(t.published||'—')+'</div>'+
       '<div class="k">Closes</div><div>'+esc(t.closing||'—')+'</div>'+
       '<div class="k">Opening</div><div>'+esc(t.opening||'—')+'</div>'+
@@ -1373,7 +1395,9 @@ function renderMjp(){
         '<option value="none">'+T('No matching tender')+'</option></select>'+
       '<span class="count" id="mCount"></span>'+
       '<button class="btn ghost exportbtn" id="mExport">⤓ CSV</button></div>'+
-    '<div class="card"><div class="tablewrap"><table class="data" id="mTable"></table></div></div>';
+    '<div class="card"><div class="tablewrap"><table class="data" id="mTable"></table></div></div>'+
+    '<div id="mReviewWrap"></div>';
+  drawMjpReview();
   $('#mSearch',p).addEventListener('input',function(){mjpState.q=this.value.toLowerCase();drawMjp();});
   $('#mDistrict',p).addEventListener('change',function(){mjpState.district=this.value;drawMjp();});
   $('#mScheme',p).addEventListener('change',function(){mjpState.scheme=this.value;drawMjp();});
@@ -1425,6 +1449,33 @@ function drawMjp(){
   $('#mTable').innerHTML=head+'<tbody>'+body+'</tbody>';
   $('#mCount').textContent=rows.length+' '+T('project(s)');
   $all('#mTable tr[data-mjp]').forEach(function(tr){tr.addEventListener('click',function(){openMjp(tr.dataset.mjp);});});
+}
+/* Review queue: GRs where MJP is named but its role is not yet established.
+   Shown separately from confirmed projects and never counted as one; each row
+   keeps the amount, the supporting passage, the page and the source PDF so a
+   human can adjudicate. (The brief: incidental mentions go to a review queue.) */
+function drawMjpReview(){
+  var wrap=$('#mReviewWrap'); if(!wrap) return;
+  var items=(MJP.review_queue||[]).filter(function(r){return r.item_type==='project_role_uncertain';});
+  if(!items.length){wrap.innerHTML='';return;}
+  var rows=items.map(function(r){
+    var d=r.detail||{}, code=d.doc_code||r.ref||'';
+    var loc=[d.municipality,d.district].filter(Boolean).map(esc).join(', ');
+    var amt=d.amount_inr?('₹'+esc(fmtNum(parseFloat(d.amount_inr)))):'<span class="unknown">'+T('Unknown')+'</span>';
+    var link=d.url?('<a href="'+esc(d.url)+'" target="_blank" rel="noopener noreferrer">'+esc(code)+' ↗</a>'):esc(code);
+    var ev=d.evidence?('<div class="rev-ev">'+esc(d.evidence)+(d.evidence_page?(' <span class="t-sub">— '+T('page')+' '+esc(d.evidence_page)+'</span>'):'')+'</div>'):'';
+    return '<tr><td class="t-title">'+link+(d.title?('<div class="t-sub">'+esc(d.title)+'</div>'):'')+ev+'</td>'+
+      '<td>'+(loc||'<span class="unknown">'+T('Unknown')+'</span>')+'</td>'+
+      '<td class="r num">'+amt+'</td>'+
+      '<td>'+esc(d.gr_date||'—')+'</td></tr>';
+  }).join('');
+  wrap.innerHTML='<h2 class="so-h" style="margin:22px 0 6px">'+T('Under review')+
+    ' <span class="t-sub">('+items.length+')</span></h2>'+
+    '<p class="sub" style="margin-top:0">'+T('These Government Resolutions name MJP, but the document does not establish MJP as the implementing, tendering or technical authority. They are candidates for a human to confirm, not tracked projects.')+'</p>'+
+    '<div class="card"><div class="tablewrap"><table class="data"><thead><tr>'+
+    '<th class="no-sort">'+T('Government Resolution')+'</th><th class="no-sort">'+T('Location')+'</th>'+
+    '<th class="no-sort r">'+T('Amount in document')+'</th><th class="no-sort">'+T('GR date')+'</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function mjpRoleLabel(r){
   return {implementing_agency:'Implementing agency',tendering_authority:'Tendering authority',
@@ -1573,6 +1624,7 @@ function buildSearchIndex(){
       sub:[t.org,t.cityGroup].filter(Boolean).join(' · '),
       hay:((t.title||'')+' '+t.id+' '+(t.org||'')+' '+(t.ref||'')+' '+(t.cityGroup||'')).toLowerCase(),
       value:(typeof t.valueNum==='number'?t.valueNum:null),
+      fmt:(t.valueFmt||t.estValueFmt||''),est:(!t.valueFmt&&!!t.estValueFmt),
       closingTs:toMs(t.closingTs),publishedTs:toMs(t.publishedTs),live:!!t.live,st:t.st,district:t.cityGroup});
   });
   (AWARDS||[]).forEach(function(a){
@@ -1706,7 +1758,7 @@ function renderSearchResults(parsed){
   var terms=SEARCH.lastTerms;
   var html=SEARCH.results.map(function(r,i){
     var d=r.d, pct=Math.round(100*r.score/max);
-    var right=d.fmt?('₹'+esc(d.fmt)):(d.value!=null?'₹'+fmtNum(d.value):'');
+    var right=d.fmt?('₹'+esc(d.fmt)+(d.est?' '+esc(T('est.')):'')):(d.value!=null?'₹'+fmtNum(d.value):'');
     return '<a class="sres'+(i===SEARCH.active?' active':'')+'" data-i="'+i+'" href="#">'+
       '<span class="stype">'+TYPE_LABEL[d.type]+'</span>'+
       '<span class="sbody"><span class="stitle">'+hl(d.title,terms)+'</span>'+
@@ -1752,11 +1804,14 @@ function downloadCSV(rows,cols,name){
   a.href=url; a.download=name; document.body.appendChild(a); a.click();
   setTimeout(function(){URL.revokeObjectURL(url);a.remove();},400);
 }
+var VALUE_BASIS={exact:'exact (portal)',emd_estimate:'estimate (1% EMD rule)',
+  not_published:'not published',no_detail:'detail not fetched'};
 function exportTenders(){
   var rows=tendersFiltered().map(function(t){return {title:t.title,ref:t.ref||'',district:t.cityGroup||'',
-    estimate:(typeof t.valueNum==='number'?t.valueNum:''),published:t.published||'',closes:t.closing||'',
+    estimate:((t.valueNum!=null&&t.valueNum>=0)?t.valueNum:''),
+    value_basis:VALUE_BASIS[t.valueSource]||'',published:t.published||'',closes:t.closing||'',
     status:t.stLabel||t.st||'',id:t.id};});
-  downloadCSV(rows,['title','ref','district','estimate','published','closes','status','id'],'tenderwatch-open-tenders.csv');
+  downloadCSV(rows,['title','ref','district','estimate','value_basis','published','closes','status','id'],'tenderwatch-open-tenders.csv');
 }
 function exportAwards(){
   var rows=AWARDS.filter(function(a){return !aState.q||(a.title+' '+a.contractor+' '+a.org+' '+a.id).toLowerCase().indexOf(aState.q)>=0;})

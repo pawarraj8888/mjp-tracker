@@ -29,13 +29,16 @@ import money
 import timez
 
 from ..store import Store
-from . import extract, gr_source, match, store as mstore
+from . import extract, gr_source, match, search_discovery, store as mstore
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 MJP_DIR = ROOT / "mjp_store"
 DOCS_DIR = MJP_DIR / "documents"
 INDEX_FILE = MJP_DIR / "index.json"
 SEEDS_FILE = MJP_DIR / "seeds.json"
+# Curated / accumulated GR PDF URLs discovered by search. Ingested through the
+# same MJP-role gate as everything else; a plain JSON list of URL strings.
+CANDIDATES_FILE = MJP_DIR / "gr_candidates.json"
 LINK_DECISIONS_FILE = MJP_DIR / "link_decisions.json"
 
 PORTAL = "gr.maharashtra.gov.in"
@@ -111,10 +114,12 @@ def detect_scheme_hint(text: str) -> str:
 # -- discovery ---------------------------------------------------------------
 
 def discover(index: dict, session=None, seeds: list | None = None,
-             fetch_live: bool = True, now: str = "") -> dict:
+             fetch_live: bool = True, now: str = "",
+             candidates: list | None = None) -> dict:
     """Update the durable index with newly published relevant GRs (from the
-    captcha-free listing) and any seed codes. Downloads each new original once.
-    Returns a discovery summary (including honest coverage notes)."""
+    captcha-free listing), any seed codes, and any search-discovered candidate
+    URLs. Downloads each new original once. Returns a discovery summary
+    (including honest coverage notes)."""
     now = now or timez.iso_ist()
     added, refreshed, failures = [], [], []
     listing_ok = True
@@ -129,6 +134,18 @@ def discover(index: dict, session=None, seeds: list | None = None,
         except Exception as exc:
             listing_ok = False
             failures.append({"stage": "listing", "error": str(exc)})
+
+    # Search-discovered GR PDF URLs (see search_discovery). These are untrusted
+    # candidates: the code is derived from the URL and each still passes through
+    # the same download + MJP-role gate. Unlike a seed, a candidate already known
+    # to be non-MJP is not re-downloaded.
+    for url in (candidates or []):
+        entries.append({
+            "doc_code": "", "url": url, "department": "", "title": "",
+            "gr_date": "", "district": "", "municipality": "", "scheme": "",
+            "language": "en" if "/English/" in url else "mr",
+            "relevance": "search",
+        })
 
     for s in (seeds or []):
         entries.append({
@@ -282,22 +299,34 @@ def build_projects(store: Store, index: dict, now: str) -> dict:
 
         # Gate: only keep GRs where MJP's role is established. Mark every
         # document's index entry so run() can prune non-MJP originals, and drop
-        # (or, for a bare mention, review) the rest instead of showing it.
+        # (or, for a bare mention, review) the rest instead of showing it. A
+        # "mentioned" GR is kept (flag "review", not pruned) so the review queue
+        # is reproducible on each fresh-DB run; a GR with no MJP reference at all
+        # is marked False and its original pruned.
         role = best_role["doc"]["mjp_role"]
         codes = [i["doc"]["doc_code"] for i in items]
         if role not in ESTABLISHED_ROLES:
+            flag = "review" if role == "mentioned" else False
             for c in codes:
                 if c in index:
-                    index[c]["mjp"] = False
+                    index[c]["mjp"] = flag
             if role == "mentioned":
+                bd = best_role["doc"]
                 mstore.queue_review(
                     store, "project_role_uncertain", codes[0],
                     "MJP is named but its role is not established; not shown "
                     "as a project.",
                     {"municipality": muni, "district": district,
                      "title": (items[0]["doc"].get("title_original") or "")[:160],
-                     "doc_code": codes[0]}, score=1.0 -
-                    best_role["doc"]["mjp_role_confidence"])
+                     "doc_code": codes[0],
+                     # Retain the supporting passage + page + amount so a human
+                     # can adjudicate the candidate straight from the queue.
+                     "amount_inr": bd.get("approved_cost_inr"),
+                     "evidence": (bd.get("mjp_role_evidence") or "")[:400],
+                     "evidence_page": bd.get("mjp_role_page"),
+                     "gr_date": items[0]["entry"].get("gr_date", ""),
+                     "url": items[0]["entry"].get("url", "")},
+                    score=1.0 - best_role["doc"]["mjp_role_confidence"])
                 n_review += 1
             continue
         for c in codes:
@@ -525,6 +554,34 @@ def _prune_non_mjp_docs(index: dict) -> int:
     return n
 
 
+# -- search discovery --------------------------------------------------------
+
+def _discover_candidates(session=None) -> tuple[list[str], dict]:
+    """Collect GR PDF URLs from the search index (when configured) plus the
+    curated candidate file, so the GR portal's captcha-blocked department search
+    is replaced by an automatable, honest substitute. Returns (urls, note); the
+    note records the backend and any coverage gap without ever masquerading a
+    missing backend as a clean 'no results'."""
+    curated = _load_json(CANDIDATES_FILE, [])
+    curated = [u for u in curated if isinstance(u, str)]
+    try:
+        res = search_discovery.harvest(session=session, extra_urls=curated)
+        return res["urls"], {
+            "backend": res["backend"], "queries": res["queries"],
+            "found": len(res["urls"]), "rejected": res["rejected"],
+            "failures": res["failures"], "curated": len(curated),
+        }
+    except search_discovery.SearchNotConfigured as exc:
+        # No API key and no curated URLs: report the gap, do not pretend success.
+        return [], {"backend": "none", "found": 0, "curated": 0,
+                    "coverage_gap": str(exc)}
+    except Exception as exc:                                # noqa: BLE001
+        # Any other discovery failure must degrade to the listing path, not abort
+        # the whole MJP run (and never silently report "no new").
+        return [], {"backend": "error", "found": 0,
+                    "curated": len(curated), "error": str(exc)}
+
+
 # -- top-level run -----------------------------------------------------------
 
 def run(store: Store, fetch_live: bool = True, session=None,
@@ -534,8 +591,10 @@ def run(store: Store, fetch_live: bool = True, session=None,
     now = timez.iso_ist()
     index = _load_json(INDEX_FILE, {})
     seeds = _load_json(SEEDS_FILE, [])
+    candidates, search_note = _discover_candidates(session)
     disc = discover(index, session=session, seeds=seeds,
-                    fetch_live=fetch_live, now=now)
+                    fetch_live=fetch_live, now=now, candidates=candidates)
+    disc["search"] = search_note
     built = build_projects(store, index, now)   # sets index[code]["mjp"]
     pruned = _prune_non_mjp_docs(index)
     _save_json(INDEX_FILE, index)               # save AFTER mjp flags + prune
@@ -547,6 +606,16 @@ def run(store: Store, fetch_live: bool = True, session=None,
         except Exception:
             state = {}
     matched = match_all(store, state, now)
+    sb = (disc.get("search") or {}).get("backend", "none")
+    coverage_note = (
+        "GRs are discovered three ways, all captcha-free: the portal's latest "
+        "listing, a search index over the portal (%s), and curated GR URLs. The "
+        "portal's own department/date search is CAPTCHA + load-balancer "
+        "protected and is NOT auto-solved. Set GOOGLE_CSE_KEY and GOOGLE_CSE_CX "
+        "to widen continuous search; otherwise coverage is the listing plus "
+        "curated URLs." % ("search index active" if sb != "none"
+                           else "search index inactive: no API key"))
+    disc["coverage_note"] = coverage_note
     store.record_run(PORTAL, now, timez.iso_ist(), len(disc["added"]),
                      len(disc["refreshed"]), len(disc["failures"]),
                      note="mjp docs=%d projects=%d links=%d suggested=%d"
@@ -554,8 +623,4 @@ def run(store: Store, fetch_live: bool = True, session=None,
                         matched["linked"], matched["suggested"]))
     return {"discovery": disc, "build": built, "match": matched,
             "pruned_non_mjp": pruned, "indexed_docs": len(index),
-            "coverage_note": (
-                "Listing polling + direct-code ingest are captcha-free. "
-                "Department/date search and pagination are gated by a CAPTCHA "
-                "and a load-balancer viewstate MAC and are NOT auto-solved; "
-                "deep history requires seed codes or manual assist.")}
+            "coverage_note": coverage_note}
