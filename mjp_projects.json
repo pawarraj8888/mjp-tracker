@@ -18,10 +18,18 @@
   "suggested_tenders": 1
  },
  "discovery": {
-  "added": [],
-  "checked_at": "2026-09-24T10:15:01+05:30",
+  "added": [
+   "202609241455259225"
+  ],
+  "checked_at": "2026-09-24T15:06:42+05:30",
   "coverage_note": "GRs are discovered three ways, all captcha-free: the portal's latest listing, a search index over the portal (search index inactive: no API key), and curated GR URLs. The portal's own department/date search is CAPTCHA + load-balancer protected and is NOT auto-solved. Set GOOGLE_CSE_KEY and GOOGLE_CSE_CX to widen continuous search; otherwise coverage is the listing plus curated URLs.",
-  "failures": [],
+  "failures": [
+   {
+    "code": "202609241450047525...",
+    "error": "document code is not digits-only",
+    "stage": "validate"
+   }
+  ],
   "listing_ok": true,
   "refreshed": [
    "202203111830233728",
@@ -42,7 +50,7 @@
    "rejected": 0
   }
  },
- "generated": "2026-09-24T10:15:07+05:30",
+ "generated": "2026-09-24T15:07:02+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -135,7 +143,7 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-09-24T10:15:01+05:30",
+   "last_checked_at": "2026-09-24T15:06:42+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
