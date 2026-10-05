@@ -11,15 +11,15 @@
   "linked_tenders": 0,
   "mjp_alerts": 0,
   "mjp_documents": 1,
-  "mjp_events": 3,
+  "mjp_events": 2,
   "mjp_projects": 1,
-  "mjp_review_queue": 5,
-  "mjp_tender_links": 1,
-  "suggested_tenders": 1
+  "mjp_review_queue": 4,
+  "mjp_tender_links": 0,
+  "suggested_tenders": 0
  },
  "discovery": {
   "added": [],
-  "checked_at": "2026-10-05T11:56:19+05:30",
+  "checked_at": "2026-10-05T20:37:00+05:30",
   "coverage_note": "GRs are discovered three ways, all captcha-free: the portal's latest listing, a search index over the portal (search index inactive: no API key), and curated GR URLs. The portal's own department/date search is CAPTCHA + load-balancer protected and is NOT auto-solved. Set GOOGLE_CSE_KEY and GOOGLE_CSE_CX to widen continuous search; otherwise coverage is the listing plus curated URLs.",
   "failures": [],
   "listing_ok": true,
@@ -42,7 +42,7 @@
    "rejected": 0
   }
  },
- "generated": "2026-10-05T11:56:25+05:30",
+ "generated": "2026-10-05T20:37:06+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -91,21 +91,6 @@
    ],
    "events": [
     {
-     "date": "",
-     "detail": {
-      "confidence": 0.85,
-      "reasons": [
-       "municipality_in_tender",
-       "mjp_is_tendering_agency",
-       "district_match"
-      ],
-      "tender_id": "2026_COJAL_1337629_1"
-     },
-     "event_type": "tender_suggested",
-     "label": "Possible tender match",
-     "source_doc_code": "2026_COJAL_1337629_1"
-    },
-    {
      "date": "2026-06-25",
      "detail": {
       "doc_code": "202606251057023925",
@@ -135,40 +120,14 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-10-05T11:56:19+05:30",
+   "last_checked_at": "2026-10-05T20:37:00+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
    },
-   "links": [
-    {
-     "amount_note": "Scheme wording differs (project: वैशिष्ट्यपूर्ण (special grant); tender: MSJNM); relationship not confirmed on scheme. Approved cost 249925000 vs tender estimate 211804330 -- kept as separate figures; a difference is not assumed to be GST or scope change.",
-     "confidence": 0.85,
-     "confirmed_at": null,
-     "confirmed_by": null,
-     "reasons": [
-      {
-       "detail": "Chikhaldara named in tender",
-       "signal": "municipality_in_tender",
-       "weight": 0.4
-      },
-      {
-       "detail": "MJP office in tender address/organisation",
-       "signal": "mjp_is_tendering_agency",
-       "weight": 0.3
-      },
-      {
-       "detail": "district Amravati",
-       "signal": "district_match",
-       "weight": 0.15
-      }
-     ],
-     "status": "suggested",
-     "tender_id": "2026_COJAL_1337629_1"
-    }
-   ],
+   "links": [],
    "missing": [],
-   "mjp_office": "Executive Engineer, MJP WM Division Amravati",
+   "mjp_office": "",
    "mjp_role": "implementing_agency",
    "mjp_role_confidence": 0.9,
    "mjp_role_evidence": "ासकीय मान्यता प्रदान करावी. 3. सदर िासन शनर्णयातील कामािी कायान्वयन यंत्रर्ा “महाराष्ट्र जीवन प्राशधकरर्” राशहल. 4. सदर िासन शनर्णयानुसार प्रत्येक कामाच्या रक्कम रू. 10.00 लक्ष अथवा त्यापेक्षा जास्त शकमतीस मान्यता देण्यात आली आहे.सबब,",
@@ -181,13 +140,13 @@
     "plain": null
    },
    "scheme": "वैशिष्ट्यपूर्ण (special grant)",
-   "status_label": "Possible tender match",
+   "status_label": "Funding sanctioned",
    "tender_estimate": {
     "display": null,
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "Possible tender match: 2026_COJAL_1337629_1",
+   "tender_match_status": "No matching tender found as of 05 Oct 2026, 20:37 IST",
    "title_en": "Water-supply works for Chikhaldara, Amravati. Components include: Intake Well @ Bagling Dam (3.00 MM dia. 5.5 M Depth); Inspection Well From Baglinga Dam (Dia. 2.00 M, Depth - 9.80 M); Connecting Main 400 mm dia., L-60 M; Jack Well 8.00 M Dia. 19.00 M Deep with overhead Pump House 8.60 x 19.60 M.",
    "title_original": "“वैशिष्ट्यपूर्ण” योजनेअंतर्गत चिखलदरा नगरपरिषद, जि. अमरावती करीता निधी मंजूर करण्याबाबत.",
    "uncertainties": [
@@ -197,33 +156,6 @@
   }
  ],
  "review_queue": [
-  {
-   "detail": {
-    "confidence": 0.85,
-    "note": "Scheme wording differs (project: वैशिष्ट्यपूर्ण (special grant); tender: MSJNM); relationship not confirmed on scheme. Approved cost 249925000 vs tender estimate 211804330 -- kept as separate figures; a difference is not assumed to be GST or scope change.",
-    "reasons": [
-     {
-      "detail": "Chikhaldara named in tender",
-      "signal": "municipality_in_tender",
-      "weight": 0.4
-     },
-     {
-      "detail": "MJP office in tender address/organisation",
-      "signal": "mjp_is_tendering_agency",
-      "weight": 0.3
-     },
-     {
-      "detail": "district Amravati",
-      "signal": "district_match",
-      "weight": 0.15
-     }
-    ]
-   },
-   "item_type": "tender_match_suggested",
-   "reason": "Possible tender match for review.",
-   "ref": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5|2026_COJAL_1337629_1",
-   "score": 0.85
-  },
   {
    "detail": {
     "amount_inr": "546100000",
