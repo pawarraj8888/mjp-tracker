@@ -18,10 +18,8 @@
   "suggested_tenders": 0
  },
  "discovery": {
-  "added": [
-   "202610061359370125"
-  ],
-  "checked_at": "2026-10-06T14:30:28+05:30",
+  "added": [],
+  "checked_at": "2026-10-06T21:07:36+05:30",
   "coverage_note": "GRs are discovered three ways, all captcha-free: the portal's latest listing, a search index over the portal (search index inactive: no API key), and curated GR URLs. The portal's own department/date search is CAPTCHA + load-balancer protected and is NOT auto-solved. Set GOOGLE_CSE_KEY and GOOGLE_CSE_CX to widen continuous search; otherwise coverage is the listing plus curated URLs.",
   "failures": [],
   "listing_ok": true,
@@ -44,7 +42,7 @@
    "rejected": 0
   }
  },
- "generated": "2026-10-06T14:30:35+05:30",
+ "generated": "2026-10-06T21:07:43+05:30",
  "projects": [
   {
    "approved_cost": {
@@ -122,7 +120,7 @@
     "plain": null
    },
    "id": "6d649a6f-6f9b-5d0b-8ffe-a3fbe9ed58a5",
-   "last_checked_at": "2026-10-06T14:30:28+05:30",
+   "last_checked_at": "2026-10-06T21:07:36+05:30",
    "latest_approval": {
     "date": "2026-06-25",
     "label": "Funding sanctioned"
@@ -148,7 +146,7 @@
     "inr": null,
     "plain": null
    },
-   "tender_match_status": "No matching tender found as of 06 Oct 2026, 14:30 IST",
+   "tender_match_status": "No matching tender found as of 06 Oct 2026, 21:07 IST",
    "title_en": "Water-supply works for Chikhaldara, Amravati. Components include: Intake Well @ Bagling Dam (3.00 MM dia. 5.5 M Depth); Inspection Well From Baglinga Dam (Dia. 2.00 M, Depth - 9.80 M); Connecting Main 400 mm dia., L-60 M; Jack Well 8.00 M Dia. 19.00 M Deep with overhead Pump House 8.60 x 19.60 M.",
    "title_original": "“वैशिष्ट्यपूर्ण” योजनेअंतर्गत चिखलदरा नगरपरिषद, जि. अमरावती करीता निधी मंजूर करण्याबाबत.",
    "uncertainties": [
