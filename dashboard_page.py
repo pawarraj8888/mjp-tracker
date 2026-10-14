@@ -574,6 +574,10 @@ var I18N={mr:{
   "In review queue":"पुनरावलोकन रांगेत","needs a human check":"मानवी तपासणी आवश्यक",
   "Under review":"पुनरावलोकनाधीन","Government Resolution":"शासन निर्णय",
   "Amount in document":"दस्तऐवजातील रक्कम","GR date":"शासन निर्णय दिनांक",
+  "MJP portal tenders":"मजीप्रा संकेतस्थळावरील निविदा","Tenders published on MJP’s own website":
+    "महाराष्ट्र जीवन प्राधिकरणाच्या स्वतःच्या संकेतस्थळावर प्रसिद्ध केलेल्या निविदा",
+  "Tender":"निविदा","Region":"विभाग","Start":"सुरू","End":"समाप्त",
+  "Open":"खुली","Closed":"बंद",
   "These Government Resolutions name MJP, but the document does not establish MJP as the implementing, tendering or technical authority. They are candidates for a human to confirm, not tracked projects.":
     "या शासन निर्णयांत महाराष्ट्र जीवन प्राधिकरणाचा उल्लेख आहे, परंतु दस्तऐवज मजीप्राला कार्यान्वयन, निविदा किंवा तांत्रिक यंत्रणा म्हणून सिद्ध करत नाही. हे मानवी पुष्टीकरणासाठीचे उमेदवार आहेत, मागोवा घेतलेले प्रकल्प नाहीत.",
   "Monitoring":"देखरेख","Runs on the shared 15-minute schedule (target: hourly).":
@@ -1396,8 +1400,10 @@ function renderMjp(){
       '<span class="count" id="mCount"></span>'+
       '<button class="btn ghost exportbtn" id="mExport">⤓ CSV</button></div>'+
     '<div class="card"><div class="tablewrap"><table class="data" id="mTable"></table></div></div>'+
-    '<div id="mReviewWrap"></div>';
+    '<div id="mReviewWrap"></div>'+
+    '<div id="mPortalWrap"></div>';
   drawMjpReview();
+  drawMjpPortal();
   $('#mSearch',p).addEventListener('input',function(){mjpState.q=this.value.toLowerCase();drawMjp();});
   $('#mDistrict',p).addEventListener('change',function(){mjpState.district=this.value;drawMjp();});
   $('#mScheme',p).addEventListener('change',function(){mjpState.scheme=this.value;drawMjp();});
@@ -1475,6 +1481,35 @@ function drawMjpReview(){
     '<div class="card"><div class="tablewrap"><table class="data"><thead><tr>'+
     '<th class="no-sort">'+T('Government Resolution')+'</th><th class="no-sort">'+T('Location')+'</th>'+
     '<th class="no-sort r">'+T('Amount in document')+'</th><th class="no-sort">'+T('GR date')+'</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
+}
+/* MJP's OWN published tenders, straight from mjp.maharashtra.gov.in/tenders.
+   A separate official source from the GePNIC live tenders; shown with its own
+   provenance line and refreshed by the cron. */
+function drawMjpPortal(){
+  var wrap=$('#mPortalWrap'); if(!wrap) return;
+  var pt=(MJP.portal_tenders)||{}, items=pt.tenders||[];
+  if(!items.length){wrap.innerHTML='';return;}
+  var today=new Date().toISOString().slice(0,10);
+  var rows=items.map(function(t){
+    var open=t.end && t.end>=today;
+    var nm=t.pdf_url?('<a href="'+esc(t.pdf_url)+'" target="_blank" rel="noopener noreferrer">'+esc(t.name)+' ↗</a>'):esc(t.name);
+    return '<tr><td class="t-title">'+nm+
+        (t.description&&t.description!==t.name?('<div class="t-sub">'+esc(t.description)+'</div>'):'')+'</td>'+
+      '<td>'+esc(t.region||'—')+'</td>'+
+      '<td class="r">'+esc(t.start||'—')+'</td>'+
+      '<td class="r">'+esc(t.end||'—')+'</td>'+
+      '<td><span class="badge '+(open?'live':'closed')+'">'+T(open?'Open':'Closed')+'</span></td></tr>';
+  }).join('');
+  wrap.innerHTML='<h2 class="so-h" style="margin:22px 0 6px">'+T('MJP portal tenders')+
+    ' <span class="t-sub">('+items.length+')</span></h2>'+
+    '<p class="sub" style="margin-top:0">'+T('Tenders published on MJP’s own website')+
+    ' (<a href="'+esc(pt.source||'https://mjp.maharashtra.gov.in/tenders/')+'" target="_blank" rel="noopener noreferrer">mjp.maharashtra.gov.in/tenders</a>)'+
+    (pt.last_checked?('. '+T('Last checked')+' '+esc(fmtIso(pt.last_checked))):'')+'.</p>'+
+    '<div class="card"><div class="tablewrap"><table class="data"><thead><tr>'+
+    '<th class="no-sort">'+T('Tender')+'</th><th class="no-sort">'+T('Region')+'</th>'+
+    '<th class="no-sort r">'+T('Start')+'</th><th class="no-sort r">'+T('End')+'</th>'+
+    '<th class="no-sort">'+T('Status')+'</th>'+
     '</tr></thead><tbody>'+rows+'</tbody></table></div></div>';
 }
 function mjpRoleLabel(r){

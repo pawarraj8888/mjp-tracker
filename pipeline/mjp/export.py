@@ -21,6 +21,20 @@ from . import store as mstore
 ROOT = Path(__file__).resolve().parent.parent.parent
 FEED_FILE = ROOT / "mjp_projects.json"
 ALERTS_LOG = ROOT / "mjp_store" / "alerts.json"
+PORTAL_TENDERS_FILE = ROOT / "mjp_store" / "portal_tenders.json"
+
+
+def _portal_tenders() -> dict:
+    """MJP's own published tenders (mjp.maharashtra.gov.in/tenders), ingested by
+    mjp_portal. Returns {"tenders", "source", "last_checked"} or empty."""
+    try:
+        data = json.loads(PORTAL_TENDERS_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"tenders": [], "source": "", "last_checked": ""}
+    return {"tenders": data.get("tenders", []),
+            "source": data.get("source", ""),
+            "last_checked": data.get("last_checked", ""),
+            "last_error": data.get("last_error", "")}
 
 _EVENT_LABEL = {
     "project_discovered": "Project discovered",
@@ -187,6 +201,8 @@ def build_feed(store: Store, discovery: dict | None = None) -> dict:
                    "pending": len(alerts_log.get("pending", [])),
                    "recipients": alerts_log.get("recipients", [])},
         "projects": projects,
+        # MJP's own published tenders, straight from mjp.maharashtra.gov.in.
+        "portal_tenders": _portal_tenders(),
     }
 
 

@@ -74,7 +74,8 @@ def main(argv=None) -> int:
     sub.add_parser("review")
     p_mjp = sub.add_parser("mjp")  # Upcoming MJP Projects
     p_mjp.add_argument("action", nargs="?", default="ingest",
-                       choices=["ingest", "export", "alerts", "verify"])
+                       choices=["ingest", "export", "alerts", "verify",
+                                "portal"])
     p_mjp.add_argument("--no-live", action="store_true",
                        help="skip the live GR listing fetch (seeds only)")
     p_mjp.add_argument("--dry-run-alerts", action="store_true",
@@ -152,11 +153,15 @@ def _load_details():
 
 
 def _mjp(args) -> int:
-    from .mjp import alerts, export, ingest, verify
+    from .mjp import alerts, export, ingest, mjp_portal, verify
     if args.action == "verify":
         result = verify.run()
         _print(result)
         return 0 if result.get("pass") else 2
+    if args.action == "portal":
+        # Refresh MJP's own published tenders (mjp.maharashtra.gov.in/tenders).
+        _print(mjp_portal.run())
+        return 0
     store = Store()
     if args.action == "export":
         _print(export.write_feed(store))
@@ -166,13 +171,15 @@ def _mjp(args) -> int:
         _print(alerts.run(store, projects, _load_details(),
                           dry_run=args.dry_run_alerts))
         return 0
-    # default: full ingest -> export -> prepare/send alerts
+    # default: refresh MJP portal tenders -> full GR ingest -> export -> alerts.
+    portal = mjp_portal.run()
     summary = ingest.run(store, fetch_live=not args.no_live)
     exp = export.write_feed(store, summary.get("discovery"))
     projects = export.build_feed(store)["projects"]
     al = alerts.run(store, projects, _load_details(),
                     dry_run=args.dry_run_alerts)
-    _print({"ingest": summary, "export": exp, "alerts": al})
+    _print({"portal_tenders": portal, "ingest": summary,
+            "export": exp, "alerts": al})
     return 0
 
 
