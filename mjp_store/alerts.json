@@ -3,25 +3,25 @@
  "delivered": [],
  "pending": [
   {
-   "attempts": 241,
+   "attempts": 242,
    "event_key": "backfill_digest",
    "kind": "alert",
    "reason": "SMTP not configured (SMTP_USER/SMTP_PASS unset)",
    "recipient": "pawarraj8888@gmail.com",
-   "updated_at": "2026-10-27T22:06:58+05:30"
+   "updated_at": "2026-10-28T02:29:32+05:30"
   },
   {
-   "attempts": 241,
+   "attempts": 242,
    "event_key": "backfill_digest",
    "kind": "alert",
    "reason": "SMTP not configured (SMTP_USER/SMTP_PASS unset)",
    "recipient": "sppawar.sachin7777@gmail.com",
-   "updated_at": "2026-10-27T22:06:58+05:30"
+   "updated_at": "2026-10-28T02:29:32+05:30"
   }
  ],
  "recipients": [
   "pawarraj8888@gmail.com",
   "sppawar.sachin7777@gmail.com"
  ],
- "updated_at": "2026-10-27T22:06:58+05:30"
+ "updated_at": "2026-10-28T02:29:32+05:30"
 }
