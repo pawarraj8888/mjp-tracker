@@ -12,57 +12,63 @@
  "by_district": [
   {
    "district": "Mumbai",
-   "floated_fmt": "25241.78 Cr",
-   "floated_inr": "252417774862.00",
-   "tenders": 940
+   "floated_fmt": "25237.11 Cr",
+   "floated_inr": "252371059375.00",
+   "tenders": 921
   },
   {
    "district": "Pune",
-   "floated_fmt": "1144.62 Cr",
-   "floated_inr": "11446215230.00",
-   "tenders": 1681
+   "floated_fmt": "1106.85 Cr",
+   "floated_inr": "11068520326.00",
+   "tenders": 1947
   },
   {
    "district": "Satara",
    "floated_fmt": "1022.76 Cr",
    "floated_inr": "10227556144",
-   "tenders": 37
+   "tenders": 36
   },
   {
    "district": "Nagpur",
-   "floated_fmt": "705.7 Cr",
-   "floated_inr": "7057031436.00",
-   "tenders": 268
+   "floated_fmt": "717.12 Cr",
+   "floated_inr": "7171155287.00",
+   "tenders": 270
   },
   {
    "district": "Nashik",
-   "floated_fmt": "529.47 Cr",
-   "floated_inr": "5294658042.00",
-   "tenders": 202
+   "floated_fmt": "521.99 Cr",
+   "floated_inr": "5219910128.00",
+   "tenders": 201
   },
   {
    "district": "Nanded",
-   "floated_fmt": "201.54 Cr",
-   "floated_inr": "2015397373.00",
-   "tenders": 86
+   "floated_fmt": "200.93 Cr",
+   "floated_inr": "2009347017.00",
+   "tenders": 75
   },
   {
    "district": "Ulhasnagar Municipal Corporati",
    "floated_fmt": "177.89 Cr",
    "floated_inr": "1778887678",
-   "tenders": 5
+   "tenders": 4
   },
   {
    "district": "Chhatrapati Sambhajinagar",
-   "floated_fmt": "127.51 Cr",
-   "floated_inr": "1275067393.00",
-   "tenders": 111
+   "floated_fmt": "126.71 Cr",
+   "floated_inr": "1267137247.00",
+   "tenders": 107
   },
   {
    "district": "Solapur",
    "floated_fmt": "97.52 Cr",
    "floated_inr": "975238274.00",
-   "tenders": 104
+   "tenders": 102
+  },
+  {
+   "district": "Kolhapur",
+   "floated_fmt": "97.51 Cr",
+   "floated_inr": "975133707",
+   "tenders": 120
   },
   {
    "district": "Maharashtra",
@@ -72,15 +78,21 @@
   },
   {
    "district": "Chandrapur",
-   "floated_fmt": "84.61 Cr",
-   "floated_inr": "846060280.00",
-   "tenders": 81
+   "floated_fmt": "87.57 Cr",
+   "floated_inr": "875672280.00",
+   "tenders": 76
   },
   {
    "district": "Beed",
-   "floated_fmt": "78.93 Cr",
-   "floated_inr": "789277663.00",
-   "tenders": 160
+   "floated_fmt": "78.48 Cr",
+   "floated_inr": "784816242.00",
+   "tenders": 156
+  },
+  {
+   "district": "Thane",
+   "floated_fmt": "76.35 Cr",
+   "floated_inr": "763534632.00",
+   "tenders": 174
   },
   {
    "district": "Parbhani",
@@ -90,57 +102,45 @@
   },
   {
    "district": "Aurangabad",
-   "floated_fmt": "62.79 Cr",
-   "floated_inr": "627894550",
-   "tenders": 93
-  },
-  {
-   "district": "Thane",
-   "floated_fmt": "61.97 Cr",
-   "floated_inr": "619654144.00",
-   "tenders": 127
-  },
-  {
-   "district": "Kolhapur",
-   "floated_fmt": "58.84 Cr",
-   "floated_inr": "588414960",
-   "tenders": 89
+   "floated_fmt": "62.69 Cr",
+   "floated_inr": "626894550",
+   "tenders": 98
   },
   {
    "district": "Buldhana",
-   "floated_fmt": "52.51 Cr",
-   "floated_inr": "525087571.00",
-   "tenders": 93
+   "floated_fmt": "53.2 Cr",
+   "floated_inr": "532010072.00",
+   "tenders": 87
   },
   {
    "district": "Hingoli",
    "floated_fmt": "51.58 Cr",
    "floated_inr": "515793250.00",
-   "tenders": 55
+   "tenders": 54
   },
   {
    "district": "Bhandara",
-   "floated_fmt": "51.01 Cr",
-   "floated_inr": "510124673.00",
-   "tenders": 37
+   "floated_fmt": "51.28 Cr",
+   "floated_inr": "512808646.00",
+   "tenders": 43
   },
   {
    "district": "Pmc Area",
    "floated_fmt": "45.03 Cr",
    "floated_inr": "450253103",
-   "tenders": 14
+   "tenders": 13
   },
   {
    "district": "Raigad",
-   "floated_fmt": "38.84 Cr",
-   "floated_inr": "388440716",
-   "tenders": 47
+   "floated_fmt": "41.86 Cr",
+   "floated_inr": "418560116",
+   "tenders": 66
   },
   {
    "district": "Sangli",
-   "floated_fmt": "35.56 Cr",
-   "floated_inr": "355623948.00",
-   "tenders": 66
+   "floated_fmt": "35.26 Cr",
+   "floated_inr": "352627810.00",
+   "tenders": 96
   },
   {
    "district": "Pmc Office, Panvel",
@@ -149,42 +149,48 @@
    "tenders": 7
   },
   {
-   "district": "Mbmc",
-   "floated_fmt": "33.52 Cr",
-   "floated_inr": "335171136",
-   "tenders": 28
+   "district": "Wardha",
+   "floated_fmt": "33.34 Cr",
+   "floated_inr": "333440338.00",
+   "tenders": 58
   },
   {
-   "district": "Wardha",
-   "floated_fmt": "32.95 Cr",
-   "floated_inr": "329546952.00",
-   "tenders": 56
+   "district": "Mbmc",
+   "floated_fmt": "32.46 Cr",
+   "floated_inr": "324577085",
+   "tenders": 17
   }
  ],
  "by_funding_scheme": [
   {
-   "floated_fmt": "30310.05 Cr",
-   "floated_inr": "303100507434.00",
+   "floated_fmt": "30319.69 Cr",
+   "floated_inr": "303196868218.00",
    "scheme": "(unclassified)",
-   "tenders": 5379
+   "tenders": 5705
   },
   {
    "floated_fmt": "27.11 Cr",
-   "floated_inr": "271070906.00",
+   "floated_inr": "271070827.00",
    "scheme": "DPDC / District Planning",
    "tenders": 100
   },
   {
-   "floated_fmt": "7.17 Cr",
-   "floated_inr": "71728889",
+   "floated_fmt": "7.32 Cr",
+   "floated_inr": "73227440",
    "scheme": "Amdar Nidhi / MLA fund",
-   "tenders": 31
+   "tenders": 33
   },
   {
    "floated_fmt": "3.53 Cr",
-   "floated_inr": "35315942",
+   "floated_inr": "35315942.00",
    "scheme": "15th Finance Commission",
-   "tenders": 20
+   "tenders": 19
+  },
+  {
+   "floated_fmt": "184.92 Cr",
+   "floated_inr": "1849244117",
+   "scheme": "AMRUT",
+   "tenders": 8
   },
   {
    "floated_fmt": "3.49 Cr",
@@ -196,12 +202,6 @@
    "floated_fmt": "3.37 Cr",
    "floated_inr": "33660379",
    "scheme": "Dalit Vasti",
-   "tenders": 8
-  },
-  {
-   "floated_fmt": "184.92 Cr",
-   "floated_inr": "1849244117",
-   "scheme": "AMRUT",
    "tenders": 7
   },
   {
@@ -220,16 +220,16 @@
  "coverage": [
   {
    "awarded": 0,
-   "closed": 1,
+   "closed": 2,
    "coverage": 0.0,
-   "org": "Municipal Council Yawal",
+   "org": "BEED-WORKS DIV.",
    "year": 2026
   },
   {
    "awarded": 0,
-   "closed": 5,
+   "closed": 2,
    "coverage": 0.0,
-   "org": "Municipal Council Bhusaval",
+   "org": "VISHNAPUR",
    "year": 2026
   },
   {
@@ -241,16 +241,72 @@
   },
   {
    "awarded": 0,
-   "closed": 1,
+   "closed": 5,
    "coverage": 0.0,
-   "org": "Agriculture Product Market Committee Dharangaon",
+   "org": "Municipal Council Bhusaval",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "EE (MJP) W.M. Division Amravati",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "Public Works Division No.2 Jalgaon",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "Municipal Council Erandol",
+   "org": "BHILALI",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "EE (MJP) Division Amravati",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 15,
+   "coverage": 0.0,
+   "org": "JALGAON-RWS",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 4,
+   "coverage": 0.0,
+   "org": "EE Jalgaon Medium Project Division No.2 Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "Municipal Council Raver",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "EE Majalgaon Irrigation Division Parli (V)",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "KHADKI",
    "year": 2026
   },
   {
@@ -264,49 +320,14 @@
    "awarded": 0,
    "closed": 2,
    "coverage": 0.0,
-   "org": "Public Works Division No.2 Jalgaon",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "EE Dhule Irrigation Division Dhule",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 4,
-   "coverage": 0.0,
-   "org": "EE Jalgaon Medium Project Division No.2 Jalgaon",
+   "org": "CHUNCHALE",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "EE Girna Irrigation Division Jalgaon",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 3,
-   "coverage": 0.0,
-   "org": "EE(Thane),SE(Thane),WSSD,Maharashtra",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 3,
-   "coverage": 0.0,
-   "org": "EE (MJP) W.M. Division Amravati",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "GODHANI(G)",
+   "org": "EE (MJP) W.M. Division Nagpur",
    "year": 2026
   },
   {
@@ -320,42 +341,63 @@
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "Agriculture Product Market Committee Majalgaon",
+   "org": "Municipal Council Yawal",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "E and M Division Aurangabad",
+   "org": "KARAJGAON",
    "year": 2026
   },
   {
    "awarded": 0,
-   "closed": 15,
+   "closed": 2,
    "coverage": 0.0,
-   "org": "JALGAON-RWS",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "VITNER",
+   "org": "PAL",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "JINSI",
+   "org": "EE Jalgaon Irrigation Division Jalgaon",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "MOHIDE",
+   "org": "EE Nandurbar Medium Project Division Nandurbar",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council, Majalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "DABHA",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 3,
+   "coverage": 0.0,
+   "org": "EE(Thane),SE(Thane),WSSD,Maharashtra",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "VASANTWADI",
    "year": 2026
   },
   {
@@ -374,13 +416,6 @@
   },
   {
    "awarded": 0,
-   "closed": 3,
-   "coverage": 0.0,
-   "org": "Municipal Council Raver",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
    "closed": 2,
    "coverage": 0.0,
    "org": "JALGAON-DRDA",
@@ -388,9 +423,37 @@
   },
   {
    "awarded": 0,
-   "closed": 2,
+   "closed": 1,
    "coverage": 0.0,
-   "org": "PAL",
+   "org": "JINSI",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "HEDAVE",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "North Maharashtra University Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Maharashtra State Infrastructure Development Corporation",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "VITNER",
    "year": 2026
   },
   {
@@ -411,7 +474,14 @@
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "SHELWAD",
+   "org": "ADGAON",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "EE Dhule Irrigation Division Dhule",
    "year": 2026
   },
   {
@@ -425,14 +495,14 @@
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "Maharashtra State Infrastructure Development Corporation",
+   "org": "BHOD BK.",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "EE (MJP) Division Amravati",
+   "org": "EE Girna Irrigation Division Jalgaon",
    "year": 2026
   },
   {
@@ -444,142 +514,9 @@
   },
   {
    "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "BEED-WORKS DIV.",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "EE Majalgaon Irrigation Division Parli (V)",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "Municipal Council, Jalgaon Jamod",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "EE Jalgaon Irrigation Division Jalgaon",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "AURANGABAD-RWS",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "ADGAON",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "EE Nandurbar Medium Project Division Nandurbar",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "Division Dhule",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "Asst. Commissionerate of Fisheries- Jalgaon",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "BHILALI",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "Municipal Council, Majalgaon",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "BHOD BK.",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "DABHA",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "VISHNAPUR",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "VASANTWADI",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 2,
-   "coverage": 0.0,
-   "org": "CHUNCHALE",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "Municipal Council Amalner",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "North Maharashtra University Jalgaon",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "KARAJGAON",
-   "year": 2026
-  },
-  {
-   "awarded": 0,
-   "closed": 1,
-   "coverage": 0.0,
-   "org": "EE (MJP) W.M. Division Nagpur",
+   "org": "Government Medical College and Hospital Jalgaon",
    "year": 2026
   },
   {
@@ -593,7 +530,35 @@
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "KHADKI",
+   "org": "Agriculture Product Market Committee Majalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "E and M Division Aurangabad",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 2,
+   "coverage": 0.0,
+   "org": "Division Dhule",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "SHELWAD",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "MOHIDE",
    "year": 2026
   },
   {
@@ -612,16 +577,51 @@
   },
   {
    "awarded": 0,
-   "closed": 1,
+   "closed": 2,
    "coverage": 0.0,
-   "org": "Government Medical College and Hospital Jalgaon",
+   "org": "AURANGABAD-RWS",
    "year": 2026
   },
   {
    "awarded": 0,
    "closed": 1,
    "coverage": 0.0,
-   "org": "HEDAVE",
+   "org": "Municipal Council, Jalgaon Jamod",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council Amalner",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Asst. Commissionerate of Fisheries- Jalgaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Agriculture Product Market Committee Dharangaon",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "Municipal Council Erandol",
+   "year": 2026
+  },
+  {
+   "awarded": 0,
+   "closed": 1,
+   "coverage": 0.0,
+   "org": "GODHANI(G)",
    "year": 2026
   },
   {
@@ -632,15 +632,15 @@
    "year": 2026
   }
  ],
- "generated": "2026-11-09T07:46:55+05:30",
+ "generated": "2026-11-09T15:19:36+05:30",
  "reconciliation": {
   "awarded": 64,
   "awards": 100,
-  "canonical_tenders": 5558,
+  "canonical_tenders": 5885,
   "contractors": 67,
   "definition": "Distinct tenders in the canonical store after cross-portal dedupe. This is the authoritative count.",
-  "live": 5365,
-  "merged_across_portals": 436
+  "live": 5692,
+  "merged_across_portals": 439
  },
  "single_bidder": [],
  "summary": {
@@ -653,13 +653,13 @@
    "crawl_runs": 1,
    "documents": 0,
    "tender_events": 99,
-   "tenders": 5558
+   "tenders": 5885
   },
-  "tenders_with_known_estimate": 3944,
+  "tenders_with_known_estimate": 3801,
   "total_awarded_value_fmt": "35.27 Cr",
   "total_awarded_value_inr": "352724903.196",
-  "total_floated_value_fmt": "30540.84 Cr",
-  "total_floated_value_inr": "305408365975.00"
+  "total_floated_value_fmt": "30550.62 Cr",
+  "total_floated_value_inr": "305506225231.00"
  },
  "time_to_award": [
   {
@@ -852,23 +852,23 @@
   },
   {
    "band": "10-100 Cr",
-   "count": 78
+   "count": 79
   },
   {
    "band": "1-10 Cr",
-   "count": 413
+   "count": 416
   },
   {
    "band": "10 L - 1 Cr",
-   "count": 2003
+   "count": 1887
   },
   {
    "band": "< 10 L",
-   "count": 1429
+   "count": 1398
   },
   {
    "band": "(no value)",
-   "count": 1614
+   "count": 2084
   }
  ]
 }
