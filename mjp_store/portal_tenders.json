@@ -1,6 +1,6 @@
 {
  "generated": "2026-11-25T01:04:28+00:00",
- "last_checked": "2026-11-25T19:40:37+00:00",
+ "last_checked": "2026-11-26T02:29:33+00:00",
  "last_error": "HTTPSConnectionPool(host='mjp.maharashtra.gov.in', port=443): Max retries exceeded with url: /tenders/ (Caused by NameResolutionError(\"HTTPSConnection(host='mjp.maharashtra.gov.in', port=443): Failed to resolve 'mjp.maharashtra.gov.in' ([Errno -3] Temporary failure in name resolution)\"))",
  "source": "https://mjp.maharashtra.gov.in/tenders/",
  "tenders": [
